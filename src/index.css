@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  body{
+    background: linear-gradient(to bottom, #000F15, #02354C);
+  }
+}
+
+body{
+  background: linear-gradient(to bottom, #000F15, #02354C);
+}
+
 .root {
   /* position: relative;
   width: 100vw;
@@ -25,5 +35,10 @@
 
 .active-nav{
   background: linear-gradient(to bottom, #FFB939, #FFD683);
+
+}
+
+.grad-con{
+  background: linear-gradient(to top, #01162000, #011620);
 
 }

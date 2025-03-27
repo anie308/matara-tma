@@ -7,6 +7,8 @@ import Layout from './layout';
 import Home from './pages';
 import eruda from "eruda";
 import Referral from './pages/referral';
+import Rank from './pages/rank';
+import Task from './pages/task';
 
 function App() {
   eruda.init();
@@ -42,6 +44,8 @@ function App() {
       <Route path="/" element={<Layout />} >
         <Route path="" element={<Home />} />
         <Route path="ref" element={<Referral />} />
+        <Route path="rank" element={<Rank />} />
+        <Route path="tasks" element={<Task />} />
       </Route>
     </Routes>
   )

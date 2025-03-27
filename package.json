@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.6.1",
     "@twa-dev/sdk": "^8.0.2",
     "autoprefixer": "^10.4.21",

@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.root {
+  /* position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: hidden;
+  overflow-y: hidden; */
+  background: linear-gradient(to bottom, #000F15, #02354C);
+}
+
+.btn {
+  background: linear-gradient(to right, #FFB939, #FFD683);
+}
+
+.coin-bnt{
+  background: linear-gradient(to right, #000F15, #02354C);
+}
+
+.nav-btn{
+  background: linear-gradient(to bottom, #000F15, #02354C);
+}
+
+.active-nav{
+  background: linear-gradient(to bottom, #FFB939, #FFD683);
+
+}

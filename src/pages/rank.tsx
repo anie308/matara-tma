@@ -29,7 +29,7 @@ function Rank() {
             </tr>
         </thead>
         <tbody>
-            <tr className="">
+            <tr className="text-[14px]">
                 <th scope="row" className="px-6 py-4 font-medium whitespace-nowrap text-center  text-[#CDCBC8]">
                     @jurstadev
                 </th>

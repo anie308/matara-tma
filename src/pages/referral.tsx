@@ -39,7 +39,7 @@ function Referral() {
             </tr>
         </thead>
         <tbody>
-            <tr className="">
+            <tr className="text-[14px]">
                 <th scope="row" className="px-6 py-4 font-medium whitespace-nowrap text-center ">
                     @jurstadev
                 </th>

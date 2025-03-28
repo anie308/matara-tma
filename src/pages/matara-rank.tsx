@@ -8,21 +8,32 @@ function MataraRank() {
 
   const ranks = [
     { name: "Cub Recruit", mat: "0 - 99", icon: "./recriut.png" },
-    { name: "Scout", mat: '100 - 999', icon: "./warrior.svg" },
-    { name: "MASTER", mat: 5000, icon: "./master.svg" },
+    { name: "Scout", mat: '100 - 999', icon: "./scout.png" },
+    { name: "Warrior", mat: '1,000 - 9,999', icon: "./warrior.png" },
+    { name: "Sergeant", mat: '10,000 - 99,999', icon: "./sergeant.png" },
+    { name: "Captain", mat: '100,000 - 999,999', icon: "./captain.png" },
+    { name: "Lieutenant", mat: '1,000,000 - 9,999,999', icon: "./lutenantt.png" },
+    { name: "Commander", mat: '10,000,000 - 99,999,999', icon: "./commander.png" },
+    { name: "General", mat: '100,000,000+', icon: "./general.png" },
+    { name: "Field Marshal", mat: '1,000,000,000+', icon: "./field.png" },
+    { name: "Champion of Matara", mat: '10,000,000,000+', icon: "./champion.png" },
   ];
 
   const [index, setIndex] = useState(1); // Default to Warrior
   const [direction, setDirection] = useState(0); // -1 for left, 1 for right
 
   const nextRank = () => {
-    setDirection(1);
-    setIndex((prev) => (prev + 1) % ranks.length);
+    if (index < ranks.length - 1) {
+      setDirection(1);
+      setIndex((prev) => prev + 1);
+    }
   };
 
   const prevRank = () => {
-    setDirection(-1);
-    setIndex((prev) => (prev - 1 + ranks.length) % ranks.length);
+    if (index > 0) {
+      setDirection(-1);
+      setIndex((prev) => prev - 1);
+    }
   };
   return (
     <div className="flex flex-col items-center justify-between min-h-full  w-full px-[10px]">
@@ -33,21 +44,19 @@ function MataraRank() {
           initial={{ x: direction === 1 ? "100%" : "-100%", opacity: 0 }}
               animate={{ x: "0%", opacity: 1 }}
               exit={{ x: direction === 1 ? "-100%" : "100%", opacity: 0 }}
-              transition={{ duration: 0.5 }}
+              transition={{ duration: 0.6 }}
           className="font-[900] w-[70%] flex-col  justify-center  rounded-[8px] flex items-center space-x-[5px]"
         >
-          <div className="flex flex-col items-center justify-center">
+          <div className="flex flex-col items-center justify-center w-full">
             <img className="h-[150px]" src={ranks[index].icon} alt="" />
 
-            <div className="mt-[20px] flex flex-col items-center justify-center">
-              <p className="font-[900] text-[28px] gradient-text">{ranks[index].name}</p>
-              <p className="text-[#CDCBC8] text-[22px] font-[400]">{ranks[index].mat} $MAT</p>
+            <div className="mt-[20px] flex flex-col items-center justify-center w-full">
+              <p className="font-[900] text-[30px] gradient-text text-center leading-[35px]">{ranks[index].name}</p>
+              <p className="text-[#CDCBC8] text-[22px] text-center leading-[26px] mt-[5px] font-[400]  w-[70%]">{ranks[index].mat}  $MAT</p>
             </div>
 
           </div>
-          {/* <p className="gradient-text text-[14px]">{ranks[index].mat} MAT</p>
-          <img src={ranks[index].icon} className="h-[30px]" alt={ranks[index].name} />
-          <p className="gradient-text text-[14px]">{ranks[index].name}</p> */}
+         
         </motion.div>
         <div  onClick={nextRank}><CircleChevronRight size={40} className="text-[#44F58E]" /></div>
       </div>

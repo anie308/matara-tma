@@ -40,7 +40,7 @@ bot.start(async (ctx) => {
                             ],
                             [
                               Markup.button.webApp(
-                                "Test Brawl now!",
+                                "Start now!",
                                 `https://7dvfrf1x-5173.uks1.devtunnels.ms/`
                               ),
                             ],

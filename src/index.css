@@ -1,3 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -13,12 +16,15 @@ body{
 }
 
 .root {
-  /* position: relative;
-  width: 100vw;
-  height: 100vh;
-  overflow-x: hidden;
-  overflow-y: hidden; */
   background: linear-gradient(to bottom, #000F15, #02354C);
+}
+
+.gradient-text {
+  background: linear-gradient(to right, #44F58E, #FAFAFA);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold; /* Optional */
 }
 
 .btn {

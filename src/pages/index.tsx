@@ -1,8 +1,11 @@
 // import React from 'react'
 
+import WebApp from "@twa-dev/sdk";
 import { useState } from "react"
 
 function Home() {
+          WebApp.BackButton.hide();
+  
   const [porfolioStatus, setPortfolioStatus] = useState(false)
   return (
     <div className="min-h-full">

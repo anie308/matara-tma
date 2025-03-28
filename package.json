@@ -12,9 +12,11 @@
   "dependencies": {
     "@headlessui/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.6.1",
+    "@tonconnect/ui-react": "^2.1.0",
     "@twa-dev/sdk": "^8.0.2",
     "autoprefixer": "^10.4.21",
     "eruda": "^3.4.1",
+    "framer-motion": "^12.6.2",
     "lucide-react": "^0.484.0",
     "postcss": "^8.5.3",
     "react": "^19.0.0",

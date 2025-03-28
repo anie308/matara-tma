@@ -9,6 +9,9 @@ import eruda from "eruda";
 import Referral from './pages/referral';
 import Rank from './pages/rank';
 import Task from './pages/task';
+import Game from './pages/game';
+import Profile from './pages/profile';
+import MataraRank from './pages/matara-rank';
 
 function App() {
   eruda.init();
@@ -46,6 +49,9 @@ function App() {
         <Route path="ref" element={<Referral />} />
         <Route path="rank" element={<Rank />} />
         <Route path="tasks" element={<Task />} />
+        <Route path="game" element={<Game />} />
+        <Route path="profile" element={<Profile />} />
+        <Route path="matara-ranks" element={<MataraRank />} />
       </Route>
     </Routes>
   )

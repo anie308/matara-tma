@@ -1,6 +1,10 @@
-import React from 'react'
+// import React from 'react'
+
+import WebApp from "@twa-dev/sdk";
 
 function Rank() {
+          WebApp.BackButton.hide();
+  
   return (
     <div className="text-white flex w-full px-[10px] items-center flex-col justify-center">
       <p className="text-[#FFB948] font-[900] text-[35px] mt-[20px]">Ranking</p>

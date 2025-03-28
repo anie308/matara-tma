@@ -1,9 +1,12 @@
 // import React from 'react'
 
+import WebApp from "@twa-dev/sdk";
 import { Copy } from "lucide-react"
 
 
 function Referral() {
+            WebApp.BackButton.hide();
+    
   return (
     <div className="text-white flex px-[10px] items-center flex-col justify-center">
       <p className="text-[#FFB948] font-[900] text-[35px] mt-[20px]">Referrals</p>

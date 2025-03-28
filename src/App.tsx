@@ -20,6 +20,7 @@ function App() {
   WebApp.isClosingConfirmationEnabled = true;
   WebApp.isVerticalSwipesEnabled = false;
   const [supported, setSupported] = useState(true);
+  console.log(supported)
   const initUser = WebApp.initDataUnsafe.user?.username;
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.user);
@@ -34,9 +35,9 @@ function App() {
   useEffect(() => {
     WebApp.ready();
 
-    // if (WebApp.platform !== "android" && WebApp.platform !== "ios") {
-    //   setSupported(false);
-    // }
+    if (WebApp.platform !== "android" && WebApp.platform !== "ios") {
+      setSupported(false);
+    }
   }, []);
 
   if (!WebApp.isExpanded) {

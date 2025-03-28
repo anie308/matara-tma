@@ -18,7 +18,7 @@ function Home() {
               $MAT</p>
           </div>
           <div>
-            {porfolioStatus ? <img src="/earn-up.svg" alt="" /> : <img src="/earn-down.svg" alt="" />}
+            {porfolioStatus ? <img src="/earn-up.svg" alt="" /> : <img src="/earn-down.svg" onClick={()=> setPortfolioStatus(true)} alt="" />}
           </div>
           <div>
             <p className="text-[#FFBF49] text-[9px]">Earning Rate</p>

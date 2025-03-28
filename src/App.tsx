@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
 import { useEffect, useState } from 'react'
 import WebApp from "@twa-dev/sdk";
 import {  useDispatch, useSelector } from 'react-redux';

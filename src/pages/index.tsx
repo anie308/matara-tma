@@ -1,12 +1,13 @@
 // import React from 'react'
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import WebApp from "@twa-dev/sdk";
 import { useState } from "react"
 
 function Home() {
           WebApp.BackButton.hide();
   
-  const [porfolioStatus, setPortfolioStatus] = useState(false)
+  const [porfolioStatus, setPortfolioStatus] = useState(false);
   return (
     <div className="min-h-full">
       <div className="flex flex-col items-center py-[30px]">

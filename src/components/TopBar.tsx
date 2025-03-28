@@ -7,7 +7,7 @@ import { useTonConnectUI } from '@tonconnect/ui-react';
 function TopBar() {
   const location = useLocation();
   const path = location.pathname;
-  const [tonConnectUI, setOptions] = useTonConnectUI();
+  const [tonConnectUI] = useTonConnectUI();
 
 
   const handleRender = () => {

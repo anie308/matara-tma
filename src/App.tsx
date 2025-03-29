@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { useEffect, useState } from 'react'
-import WebApp from "@twa-dev/sdk";
+// import WebApp from "@twa-dev/sdk";
 import {  useDispatch, useSelector } from 'react-redux';
 import { setUsername } from './services/redux/user';
 import { Route, Routes } from 'react-router-dom';
@@ -14,17 +14,24 @@ import Task from './pages/task';
 import Game from './pages/game';
 import Profile from './pages/profile';
 import MataraRank from './pages/matara-rank';
+import Unsupported from './pages/unsupported';
 
 function App() {
   eruda.init();
+  const WebApp = window.Telegram.WebApp;
+
   WebApp.isClosingConfirmationEnabled = true;
   WebApp.isVerticalSwipesEnabled = false;
   const [supported, setSupported] = useState(true);
   console.log(supported)
-  const initUser = WebApp.initDataUnsafe.user?.username;
+  // const WebApp = window.Telegram.WebApp.initData;
+
+  const initUser = WebApp.initDataUnsafe;
+  console.log(initUser, "init data")
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.user);
   const savedUser = user.username;
+
 
   useEffect(() => {
     if (!savedUser && initUser) {
@@ -47,7 +54,8 @@ function App() {
 
   return (
       <Routes>
-      <Route path="/" element={<Layout />} >
+      {supported ? (
+        <Route path="/" element={<Layout />} >
         <Route path="" element={<Home />} />
         <Route path="ref" element={<Referral />} />
         <Route path="rank" element={<Rank />} />
@@ -56,6 +64,9 @@ function App() {
         <Route path="profile" element={<Profile />} />
         <Route path="matara-ranks" element={<MataraRank />} />
       </Route>
+      ) : (
+        <Route path="/" element={<Unsupported />} ></Route>
+      )}
     </Routes>
   )
 }

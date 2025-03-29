@@ -7,6 +7,21 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './services/store.ts';
 import { TonConnectUIProvider } from '@tonconnect/ui-react';
+// import WebApp from '@twa-dev/sdk';
+
+// Hide the main button
+
+// const WebApp = window.Telegram.WebApp;
+
+
+// WebApp.MainButton.hide();
+// // Expand the Telegram Mini App to full screen
+// WebApp.expand();
+// // Initialize the Telegram Mini App SDK
+// WebApp.ready();
+// // Enable the closing confirmation
+// WebApp.enableClosingConfirmation();
+
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

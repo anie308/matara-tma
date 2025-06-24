@@ -29,7 +29,7 @@ function BottomNav() {
   ]
   return (
     <div className="fixed  text-white border-white w-full flex bottom-0 items-center justify-center ">
-      <div onClick={()=> navigate('/')} className="h-[80px] absolute w-[80px] z-20  border bottom-[35px]  rounded-full">
+      <div onClick={()=> navigate('/')} className="h-[80px] absolute w-[80px] z-20 items-center justify-center flex  border bottom-[35px]  rounded-full">
         <img src="./circle.png" className="h-[80px] w-[80px] object-cover" alt="" />
       </div>
       <div className="grid grid-cols-4 w-full">

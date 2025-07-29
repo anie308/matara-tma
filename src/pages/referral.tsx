@@ -12,12 +12,12 @@ function Referral() {
       <p className="text-[#FFB948] font-[900] text-[35px] mt-[20px]">Referrals</p>
 
       <div className="flex-col w-full mt-[20px] flex items-center justify-center space-y-[10px]">
-        <button className="coin-btn border-[#44F58E] text-white border-[2px] rounded-[8px]  justify-center  p-[8px_25px] w-[60%] flex items-center space-x-[10px]">
+        <button className="coin-btn border-[#44F58E] text-white border-[2px] rounded-[8px]  justify-center  p-[8px_25px] w-[80%] flex items-center space-x-[10px]">
           <span className="font-[900] text-[18px]">Invite Friends</span>
           <Copy />
         </button>
 
-        <button className="btn  text-black  rounded-[8px]   p-[8px_25px] w-[60%] flex items-center space-x-[10px] justify-center">
+        <button className="btn  text-black  rounded-[8px]   p-[8px_25px] w-[80%] flex items-center space-x-[10px] justify-center">
           <span className="font-[900] text-[18px]">Share to story </span>
           
         </button>

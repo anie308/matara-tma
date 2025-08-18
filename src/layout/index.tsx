@@ -1,31 +1,28 @@
-// import React from 'react'
-
 import { Outlet, useLocation } from "react-router-dom";
-import BottomNav from "../components/BottomNav"
+import BottomNav from "../components/BottomNav";
 import TopBar from "../components/TopBar";
 
 function Layout() {
   const location = useLocation();
-  const path = location.pathname;
+  const { pathname } = location;
 
-  const handleRender = () => {
-    if (path === "/profile" || path === '/matara-ranks' ) {
-      return 
-    }  else {
-      return <BottomNav />
-    }
-  }
+  // Determine whether to show the BottomNav based on the current path
+  const showBottomNav = !["/profile", "/matara-ranks"].includes(pathname);
+
   return (
-      <div className="min-h-screen h-screen font-montserrat root relative flex flex-col  w-full">
-        <div className="min-h-full  ">
-          <TopBar/>
-         <div className="overflow-auto min-h-full pb-[80px]">
-         <Outlet />
-         </div>
-        </div>
-        {handleRender()}
+    <div className="min-h-screen font-montserrat root relative flex flex-col w-full">
+      {/* TopBar is always visible */}
+      <TopBar />
+
+      {/* Main content area */}
+      <div className="overflow-auto flex-grow pb-20">
+        <Outlet />
+      </div>
+
+      {/* Conditionally render BottomNav */}
+      {showBottomNav && <BottomNav />}
     </div>
-  )
+  );
 }
 
-export default Layout
+export default Layout;

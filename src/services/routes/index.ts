@@ -23,7 +23,7 @@ const userSlice = apiSlice.injectEndpoints({
     }),
     getMilestones: builder.query({
       query: ({ username }) => ({
-        url: `milestone/${username}`,
+        url: `/milestone/${username}`,
         method: "GET",
       }),
       providesTags: ["milestone"],

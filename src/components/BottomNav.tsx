@@ -1,44 +1,53 @@
-// import React from 'react'
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
-import { Link, useLocation, useNavigate } from "react-router-dom"
-
-function BottomNav() {
-  const location = useLocation();
-  const path = location.pathname;
-  console.log(path)
-  const navigate = useNavigate()
-
-  const links = [
-    {
-      title: "Ref",
-      link: "ref"
-    },
-    {
-      title: "Rank",
-      link: "rank"
-    },
-    {
-      title: "Tasks",
-      link: "tasks"
-    },
-    {
-      title: "Game",
-      link: "game"
-    },
-
-  ]
-  return (
-    <div className="fixed  text-white border-white w-full flex bottom-0 items-center justify-center ">
-      <div onClick={()=> navigate('/')} className="h-[80px] absolute w-[80px] z-20 items-center justify-center flex bottom-[35px]  rounded-full">
-        <img src="./circle.png" className="h-[80px] w-[80px] object-cover" alt="" />
-      </div>
-      <div className="grid grid-cols-4 w-full">
-        {links.map((l: any, index) =>
-          <Link key={index} to={l.link} className={`${path === `/${l.link}` ? "active-nav" : "nav-btn"} p-[20px] border-[3px] border-[#02354C] font-[700] flex items-center justify-center`}>{l.title}</Link>
-        )}
-      </div>
-    </div>
-  )
+// Define the type for a navigation link
+interface NavLink {
+  title: string;
+  link: string;
 }
 
-export default BottomNav
+const BottomNav = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPath = location.pathname;
+
+  const links: NavLink[] = [
+    { title: "Ref", link: "/ref" },
+    { title: "Rank", link: "/rank" },
+    { title: "Tasks", link: "/tasks" },
+    { title: "Game", link: "/game" },
+  ];
+
+  return (
+    <div className="fixed bottom-0 w-full text-white flex items-center justify-center">
+      {/* Central navigation button */}
+      <div
+        onClick={() => navigate('/')}
+        className="absolute z-20 w-20 h-20 flex items-center justify-center bottom-9 cursor-pointer"
+      >
+        <img
+          src="./circle.png"
+          className="w-full h-full object-cover"
+          alt="Home Button"
+        />
+      </div>
+
+      {/* Navigation links */}
+      <div className="grid grid-cols-4 w-full">
+        {links.map((linkInfo) => (
+          <Link
+            key={linkInfo.link}
+            to={linkInfo.link}
+            className={`p-5 border-t-4 border-[#02354C] font-bold flex items-center justify-center ${
+              currentPath === linkInfo.link ? "active-nav" : "nav-btn"
+            }`}
+          >
+            {linkInfo.title}
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default BottomNav;

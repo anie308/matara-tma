@@ -1,74 +1,56 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-
-import { useEffect, useState } from 'react'
-// import WebApp from "@twa-dev/sdk";
-import {  useDispatch, useSelector } from 'react-redux';
-import { setUsername } from './services/redux/user';
+import { useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes } from 'react-router-dom';
-import Layout from './layout';
-import Home from './pages';
-import eruda from "eruda";
-import Referral from './pages/referral';
-import Rank from './pages/rank';
-import Task from './pages/task';
-import Game from './pages/game';
-import Profile from './pages/profile';
-import MataraRank from './pages/matara-rank';
+import eruda from 'eruda';
+import { setUsername } from './services/redux/user';
+import MainRoutes from './routes/MainRoutes';
 import Unsupported from './pages/unsupported';
 
 function App() {
+  // Initialize Eruda for debugging
   eruda.init();
+
   const WebApp = window.Telegram.WebApp;
 
+  // Configure Telegram WebApp
   WebApp.isClosingConfirmationEnabled = true;
   WebApp.isVerticalSwipesEnabled = false;
-  const [supported, setSupported] = useState(true);
-  console.log(supported)
-  // const WebApp = window.Telegram.WebApp.initData;
 
-  const initUser = WebApp.initDataUnsafe;
-  console.log(initUser, "init data")
+  const [isSupported, setIsSupported] = useState(true);
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.user);
   const savedUser = user.username;
 
-
   useEffect(() => {
+    const initUser = WebApp.initDataUnsafe?.user;
     if (!savedUser && initUser) {
       dispatch(setUsername(initUser));
     }
-  }, [initUser, savedUser, dispatch]);
+  }, [WebApp.initDataUnsafe, savedUser, dispatch]);
 
   useEffect(() => {
     WebApp.ready();
 
-    if (WebApp.platform !== "android" && WebApp.platform !== "ios") {
-      setSupported(false);
+    // Check for supported platforms
+    if (WebApp.platform !== 'android' && WebApp.platform !== 'ios') {
+      setIsSupported(true);
     }
-  }, []);
 
-  if (!WebApp.isExpanded) {
-    WebApp.expand();
-  }
-
+    // Expand the WebApp
+    if (!WebApp.isExpanded) {
+      WebApp.expand();
+    }
+  }, [WebApp]);
 
   return (
-      <Routes>
-      {supported ? (
-        <Route path="/" element={<Layout />} >
-        <Route path="" element={<Home />} />
-        <Route path="ref" element={<Referral />} />
-        <Route path="rank" element={<Rank />} />
-        <Route path="tasks" element={<Task />} />
-        <Route path="game" element={<Game />} />
-        <Route path="profile" element={<Profile />} />
-        <Route path="matara-ranks" element={<MataraRank />} />
-      </Route>
+    <Routes>
+      {isSupported ? (
+        <Route path="/*" element={<MainRoutes />} />
       ) : (
-        <Route path="/" element={<Unsupported />} ></Route>
+        <Route path="/*" element={<Unsupported />} />
       )}
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

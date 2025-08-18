@@ -1,38 +1,53 @@
-// import React from 'react'
 import { useLocation } from 'react-router-dom';
-import MenuButton from './MenuButton'
+import MenuButton from './MenuButton';
 import { useTonConnectUI } from '@tonconnect/ui-react';
 
-
-function TopBar() {
+const TopBar = () => {
   const location = useLocation();
-  const path = location.pathname;
+  const currentPath = location.pathname;
   const [tonConnectUI] = useTonConnectUI();
 
-
-  const handleRender = () => {
-    if (path === "/profile") {
-      return <p className='text-start text-[#FFB948] leading-[20px] font-[900] text-[18px]'>User <br /> Profile</p>
-    } else if (path === '/matara-ranks') {
-      return <p className='text-start text-[#FFB948] leading-[20px] font-[900] text-[17px]'>Matara <br /> Ranks</p>
-
-    } else {
-      return <button className="coin-btn border-[#44F58E] text-white border-[2px] rounded-[8px] font-[700] text-[14px] p-[4px_18px]  ">300 $MAT</button>
-
+  // Render different content based on the current path
+  const renderContent = () => {
+    switch (currentPath) {
+      case '/profile':
+        return (
+          <p className="text-start text-yellow-500 leading-tight font-black text-lg">
+            User <br /> Profile
+          </p>
+        );
+      case '/matara-ranks':
+        return (
+          <p className="text-start text-yellow-500 leading-tight font-black text-lg">
+            Matara <br /> Ranks
+          </p>
+        );
+      default:
+        return (
+          <button className="coin-btn border-green-400 text-white border-2 rounded-lg font-bold text-sm py-1 px-4">
+            300 $MAT
+          </button>
+        );
     }
-  }
+  };
+
   return (
-    <div className='flex bg-[#000F15] items-center justify-between sticky top-0 w-full p-[10px_15px]'>
-      <div className="flex items-center space-x-[10px]">
-        <img src="./warrior.svg" alt="" />
-        {handleRender()}
+    <div className="flex bg-[#000F15] items-center justify-between sticky top-0 w-full p-3">
+      <div className="flex items-center space-x-3">
+        <img src="./warrior.svg" alt="Warrior Icon" />
+        {renderContent()}
       </div>
-      <div className="flex items-center space-x-[10px]">
-        <button className="btn p-[5px_10px] font-[600] text-black text-[14px] rounded-[5px]" onClick={() => tonConnectUI.openModal()}>Connect</button>
+      <div className="flex items-center space-x-3">
+        <button
+          className="btn py-1 px-3 font-semibold text-black text-sm rounded-md"
+          onClick={() => tonConnectUI.openModal()}
+        >
+          Connect
+        </button>
         <MenuButton />
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default TopBar
+export default TopBar;

@@ -9,12 +9,11 @@ import { setProfile } from "../services/redux/user";
 
 function Home() {
   WebApp.BackButton.hide();
-  const {username} = useSelector((state: RootState) => state.user.profile)
-  const savedUser = username || "jurstadev";
+  const profile = useSelector((state: RootState) => state.user.profile);
+  const savedUser = profile?.username || "jurstadev";
   const dispatch = useDispatch();
-  const { data, isSuccess } = useGetUserQuery({ username : savedUser });
+  const { data, isSuccess } = useGetUserQuery({ username: savedUser });
   const user = data?.data;
-  console.log(user);
 
   useEffect(() => {
     if (isSuccess) {

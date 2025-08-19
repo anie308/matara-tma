@@ -5,6 +5,7 @@ import eruda from 'eruda';
 import { setUsername } from './services/redux/user';
 import MainRoutes from './routes/MainRoutes';
 import Unsupported from './pages/unsupported';
+import { RootState } from './services/store';
 
 function App() {
   // Initialize Eruda for debugging
@@ -18,7 +19,7 @@ function App() {
 
   const [isSupported, setIsSupported] = useState(true);
   const dispatch = useDispatch();
-  const user = useSelector((state: any) => state.user.user);
+  const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
 
   useEffect(() => {

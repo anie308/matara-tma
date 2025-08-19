@@ -99,17 +99,17 @@ const userSlice = createSlice({
         state.missions.push(singleMission);
       }
 
-      localStorage.setItem("flower-missions", JSON.stringify(state.missions));
+      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
     },
     clearMission: (state) => {
       state.missions = [];
-      localStorage.setItem("flower-missions", JSON.stringify(state.missions));
+      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
     },
     removeActiveMission: (state, action) => {
       state.missions = state.missions.filter(
         (mission: any) => mission._id !== action.payload._id
       );
-      localStorage.setItem("flower-missions", JSON.stringify(state.missions));
+      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
     },
     updateMissionStatus: (state, action) => {
       const singleMission = action.payload;
@@ -117,7 +117,7 @@ const userSlice = createSlice({
       if (mission) {
         mission.status = singleMission?.status;
       }
-      localStorage.setItem("flower-missions", JSON.stringify(state.missions));
+      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
     },
     // setLevel: (state) => {
     //   state.user.level = state.user.level += 1;
@@ -125,7 +125,7 @@ const userSlice = createSlice({
     // },
     setRefillValue: (state) => {
       state.user.refillValue = state.user.refillValue += 1;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+      localStorage.setItem("matara-user", JSON.stringify(state.user));
     },
    
     setReferrals: (state, action) => {

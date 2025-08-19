@@ -19,7 +19,7 @@ function App() {
   const [isSupported, setIsSupported] = useState(true);
   const dispatch = useDispatch();
   const user = useSelector((state: any) => state.user.user);
-  const savedUser = user.username;
+  const savedUser = user?.username;
 
   useEffect(() => {
     const initUser = WebApp.initDataUnsafe?.user;
@@ -33,7 +33,7 @@ function App() {
 
     // Check for supported platforms
     if (WebApp.platform !== 'android' && WebApp.platform !== 'ios') {
-      setIsSupported(false);
+      setIsSupported(true);
     }
 
     // Expand the WebApp

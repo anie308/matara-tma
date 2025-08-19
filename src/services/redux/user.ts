@@ -21,11 +21,12 @@ export interface User {
   tapTime: string | null; // ISO string or null
   onboarding: boolean;
   referralCode?: string | null; // optional, since it’s commented out
+  profilePicture: string
 }
 
 export interface State {
-  user: User;
-  profile: any; // refine later
+  // user: User;
+  profile: User; // refine later
   bonus: any;
   userCabal: any;
   referrals: any[];
@@ -39,7 +40,18 @@ export interface State {
 
 
  const initialState: State = {
-  user: getUserFromLocalStorage() || {
+  // user: getUserFromLocalStorage() || {
+  //   username: null,
+  //   points: 0,
+  //   referrals: 0,
+  //   level: 1,
+  //   currentTapCount: 1,
+  //   refillValue: 1,
+  //   tapTime: null,
+  //   onboarding: false,
+  //   // referralCode: null,
+  // },
+  profile: getUserFromLocalStorage() || {
     username: null,
     points: 0,
     referrals: 0,
@@ -48,9 +60,9 @@ export interface State {
     refillValue: 1,
     tapTime: null,
     onboarding: false,
+    profilePicture: ""
     // referralCode: null,
-  },
-  profile: null,
+  }, 
   bonus: null,
   userCabal: null,
   referrals: [],
@@ -71,24 +83,24 @@ const userSlice = createSlice({
       state.profile = action.payload;
     },
     setLevel: (state, action) => {
-      state.user.level = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.user));
+      state.profile.level = action.payload;
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
     setTapTime: (state, action) => {
-      state.user.tapTime = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.user));
+      state.profile.tapTime = action.payload;
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
     setUsername: (state, action) => {
-      state.user.username = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.user));
+      state.profile.username = action.payload;
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
     setPoints: (state, action) => {
-      state.user.points = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.user));
+      state.profile.points = action.payload;
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
     setOnboarding: (state, action) => {
-      state.user.onboarding = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.user));
+      state.profile.onboarding = action.payload;
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
 
     startMission: (state, action) => {
@@ -124,8 +136,8 @@ const userSlice = createSlice({
     //   localStorage.setItem("flower-user", JSON.stringify(state.user));
     // },
     setRefillValue: (state) => {
-      state.user.refillValue = state.user.refillValue += 1;
-      localStorage.setItem("matara-user", JSON.stringify(state.user));
+      state.profile.refillValue = state.profile.refillValue += 1;
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
    
     setReferrals: (state, action) => {

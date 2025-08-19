@@ -33,7 +33,7 @@ function App() {
 
     // Check for supported platforms
     if (WebApp.platform !== 'android' && WebApp.platform !== 'ios') {
-      setIsSupported(true);
+      setIsSupported(false);
     }
 
     // Expand the WebApp

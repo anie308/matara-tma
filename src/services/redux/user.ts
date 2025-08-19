@@ -2,33 +2,55 @@
 import { createSlice } from "@reduxjs/toolkit";
 
 const getUserFromLocalStorage = () => {
-  const user = localStorage.getItem("flower-user");
+  const user = localStorage.getItem("matara-user");
   return user ? JSON.parse(user) : null;
 };
 
 const getMissonsFromLocalStorage = () => {
-  const missions = localStorage.getItem("flower-missions");
+  const missions = localStorage.getItem("matara-missions");
   return missions ? JSON.parse(missions) : [];
 };
 
-const initialState = {
+export interface User {
+  username: string | null;
+  points: number;
+  referrals: number;
+  level: number;
+  currentTapCount: number;
+  refillValue: number;
+  tapTime: string | null; // ISO string or null
+  onboarding: boolean;
+  referralCode?: string | null; // optional, since it’s commented out
+}
+
+export interface State {
+  user: User;
+  profile: any; // refine later
+  bonus: any;
+  userCabal: any;
+  referrals: any[];
+  tasks: any[];
+  cabal: any[];
+  leaderBoard: any[];
+  milestones: any[];
+  boosts: any[];
+  missions: any[];
+}
+
+
+ const initialState: State = {
   user: getUserFromLocalStorage() || {
-    token: null,
     username: null,
-    points: 30000,
+    points: 0,
     referrals: 0,
     level: 1,
     currentTapCount: 1,
-    maxpoints: 1000,
-    currentPoints: 1000,
-    multipleTapIncrement: 50000,
-    energyIncrement: 50000,
-    rechargeSpeed: 100000,
     refillValue: 1,
     tapTime: null,
     onboarding: false,
     // referralCode: null,
   },
+  profile: null,
   bonus: null,
   userCabal: null,
   referrals: [],
@@ -36,7 +58,7 @@ const initialState = {
   cabal: [],
   leaderBoard: [],
   milestones: [],
-  boosts:[],
+  boosts: [],
   missions: getMissonsFromLocalStorage() || [],
 };
 
@@ -44,29 +66,29 @@ const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setCurrentPoints: (state, action) => {
-      state.user.currentPoints = action.payload;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+    
+    setProfile: (state, action) => {
+      state.profile = action.payload;
     },
     setLevel: (state, action) => {
       state.user.level = action.payload;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+      localStorage.setItem("matara-user", JSON.stringify(state.user));
     },
     setTapTime: (state, action) => {
       state.user.tapTime = action.payload;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+      localStorage.setItem("matara-user", JSON.stringify(state.user));
     },
     setUsername: (state, action) => {
       state.user.username = action.payload;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+      localStorage.setItem("matara-user", JSON.stringify(state.user));
     },
     setPoints: (state, action) => {
       state.user.points = action.payload;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+      localStorage.setItem("matara-user", JSON.stringify(state.user));
     },
     setOnboarding: (state, action) => {
       state.user.onboarding = action.payload;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
+      localStorage.setItem("matara-user", JSON.stringify(state.user));
     },
 
     startMission: (state, action) => {
@@ -105,10 +127,7 @@ const userSlice = createSlice({
       state.user.refillValue = state.user.refillValue += 1;
       localStorage.setItem("flower-user", JSON.stringify(state.user));
     },
-    setEnergy: (state) => {
-      state.user.maxpoints = state.user.maxpoints += 500;
-      localStorage.setItem("flower-user", JSON.stringify(state.user));
-    },
+   
     setReferrals: (state, action) => {
       state.referrals = action.payload;
     },
@@ -133,9 +152,7 @@ const userSlice = createSlice({
 export const {
   setUsername,
   setPoints,
-  setCurrentPoints,
   setLevel,
-  setEnergy,
   setTasks,
   setReferrals,
   setLeaderboard,
@@ -147,7 +164,8 @@ export const {
   setMilestones,
   setBoosts,
   setBonus,
-  setTapTime
+  setTapTime,
+  setProfile
 } = userSlice.actions;
 
 export default userSlice.reducer;

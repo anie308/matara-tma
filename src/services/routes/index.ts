@@ -7,6 +7,7 @@ const userSlice = apiSlice.injectEndpoints({
       query: ({ username }) => ({
         url: `/user/get-user?username=${username}`,
         method: "GET",
+        
       }),
     }),
     getUserPoints: builder.query({

@@ -88,11 +88,8 @@ import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
 import { RootState } from "../services/store";
 
-function MataraRank() {
-  const user = useSelector((state: RootState) => state.user.profile);
-  const userPoints = user?.points || 0;
 
-  const ranks = [
+export const ranks = [
     { name: "Cub Recruit", min: 0, max: 99, icon: "./recriut.png" },
     { name: "Scout", min: 100, max: 999, icon: "./scout.png" },
     { name: "Warrior", min: 1000, max: 9999, icon: "./warrior.png" },
@@ -104,6 +101,12 @@ function MataraRank() {
     { name: "Field Marshal", min: 1000000000, max: 9999999999, icon: "./field.png" },
     { name: "Champion of Matara", min: 10000000000, max: Infinity, icon: "./champion.png" },
   ];
+
+function MataraRank() {
+  const user = useSelector((state: RootState) => state.user.profile);
+  const userPoints = user?.points || 0;
+
+  
 
   // find current rank
   const currentRank = ranks.find(

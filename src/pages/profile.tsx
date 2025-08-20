@@ -5,13 +5,20 @@ import { useNavigate } from "react-router-dom";
 import { RootState } from "../services/store";
 import { useGetReferralsQuery } from "../services/routes";
 import { setReferrals } from "../services/redux/user";
+import { ranks } from "./matara-rank";
 
 function Profile() {
   WebApp.BackButton.show();
 
   const referralList = useSelector((state: RootState) => state.user.referrals);
   const user = useSelector((state: RootState) => state.user.profile);
+    const userPoints = user?.points || 0;
+    console.log(user)
+    const currentRank = ranks.find(
+        (rank) => userPoints >= rank.min && userPoints <= rank.max
+      ) || ranks[0];
   const navigate = useNavigate();
+  console.log(user)
 
   useEffect(() => {
     WebApp.BackButton.onClick(() => navigate(-1));
@@ -34,7 +41,7 @@ function Profile() {
       <div className="flex flex-col items-center space-x-[10px] mt-[20px]">
         <div className="h-[70px] w-[70px] rounded-full border-[#44F58E] overflow-hidden border-[3px]">
           <img
-            src={user?.profilePicture}
+            src={user?.profilePicture || "https://avatar.iran.liara.run/public/boy"}
             className="h-full w-full object-cover"
             alt=""
           />
@@ -51,7 +58,7 @@ function Profile() {
       <div className="coin-bnt mt-[40px] font-[900]  border-[#44F58E] border p-[5px_15px] rounded-[8px] flex items-center space-x-[5px]">
         <p className="gradient-text text-[12px]">{user?.points} MAT</p>
         <img src="./warrior.svg" className="h-[30px]" alt="" />
-        <p className="gradient-text text-[12px]">WARRIOR</p>
+        <p className="gradient-text text-[12px]">{currentRank.name}</p>
       </div>
 
       <p className="text-[17px] my-[20px] font-[800] text-[#FFB948]">

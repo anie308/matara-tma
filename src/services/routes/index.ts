@@ -7,7 +7,6 @@ const userSlice = apiSlice.injectEndpoints({
       query: ({ username }) => ({
         url: `/user/get-user?username=${username}`,
         method: "GET",
-        
       }),
     }),
     getUserPoints: builder.query({
@@ -16,6 +15,21 @@ const userSlice = apiSlice.injectEndpoints({
         method: "GET",
       }),
     }),
+    getMiningState: builder.query({
+      query: ({ username }) => ({
+        url: `/mine/state?username=${username}`,
+        method: "GET",
+      }),
+    }),
+
+    startMining: builder.mutation({
+      query: ({ username }) => ({
+        url: `/mine/start?username=${username}`,
+        method: "POST",
+        // body: { username, points },
+      }),
+    }),
+
     getReferrals: builder.query({
       query: ({ username }) => ({
         url: `/user/referrals?username=${username}`,
@@ -85,31 +99,6 @@ const userSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["tasks"],
     }),
-    purchaseBoost: builder.mutation({
-      query: (data) => ({
-        url: `/boost/purchase`,
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["boosts"],
-
-    }),
-    claimMilestone: builder.mutation({
-      query: (data) => ({
-        url: `/milestone/complete`,
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["milestone"],
-    }),
-    collectBonus: builder.mutation({
-      query: (data) => ({
-        url: `/bonus/collect`,
-        method: "POST",
-        body: data,
-      }),
-      invalidatesTags: ["bonus"],
-    }),
   }),
 });
 
@@ -123,10 +112,9 @@ export const {
   useGetLeaderBoardQuery,
   useOnboardUserMutation,
   useGetMilestonesQuery,
-  useClaimMilestoneMutation,
   useGetUserPointsQuery,
   useGetBoostsQuery,
-  usePurchaseBoostMutation,
+  useGetMiningStateQuery,
   useCheckBonusQuery,
-  useCollectBonusMutation,
+  useStartMiningMutation
 } = userSlice;

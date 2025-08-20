@@ -31,6 +31,10 @@ body{
   background: linear-gradient(to right, #FFB939, #FFD683);
 }
 
+.btn :disabled {
+  background-color: gray;
+}
+
 .coin-bnt{
   background: linear-gradient(to right, #000F15, #02354C);
 }

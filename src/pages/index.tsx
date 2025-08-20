@@ -1,6 +1,5 @@
 import WebApp from "@twa-dev/sdk";
 import MiningStatus from "../components/home/MiningStatus";
-import ClaimButton from "../components/home/ClaimButton";
 import { useGetUserQuery } from "../services/routes";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../services/store";
@@ -21,10 +20,11 @@ function Home() {
     }
   }, [isSuccess, dispatch]);
 
+
   return (
-    <div className="min-h-full">
+    <div >
       <MiningStatus />
-      <ClaimButton />
+     
     </div>
   );
 }

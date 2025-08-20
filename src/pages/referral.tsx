@@ -12,7 +12,8 @@ function Referral() {
   const user = useSelector((state: RootState) => state.user.profile);
   const referralList = useSelector((state: RootState) => state.user.referrals);
 
-  const referralLink = `https://example.com/ref/${user?.referralCode}`;
+  // const referralLink = `https://example.com/ref/${user?.referralCode}`;
+  const referralLink = `https://t.me/MataraComBot?start=${user?.referralCode}`;
 
   const [copied, setCopied] = useState(false);
 
@@ -70,7 +71,7 @@ function Referral() {
             <p className="text-center text-red-400 py-6">
               Failed to load referrals. Please try again.
             </p>
-          ) : referralList.length === 0 ? (
+          ) : isSuccess && referralList.length === 0 ? (
             // ℹ️ Empty state
             <p className="text-center text-gray-400 py-6">
               You don’t have any referrals yet. <br /> Share your link to start

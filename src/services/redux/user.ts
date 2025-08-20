@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 const getUserFromLocalStorage = () => {
   const user = localStorage.getItem("matara-user");
@@ -24,9 +24,39 @@ export interface User {
   profilePicture: string
 }
 
+
+
+
+// const getMissionsFromLocalStorage = () => {
+//   const missions = localStorage.getItem("matara-missions");
+//   return missions ? JSON.parse(missions) : [];
+// };
+
+const getMiningStatusFromLocalStorage = () => {
+  const status = localStorage.getItem("matara-mining-status");
+  return status ? JSON.parse(status) : false;
+};
+
+const getMiningStartDateFromLocalStorage = () => {
+  const date = localStorage.getItem("matara-mining-start-date");
+  return date ? JSON.parse(date) : null;
+};
+
+export interface User {
+  username: string | null;
+  points: number;
+  referrals: number;
+  level: number;
+  currentTapCount: number;
+  refillValue: number;
+  tapTime: string | null; // ISO string or null
+  onboarding: boolean;
+  referralCode?: string | null; // optional, since it’s commented out
+  profilePicture: string
+}
+
 export interface State {
-  // user: User;
-  profile: User; // refine later
+  profile: User | null;
   bonus: any;
   userCabal: any;
   referrals: any[];
@@ -36,33 +66,29 @@ export interface State {
   milestones: any[];
   boosts: any[];
   missions: any[];
+  miningStatus: boolean;
+  miningStartDate: string | null;
 }
 
 
+//  const initialState: State = {
+//   profile: getUserFromLocalStorage(),
+//   bonus: null,
+//   userCabal: null,
+//   referrals: [],
+//   tasks: [],
+//   cabal: [],
+//   leaderBoard: [],
+//   milestones: [],
+//   boosts: [],
+//   missions: getMissionsFromLocalStorage() || [],
+//   miningStatus: getMiningStatusFromLocalStorage(),
+//   miningStartDate: getMiningStartDateFromLocalStorage(),
+// };
+
+
  const initialState: State = {
-  // user: getUserFromLocalStorage() || {
-  //   username: null,
-  //   points: 0,
-  //   referrals: 0,
-  //   level: 1,
-  //   currentTapCount: 1,
-  //   refillValue: 1,
-  //   tapTime: null,
-  //   onboarding: false,
-  //   // referralCode: null,
-  // },
-  profile: getUserFromLocalStorage() || {
-    username: null,
-    points: 0,
-    referrals: 0,
-    level: 1,
-    currentTapCount: 1,
-    refillValue: 1,
-    tapTime: null,
-    onboarding: false,
-    profilePicture: ""
-    // referralCode: null,
-  }, 
+  profile: getUserFromLocalStorage(),
   bonus: null,
   userCabal: null,
   referrals: [],
@@ -72,6 +98,8 @@ export interface State {
   milestones: [],
   boosts: [],
   missions: getMissonsFromLocalStorage() || [],
+  miningStatus: getMiningStatusFromLocalStorage(),
+  miningStartDate: getMiningStartDateFromLocalStorage(),
 };
 
 const userSlice = createSlice({
@@ -81,26 +109,41 @@ const userSlice = createSlice({
     
     setProfile: (state, action) => {
       state.profile = action.payload;
+      if (action.payload) {
+        localStorage.setItem("matara-user", JSON.stringify(action.payload));
+      } else {
+        localStorage.removeItem("matara-user");
+      }
     },
     setLevel: (state, action) => {
-      state.profile.level = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      if (state.profile) {
+        state.profile.level = action.payload;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
     },
     setTapTime: (state, action) => {
-      state.profile.tapTime = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      if (state.profile) {
+        state.profile.tapTime = action.payload;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
     },
     setUsername: (state, action) => {
-      state.profile.username = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      if (state.profile) {
+        state.profile.username = action.payload;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
     },
     setPoints: (state, action) => {
-      state.profile.points = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      if (state.profile) {
+        state.profile.points = action.payload;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
     },
     setOnboarding: (state, action) => {
-      state.profile.onboarding = action.payload;
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      if (state.profile) {
+        state.profile.onboarding = action.payload;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
     },
 
     startMission: (state, action) => {
@@ -136,8 +179,10 @@ const userSlice = createSlice({
     //   localStorage.setItem("flower-user", JSON.stringify(state.user));
     // },
     setRefillValue: (state) => {
-      state.profile.refillValue = state.profile.refillValue += 1;
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      if (state.profile) {
+        state.profile.refillValue = state.profile.refillValue + 1;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
     },
    
     setReferrals: (state, action) => {
@@ -157,6 +202,14 @@ const userSlice = createSlice({
     },
     setBonus: (state, action) => {
       state.bonus = action.payload;
+    },
+    setMiningStatus: (state, action: PayloadAction<boolean>) => {
+      state.miningStatus = action.payload;
+      localStorage.setItem("matara-mining-status", JSON.stringify(action.payload));
+    },
+    setMiningStartDate: (state, action: PayloadAction<string | null>) => {
+      state.miningStartDate = action.payload;
+      localStorage.setItem("matara-mining-start-date", JSON.stringify(action.payload));
     }
   },
 });
@@ -177,7 +230,10 @@ export const {
   setBoosts,
   setBonus,
   setTapTime,
-  setProfile
+  setProfile,
+  setRefillValue,
+  setMiningStatus,
+  setMiningStartDate
 } = userSlice.actions;
 
 export default userSlice.reducer;

@@ -35,7 +35,7 @@ const MiningStatus = () => {
         dispatch(setMiningStartDate(new Date(miningStartedAt).toISOString()));
       }
     }
-  }, [dispatch, miningStatus]);
+  }, [dispatch, isSuccess, data]);
 
   const [amountMined, setAmountMined] = useState<number>(0);
   const [timeLeft, setTimeLeft] = useState<string>("24:00:00");

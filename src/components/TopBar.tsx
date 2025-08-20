@@ -1,13 +1,13 @@
 import { useLocation } from "react-router-dom";
 import MenuButton from "./MenuButton";
-import { useTonConnectUI } from "@tonconnect/ui-react";
+// import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useSelector } from "react-redux";
 import { RootState } from "../services/store";
 
 const TopBar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
-  const [tonConnectUI] = useTonConnectUI();
+  // const [tonConnectUI] = useTonConnectUI();
   const user = useSelector((state: RootState) => state.user.profile);
   const userPoints = user?.points || 0;
 

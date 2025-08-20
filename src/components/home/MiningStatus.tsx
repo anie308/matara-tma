@@ -22,8 +22,9 @@ const MiningStatus = () => {
   const user = useSelector((state: RootState) => state.user.profile);
   const username = user?.username || "jurstadev";
 
-  const { data, isSuccess } = useGetMiningStateQuery({ username });
+  const { data, isSuccess, error } = useGetMiningStateQuery({ username });
   const [startMining, { isLoading }] = useStartMiningMutation();
+  console.log(error, data)
 
   useEffect(() => {
     if (isSuccess) {

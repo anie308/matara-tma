@@ -24,7 +24,7 @@ const MiningStatus = () => {
 
   const { data, isSuccess, error } = useGetMiningStateQuery({ username });
   const [startMining, { isLoading }] = useStartMiningMutation();
-  console.log(error, data)
+  console.log(error, "some error", data)
 
   useEffect(() => {
     if (isSuccess) {
@@ -99,7 +99,7 @@ const MiningStatus = () => {
       dispatch(setMiningStartDate(new Date(miningDate).toISOString()));
       dispatch(setMiningStatus(true));
     } catch (error) {
-      console.log(error);
+      console.log(error, "start error");
     }
   };
 

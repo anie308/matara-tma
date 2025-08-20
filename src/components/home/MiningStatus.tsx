@@ -95,9 +95,10 @@ const MiningStatus = () => {
   const toggleMining = async () => {
     try {
       const res = await startMining({ username }).unwrap();
+      console.log(res)
       const miningDate = res?.data?.miningStartedAt;
       const isMining = res?.data?.isMining;
-      console.log(miningDate, isMining);
+      console.log(new Date(miningDate).toISOString(), isMining);
       dispatch(setMiningStartDate(new Date(miningDate).toISOString()));
       dispatch(setMiningStatus(true));
     } catch (error) {

@@ -1,31 +1,35 @@
+
+
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../services/store";
 import { setMiningStatus, setMiningStartDate } from "../../services/redux/user";
 import ClaimButton from "./ClaimButton";
 import {
+  useClaimMiningMutation,
   useGetMiningStateQuery,
   useStartMiningMutation,
 } from "../../services/routes";
 
-const MINING_RATE_PER_SECOND = 0.0002; // Accurate mining rate
-const MINING_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours in ms
+const MINING_RATE_PER_SECOND = 0.0002; // tokens per second
+const MINING_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const MiningStatus = () => {
   const dispatch = useDispatch();
-  const miningStatus = useSelector(
-    (state: RootState) => state.user.miningStatus
-  );
-  const miningStartDate = useSelector(
-    (state: RootState) => state.user.miningStartDate
-  );
+  const miningStatus = useSelector((state: RootState) => state.user.miningStatus);
+  const miningStartDate = useSelector((state: RootState) => state.user.miningStartDate);
   const user = useSelector((state: RootState) => state.user.profile);
   const username = user?.username || "jurstadev";
 
-  const { data, isSuccess, error } = useGetMiningStateQuery({ username });
+  const { data, isSuccess } = useGetMiningStateQuery({ username });
   const [startMining, { isLoading }] = useStartMiningMutation();
-  console.log(error, "some error", data);
+  const [claimMine, { isLoading: claimLoad }] = useClaimMiningMutation();
 
+  const [amountMined, setAmountMined] = useState<number>(0);
+  const [timeLeft, setTimeLeft] = useState<string>("24:00:00");
+  const [canClaim, setCanClaim] = useState<boolean>(false);
+
+  // ✅ Sync mining state from backend on load
   useEffect(() => {
     if (isSuccess) {
       const status = data?.isMining;
@@ -37,11 +41,7 @@ const MiningStatus = () => {
     }
   }, [dispatch, isSuccess, data]);
 
-  const [amountMined, setAmountMined] = useState<number>(0);
-  const [timeLeft, setTimeLeft] = useState<string>("24:00:00");
-  const [canClaim, setCanClaim] = useState<boolean>(false);
-  const claimMining = async () => {};
-
+  // ✅ Mining timer logic
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
@@ -50,21 +50,29 @@ const MiningStatus = () => {
 
       const updateMining = () => {
         const now = new Date().getTime();
-        const elapsedTimeInSeconds = (now - startDateTime) / 1000;
+        const elapsedTimeMs = now - startDateTime;
 
-        // Amount mined based on elapsed time * rate
-        const mined = elapsedTimeInSeconds * MINING_RATE_PER_SECOND;
-        setAmountMined(mined);
+        if (elapsedTimeMs >= MINING_DURATION_MS) {
+          // Freeze mining rewards at max after 24 hrs
+          const maxMined = (MINING_DURATION_MS / 1000) * MINING_RATE_PER_SECOND;
+          setAmountMined(maxMined);
+          setTimeLeft("00:00:00");
+          setCanClaim(true);
+
+          clearInterval(interval);
+          dispatch(setMiningStatus(false)); // mark as stopped
+          // ⚠️ Keep miningStartDate intact until claim!
+          return;
+        }
+
+        // Still mining — keep updating
+        const elapsedSeconds = elapsedTimeMs / 1000;
+        setAmountMined(elapsedSeconds * MINING_RATE_PER_SECOND);
 
         // Countdown
-        const remainingMs = Math.max(
-          MINING_DURATION_MS - (now - startDateTime),
-          0
-        );
+        const remainingMs = MINING_DURATION_MS - elapsedTimeMs;
         const hours = Math.floor(remainingMs / (1000 * 60 * 60));
-        const minutes = Math.floor(
-          (remainingMs % (1000 * 60 * 60)) / (1000 * 60)
-        );
+        const minutes = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((remainingMs % (1000 * 60)) / 1000);
 
         setTimeLeft(
@@ -72,37 +80,59 @@ const MiningStatus = () => {
             .toString()
             .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
         );
-
-        // Stop after 24 hrs
-        if (remainingMs <= 0) {
-          setCanClaim(true);
-          clearInterval(interval);
-          dispatch(setMiningStatus(false));
-          dispatch(setMiningStartDate(null));
-        }
       };
 
       updateMining(); // run immediately
       interval = setInterval(updateMining, 1000);
+    } else if (!miningStatus && amountMined > 0) {
+      // Mining ended but rewards are preserved
+      setCanClaim(true);
     } else {
+      // Default state
       setAmountMined(0);
       setTimeLeft("24:00:00");
+      setCanClaim(false);
     }
 
     return () => clearInterval(interval);
   }, [miningStatus, miningStartDate, dispatch]);
 
+  // ✅ Start mining
   const toggleMining = async () => {
     try {
       const res = await startMining({ username }).unwrap();
-      console.log(res)
       const miningDate = res?.data?.miningStartedAt;
-      const isMining = res?.data?.isMining;
-      console.log(new Date(miningDate).toISOString(), isMining);
       dispatch(setMiningStartDate(new Date(miningDate).toISOString()));
       dispatch(setMiningStatus(true));
+      setAmountMined(0);
+      setCanClaim(false);
     } catch (error) {
       console.log(error, "start error");
+    }
+  };
+
+  // ✅ Claim mining rewards
+  const claimMining = async () => {
+    try {
+      console.log(`Claiming ${amountMined.toFixed(3)} $MAT for ${username}...`);
+      const data = {
+        username,
+        mineCount : amountMined
+      }
+
+      console.log(data)
+
+      const res = await claimMine({data}).unwrap();
+      console.log(res, "claim response")
+      // TODO: Call your backend claim endpoint here
+
+      // Reset local + redux state after claim
+      setAmountMined(0);
+      setCanClaim(false);
+      // dispatch(setMiningStatus(false));
+      dispatch(setMiningStartDate(null));
+    } catch (err) {
+      console.log("Claim failed", err);
     }
   };
 
@@ -137,16 +167,23 @@ const MiningStatus = () => {
             <span className="text-yellow-500">Mining Resets</span> in {timeLeft}
           </p>
         )}
+        {!miningStatus && canClaim && (
+          <p className="mt-4 text-yellow-400 font-semibold">
+            Rewards ready to claim!
+          </p>
+        )}
       </div>
       <ClaimButton
-        loading={isLoading}
-        disabled={canClaim} // true = ready to claim
+      canClaim={canClaim}
+        loading={isLoading || claimLoad}
+        // disabled={!canClaim && !miningStatus && isLoading} // can only press if mining OR rewards ready
         miningStatus={miningStatus}
-        action={claimMining} // claim action
-        start={toggleMining} // start action
+        action={claimMining}
+        start={toggleMining}
       />
     </div>
   );
 };
 
 export default MiningStatus;
+

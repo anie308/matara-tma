@@ -8,6 +8,7 @@ const userSlice = apiSlice.injectEndpoints({
         url: `/user/get-user?username=${username}`,
         method: "GET",
       }),
+      providesTags: ["user"]
     }),
     getUserPoints: builder.query({
       query: ({ username }) => ({
@@ -20,6 +21,7 @@ const userSlice = apiSlice.injectEndpoints({
         url: `/mine/state?username=${username}`,
         method: "GET",
       }),
+      providesTags: ["mining"]
     }),
 
     startMining: builder.mutation({
@@ -28,6 +30,14 @@ const userSlice = apiSlice.injectEndpoints({
         method: "POST",
         // body: { username, points },
       }),
+    }),
+    claimMining: builder.mutation({
+      query: ({ data }) => ({
+        url: `/mine/claim`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["user", "mining"]
     }),
 
     getReferrals: builder.query({
@@ -71,13 +81,6 @@ const userSlice = apiSlice.injectEndpoints({
       }),
       providesTags: ["tasks"],
     }),
-    getBoosts: builder.query({
-      query: ({ username }) => ({
-        url: `/boost/${username}`,
-        method: "GET",
-      }),
-      providesTags: ["boosts"],
-    }),
     checkBonus: builder.query({
       query: ({ username }) => ({
         url: `/bonus/check/${username}`,
@@ -113,8 +116,8 @@ export const {
   useOnboardUserMutation,
   useGetMilestonesQuery,
   useGetUserPointsQuery,
-  useGetBoostsQuery,
   useGetMiningStateQuery,
   useCheckBonusQuery,
-  useStartMiningMutation
+  useStartMiningMutation,
+  useClaimMiningMutation
 } = userSlice;

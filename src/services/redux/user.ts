@@ -74,6 +74,7 @@ export interface MiningState {
 
 export interface State {
   profile: User | null;
+  mining: MiningState;
   bonus: any;
   userCabal: any;
   referrals: any[];
@@ -83,8 +84,6 @@ export interface State {
   milestones: any[];
   boosts: any[];
   missions: any[];
-  miningStatus: boolean;
-  miningStartDate: string | null;
 }
 
 

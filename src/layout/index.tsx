@@ -20,17 +20,14 @@ function Layout() {
 
   const {
     data: userData,
-    isLoading: userLoading,
     isSuccess: userSuccess,
   } = useGetUserQuery({ username }, { pollingInterval: 300000 });
   const {
     data: referralData,
-    isLoading: referralLoading,
     isSuccess: referralSuccess,
   } = useGetReferralsQuery({ username }, { pollingInterval: 300000 });
   const {
     data: taskData,
-    isLoading: taskLoading,
     isSuccess: taskSuccess,
   } = useGetUserTasksQuery({ username }, { pollingInterval: 300000 });
 

@@ -11,15 +11,15 @@ const getMissonsFromLocalStorage = () => {
   return missions ? JSON.parse(missions) : [];
 };
 
-const getMiningFromLocalStorage = () => {
-  const mining = localStorage.getItem("matara-mining");
-  return mining ? JSON.parse(mining) : {
-    isActive: false,
-    startTime: null,
-    totalMined: 0,
-    sessionStartTime: null,
-  };
-};
+// const getMiningFromLocalStorage = () => {
+//   const mining = localStorage.getItem("matara-mining");
+//   return mining ? JSON.parse(mining) : {
+//     isActive: false,
+//     startTime: null,
+//     totalMined: 0,
+//     sessionStartTime: null,
+//   };
+// };
 
 export interface User {
   username: string | null;
@@ -80,6 +80,21 @@ export interface State {
   miningStartDate: string | null;
 }
 
+
+//  const initialState: State = {
+//   profile: getUserFromLocalStorage(),
+//   bonus: null,
+//   userCabal: null,
+//   referrals: [],
+//   tasks: [],
+//   cabal: [],
+//   leaderBoard: [],
+//   milestones: [],
+//   boosts: [],
+//   missions: getMissionsFromLocalStorage() || [],
+//   miningStatus: getMiningStatusFromLocalStorage(),
+//   miningStartDate: getMiningStartDateFromLocalStorage(),
+// };
 
 
  const initialState: State = {

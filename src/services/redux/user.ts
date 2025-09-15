@@ -11,6 +11,16 @@ const getMissonsFromLocalStorage = () => {
   return missions ? JSON.parse(missions) : [];
 };
 
+const getMiningFromLocalStorage = () => {
+  const mining = localStorage.getItem("matara-mining");
+  return mining ? JSON.parse(mining) : {
+    isActive: false,
+    startTime: null,
+    totalMined: 0,
+    sessionStartTime: null,
+  };
+};
+
 export interface User {
   username: string | null;
   points: number;
@@ -53,6 +63,13 @@ export interface User {
   onboarding: boolean;
   referralCode?: string | null; // optional, since it’s commented out
   profilePicture: string
+}
+
+export interface MiningState {
+  isActive: boolean;
+  startTime: string | null; // ISO string
+  totalMined: number;
+  sessionStartTime: string | null; // ISO string for current session
 }
 
 export interface State {

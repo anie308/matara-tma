@@ -26,7 +26,7 @@ const BottomNav = () => {
         className="absolute z-20 w-20 h-20 flex items-center justify-center bottom-9 cursor-pointer"
       >
         <img
-          src="./circle.png"
+          src="/circle.png"
           className="w-full h-full object-cover"
           alt="Home Button"
         />

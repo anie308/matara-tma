@@ -11,7 +11,7 @@ function Home() {
   const profile = useSelector((state: RootState) => state.user.profile);
   const savedUser = profile?.username || "jurstadev";
   const dispatch = useDispatch();
-  const { data, isSuccess } = useGetUserQuery({ username: savedUser });
+  const { data, isSuccess } = useGetUserQuery({ username: savedUser }, {pollingInterval: 50000});
   const user = data?.data;
 
   useEffect(() => {

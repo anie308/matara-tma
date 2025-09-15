@@ -104,7 +104,7 @@ function Profile() {
                   >
                     <td className="px-6 py-4 text-center">@{ref.username}</td>
                     <td className="px-6 py-4 text-center text-[#44F58E]">
-                      +${ref.earnings} $MAT
+                      +${ref.earnings} $MARS
                     </td>
                   </tr>
                 ))}

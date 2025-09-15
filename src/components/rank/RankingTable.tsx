@@ -2,7 +2,7 @@ const rankingData = [
   {
     username: "@jurstadev",
     rank: "Sergeant",
-    earnings: "50,022 $MAT",
+    earnings: "50,022 $MARS",
   },
   // Add more ranking data here
 ];

@@ -1,10 +1,8 @@
 import WebApp from "@twa-dev/sdk";
 import { Copy } from "lucide-react";
-import { useDispatch, useSelector } from "react-redux";
+import {  useSelector } from "react-redux";
 import { RootState } from "../services/store";
-import { useGetReferralsQuery } from "../services/routes";
-import { useEffect, useState } from "react";
-import { setReferrals } from "../services/redux/user";
+import {  useState } from "react";
 import toast from "react-hot-toast";
 
 function Referral() {
@@ -17,16 +15,16 @@ function Referral() {
 
   const [copied, setCopied] = useState(false);
 
-  const username = user?.username || "jurstadev";
-  const { data, isSuccess, isLoading, isError } = useGetReferralsQuery({ username });
-  const dispatch = useDispatch();
-  const referrals = data?.data;
+  // const username = user?.username || "jurstadev";
+  // const { data, isSuccess, isLoading, isError } = useGetReferralsQuery({ username });
+  // const dispatch = useDispatch();
+  // const referrals = data?.data;
 
-  useEffect(() => {
-    if (isSuccess) {
-      dispatch(setReferrals(referrals || []));
-    }
-  }, [isSuccess, referrals, dispatch]);
+  // useEffect(() => {
+  //   if (isSuccess) {
+  //     dispatch(setReferrals(referrals || []));
+  //   }
+  // }, [isSuccess, referrals, dispatch]);
 
   const handleCopy = async () => {
     try {
@@ -61,7 +59,7 @@ function Referral() {
       {/* Referrals Table */}
       <div className="w-full mt-[20px]">
         <div className="relative overflow-x-auto">
-          {isLoading ? (
+          {/* {isLoading ? (
             // 🔄 Loading state
             <p className="text-center text-gray-400 py-6 animate-pulse">
               Loading referrals...
@@ -77,8 +75,7 @@ function Referral() {
               You don’t have any referrals yet. <br /> Share your link to start
               earning!
             </p>
-          ) : (
-            // ✅ Data table
+          ) : ( */}
             <table className="w-full">
               <thead className="text-[14px] text-white border-b border-[#CDCBC8]">
                 <tr>
@@ -98,13 +95,13 @@ function Referral() {
                   >
                     <td className="px-6 py-4 text-center">@{ref.username}</td>
                     <td className="px-6 py-4 text-center text-[#44F58E]">
-                      +${ref.earnings} $MAT
+                      +${ref.earnings} $MARS
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
+          
         </div>
       </div>
     </div>

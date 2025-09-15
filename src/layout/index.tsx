@@ -1,10 +1,59 @@
 import { Outlet, useLocation } from "react-router-dom";
 import BottomNav from "../components/BottomNav";
 import TopBar from "../components/TopBar";
+import {
+  useGetReferralsQuery,
+  useGetUserQuery,
+  useGetUserTasksQuery,
+} from "../services/routes";
+import { RootState } from "../services/store";
+import { useDispatch, useSelector } from "react-redux";
+import { setReferrals, setTasks } from "../services/redux/user";
+import { useEffect } from "react";
 
 function Layout() {
   const location = useLocation();
   const { pathname } = location;
+  const user = useSelector((state: RootState) => state.user.profile);
+  const username = user?.username;
+  const dispatch = useDispatch();
+
+  const {
+    data: userData,
+    isLoading: userLoading,
+    isSuccess: userSuccess,
+  } = useGetUserQuery({ username }, { pollingInterval: 300000 });
+  const {
+    data: referralData,
+    isLoading: referralLoading,
+    isSuccess: referralSuccess,
+  } = useGetReferralsQuery({ username }, { pollingInterval: 300000 });
+  const {
+    data: taskData,
+    isLoading: taskLoading,
+    isSuccess: taskSuccess,
+  } = useGetUserTasksQuery({ username }, { pollingInterval: 300000 });
+
+  useEffect(() => {
+    if (userSuccess) {
+      // console.log(userData);
+    }
+  }, [userSuccess, userData]);
+
+  useEffect(() => {
+    if (taskSuccess) {
+      dispatch(setTasks(taskData?.data));
+    }
+  }, [taskData, taskSuccess, dispatch]);
+
+  useEffect(() => {
+    if (referralSuccess) {
+      dispatch(setReferrals(referralData?.data));
+    }
+  }, [referralData, referralSuccess, dispatch]);
+
+  const dataLoading = userLoading || referralLoading || taskLoading;
+  const dataSuccess = (userSuccess && referralSuccess) || taskSuccess;
 
   // Determine whether to show the BottomNav based on the current path
   const showBottomNav = !["/profile", "/matara-ranks"].includes(pathname);

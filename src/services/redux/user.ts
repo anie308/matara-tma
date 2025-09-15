@@ -65,16 +65,8 @@ export interface User {
   profilePicture: string
 }
 
-export interface MiningState {
-  isActive: boolean;
-  startTime: string | null; // ISO string
-  totalMined: number;
-  sessionStartTime: string | null; // ISO string for current session
-}
-
 export interface State {
   profile: User | null;
-  mining: MiningState;
   bonus: any;
   userCabal: any;
   referrals: any[];
@@ -84,23 +76,10 @@ export interface State {
   milestones: any[];
   boosts: any[];
   missions: any[];
+  miningStatus: boolean;
+  miningStartDate: string | null;
 }
 
-
-//  const initialState: State = {
-//   profile: getUserFromLocalStorage(),
-//   bonus: null,
-//   userCabal: null,
-//   referrals: [],
-//   tasks: [],
-//   cabal: [],
-//   leaderBoard: [],
-//   milestones: [],
-//   boosts: [],
-//   missions: getMissionsFromLocalStorage() || [],
-//   miningStatus: getMiningStatusFromLocalStorage(),
-//   miningStartDate: getMiningStartDateFromLocalStorage(),
-// };
 
 
  const initialState: State = {

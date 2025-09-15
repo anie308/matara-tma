@@ -52,8 +52,8 @@ function Layout() {
     }
   }, [referralData, referralSuccess, dispatch]);
 
-  const dataLoading = userLoading || referralLoading || taskLoading;
-  const dataSuccess = (userSuccess && referralSuccess) || taskSuccess;
+  // const dataLoading = userLoading || referralLoading || taskLoading;
+  // const dataSuccess = (userSuccess && referralSuccess) || taskSuccess;
 
   // Determine whether to show the BottomNav based on the current path
   const showBottomNav = !["/profile", "/matara-ranks"].includes(pathname);

@@ -16,8 +16,8 @@ const MINING_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 const MiningStatus = () => {
   const dispatch = useDispatch();
-  const miningStatus = useSelector((state: RootState) => state.user.miningStatus);
-  const miningStartDate = useSelector((state: RootState) => state.user.miningStartDate);
+  const miningStatus = useSelector((state: RootState) => state?.user?.miningStatus);
+  const miningStartDate = useSelector((state: RootState) => state?.user?.miningStartDate);
   const user = useSelector((state: RootState) => state.user.profile);
   const username = user?.username || "jurstadev";
 

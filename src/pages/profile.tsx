@@ -41,7 +41,7 @@ function Profile() {
       <div className="flex flex-col items-center space-x-[10px] mt-[20px]">
         <div className="h-[70px] w-[70px] rounded-full border-[#44F58E] overflow-hidden border-[3px]">
           <img
-            src={user?.profilePicture || "https://avatar.iran.liara.run/public/boy"}
+            src={"/circle.png"}
             className="h-full w-full object-cover"
             alt=""
           />

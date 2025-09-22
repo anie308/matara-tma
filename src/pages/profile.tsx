@@ -24,7 +24,7 @@ function Profile() {
     WebApp.BackButton.onClick(() => navigate(-1));
   }, [WebApp, navigate]);
 
-  const username = user?.username || "jurstadev";
+  const username = user?.username;
   const { data, isSuccess, isLoading, isError } = useGetReferralsQuery({ username });
   const dispatch = useDispatch();
   const referrals = data?.data;

@@ -9,7 +9,7 @@ import { setProfile } from "../services/redux/user";
 function Home() {
   WebApp.BackButton.hide();
   const profile = useSelector((state: RootState) => state.user.profile);
-  const savedUser = profile?.username || "jurstadev";
+  const savedUser = profile?.username;
   const dispatch = useDispatch();
   const { data, isSuccess } = useGetUserQuery({ username: savedUser }, {pollingInterval: 50000});
   const user = data?.data;

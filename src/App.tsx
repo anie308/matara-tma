@@ -23,7 +23,7 @@ function App() {
   const savedUser = user?.username;
 
   useEffect(() => {
-    const initUser = WebApp.initDataUnsafe?.user || "jurstadev";
+    const initUser = WebApp.initDataUnsafe?.user;
     if (!savedUser && initUser) {
       dispatch(setUsername(initUser));
     }

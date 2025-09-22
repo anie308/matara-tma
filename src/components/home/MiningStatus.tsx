@@ -19,7 +19,7 @@ const MiningStatus = () => {
   const miningStatus = useSelector((state: RootState) => state?.user?.miningStatus);
   const miningStartDate = useSelector((state: RootState) => state?.user?.miningStartDate);
   const user = useSelector((state: RootState) => state.user.profile);
-  const username = user?.username || "jurstadev";
+  const username = user?.username;
 
   const { data, isSuccess } = useGetMiningStateQuery({ username });
   const [startMining, { isLoading }] = useStartMiningMutation();

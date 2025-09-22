@@ -95,7 +95,7 @@ function Referral() {
                   >
                     <td className="px-6 py-4 text-center">@{ref.username}</td>
                     <td className="px-6 py-4 text-center text-[#44F58E]">
-                      +${ref.earnings} $MARS
+                      +$500 $MARS
                     </td>
                   </tr>
                 ))}

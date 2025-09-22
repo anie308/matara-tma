@@ -8,20 +8,21 @@ const userSlice = apiSlice.injectEndpoints({
         url: `/user/get-user?username=${username}`,
         method: "GET",
       }),
-      providesTags: ["user"]
+      providesTags: ["user"],
     }),
     getUserPoints: builder.query({
       query: ({ username }) => ({
         url: `/user/points?username=${username}`,
         method: "GET",
       }),
+      providesTags: ["user"],
     }),
     getMiningState: builder.query({
       query: ({ username }) => ({
         url: `/mine/state?username=${username}`,
         method: "GET",
       }),
-      providesTags: ["mining"]
+      providesTags: ["mining"],
     }),
 
     startMining: builder.mutation({
@@ -37,7 +38,7 @@ const userSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: data,
       }),
-      invalidatesTags: ["user", "mining"]
+      invalidatesTags: ["user", "mining"],
     }),
 
     getReferrals: builder.query({
@@ -119,5 +120,5 @@ export const {
   useGetMiningStateQuery,
   useCheckBonusQuery,
   useStartMiningMutation,
-  useClaimMiningMutation
+  useClaimMiningMutation,
 } = userSlice;

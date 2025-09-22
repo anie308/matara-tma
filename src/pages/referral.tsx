@@ -10,21 +10,10 @@ function Referral() {
   const user = useSelector((state: RootState) => state.user.profile);
   const referralList = useSelector((state: RootState) => state.user.referrals);
 
-  // const referralLink = `https://example.com/ref/${user?.referralCode}`;
   const referralLink = `https://t.me/MataraComBot?start=${user?.referralCode}`;
 
   const [copied, setCopied] = useState(false);
 
-  // const username = user?.username || "jurstadev";
-  // const { data, isSuccess, isLoading, isError } = useGetReferralsQuery({ username });
-  // const dispatch = useDispatch();
-  // const referrals = data?.data;
-
-  // useEffect(() => {
-  //   if (isSuccess) {
-  //     dispatch(setReferrals(referrals || []));
-  //   }
-  // }, [isSuccess, referrals, dispatch]);
 
   const handleCopy = async () => {
     try {
@@ -59,23 +48,7 @@ function Referral() {
       {/* Referrals Table */}
       <div className="w-full mt-[20px]">
         <div className="relative overflow-x-auto">
-          {/* {isLoading ? (
-            // 🔄 Loading state
-            <p className="text-center text-gray-400 py-6 animate-pulse">
-              Loading referrals...
-            </p>
-          ) : isError ? (
-            // ❌ Error state
-            <p className="text-center text-red-400 py-6">
-              Failed to load referrals. Please try again.
-            </p>
-          ) : isSuccess && referralList.length === 0 ? (
-            // ℹ️ Empty state
-            <p className="text-center text-gray-400 py-6">
-              You don’t have any referrals yet. <br /> Share your link to start
-              earning!
-            </p>
-          ) : ( */}
+          
             <table className="w-full">
               <thead className="text-[14px] text-white border-b border-[#CDCBC8]">
                 <tr>

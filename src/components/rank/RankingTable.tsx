@@ -14,13 +14,13 @@ const RankingTable = () => {
         <table className="w-full">
           <thead className="text-sm text-white border-b border-gray-400">
             <tr>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-3 text-[12px] py-3">
                 User Name
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-3 text-[12px] py-3">
                 Rank
               </th>
-              <th scope="col" className="px-6 py-3">
+              <th scope="col" className="px-3 text-[12px] py-3">
                 Earnings
               </th>
             </tr>
@@ -30,14 +30,14 @@ const RankingTable = () => {
               <tr key={index} className="text-sm">
                 <th
                   scope="row"
-                  className="px-6 py-4 font-medium whitespace-nowrap text-center text-gray-300"
+                  className="px-3 text-[12px] py-4 font-medium whitespace-nowrap text-center text-gray-300"
                 >
                   {user.username}
                 </th>
-                <td className="px-6 py-4 text-center text-gray-300">
+                <td className="px-3 text-[12px] py-4 text-center text-gray-300">
                   {user.rank}
                 </td>
-                <td className="px-6 py-4 text-center text-green-400">
+                <td className="px-3 text-[12px] py-4 text-center text-green-400">
                   {user.earnings}
                 </td>
               </tr>

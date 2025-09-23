@@ -11,16 +11,6 @@ const getMissonsFromLocalStorage = () => {
   return missions ? JSON.parse(missions) : [];
 };
 
-// const getMiningFromLocalStorage = () => {
-//   const mining = localStorage.getItem("matara-mining");
-//   return mining ? JSON.parse(mining) : {
-//     isActive: false,
-//     startTime: null,
-//     totalMined: 0,
-//     sessionStartTime: null,
-//   };
-// };
-
 export interface User {
   username: string | null;
   points: number;
@@ -31,16 +21,8 @@ export interface User {
   tapTime: string | null; // ISO string or null
   onboarding: boolean;
   referralCode?: string | null; // optional, since it’s commented out
-  profilePicture: string
+  profilePicture: string;
 }
-
-
-
-
-// const getMissionsFromLocalStorage = () => {
-//   const missions = localStorage.getItem("matara-missions");
-//   return missions ? JSON.parse(missions) : [];
-// };
 
 const getMiningStatusFromLocalStorage = () => {
   const status = localStorage.getItem("matara-mining-status");
@@ -62,7 +44,7 @@ export interface User {
   tapTime: string | null; // ISO string or null
   onboarding: boolean;
   referralCode?: string | null; // optional, since it’s commented out
-  profilePicture: string
+  profilePicture: string;
 }
 
 export interface State {
@@ -80,24 +62,7 @@ export interface State {
   miningStartDate: string | null;
 }
 
-
-//  const initialState: State = {
-//   profile: getUserFromLocalStorage(),
-//   bonus: null,
-//   userCabal: null,
-//   referrals: [],
-//   tasks: [],
-//   cabal: [],
-//   leaderBoard: [],
-//   milestones: [],
-//   boosts: [],
-//   missions: getMissionsFromLocalStorage() || [],
-//   miningStatus: getMiningStatusFromLocalStorage(),
-//   miningStartDate: getMiningStartDateFromLocalStorage(),
-// };
-
-
- const initialState: State = {
+const initialState: State = {
   profile: getUserFromLocalStorage(),
   bonus: null,
   userCabal: null,
@@ -116,7 +81,6 @@ const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    
     setProfile: (state, action) => {
       state.profile = action.payload;
       if (action.payload) {
@@ -138,16 +102,40 @@ const userSlice = createSlice({
       }
     },
     setUsername: (state, action) => {
-      if (state.profile) {
+      if (!state.profile) {
+        state.profile = {
+          username: action.payload,
+          points: 0,
+          referrals: 0,
+          level: 1,
+          currentTapCount: 0,
+          refillValue: 0,
+          tapTime: null,
+          onboarding: true,
+          profilePicture: "",
+        };
+      } else {
         state.profile.username = action.payload;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
       }
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
     setProfilePicture: (state, action) => {
-      if (state.profile) {
+      if (!state.profile) {
+        state.profile = {
+          username: null,
+          points: 0,
+          referrals: 0,
+          level: 1,
+          currentTapCount: 0,
+          refillValue: 0,
+          tapTime: null,
+          onboarding: true,
+          profilePicture: action.payload,
+        };
+      } else {
         state.profile.profilePicture = action.payload;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
       }
+      localStorage.setItem("matara-user", JSON.stringify(state.profile));
     },
     setPoints: (state, action) => {
       if (state.profile) {
@@ -165,7 +153,9 @@ const userSlice = createSlice({
     startMission: (state, action) => {
       const missions = state.missions;
       const singleMission = action.payload;
-      const isAlreadyActive = missions.some((m: any) => m._id === singleMission._id);
+      const isAlreadyActive = missions.some(
+        (m: any) => m._id === singleMission._id
+      );
       if (!isAlreadyActive) {
         state.missions.push(singleMission);
       }
@@ -184,7 +174,9 @@ const userSlice = createSlice({
     },
     updateMissionStatus: (state, action) => {
       const singleMission = action.payload;
-      const mission = state.missions.find((m: any) => m._id === singleMission?._id);
+      const mission = state.missions.find(
+        (m: any) => m._id === singleMission?._id
+      );
       if (mission) {
         mission.status = singleMission?.status;
       }
@@ -200,7 +192,7 @@ const userSlice = createSlice({
         localStorage.setItem("matara-user", JSON.stringify(state.profile));
       }
     },
-   
+
     setReferrals: (state, action) => {
       state.referrals = action.payload;
     },
@@ -221,12 +213,18 @@ const userSlice = createSlice({
     },
     setMiningStatus: (state, action: PayloadAction<boolean>) => {
       state.miningStatus = action.payload;
-      localStorage.setItem("matara-mining-status", JSON.stringify(action.payload));
+      localStorage.setItem(
+        "matara-mining-status",
+        JSON.stringify(action.payload)
+      );
     },
     setMiningStartDate: (state, action: PayloadAction<string | null>) => {
       state.miningStartDate = action.payload;
-      localStorage.setItem("matara-mining-start-date", JSON.stringify(action.payload));
-    }
+      localStorage.setItem(
+        "matara-mining-start-date",
+        JSON.stringify(action.payload)
+      );
+    },
   },
 });
 
@@ -250,7 +248,7 @@ export const {
   setProfile,
   setRefillValue,
   setMiningStatus,
-  setMiningStartDate
+  setMiningStartDate,
 } = userSlice.actions;
 
 export default userSlice.reducer;

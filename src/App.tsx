@@ -21,13 +21,14 @@ function App() {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
+  const initUser = WebApp.initDataUnsafe?.user;
+  console.log(WebApp.initDataUnsafe?.user)
 
   useEffect(() => {
-    const initUser = WebApp.initDataUnsafe?.user;
     if (!savedUser && initUser) {
       dispatch(setUsername(initUser));
     }
-  }, [WebApp.initDataUnsafe, savedUser, dispatch]);
+  }, [savedUser, initUser, dispatch]);
 
   useEffect(() => {
     WebApp.ready();

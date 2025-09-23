@@ -20,6 +20,7 @@ function App() {
   const [isSupported, setIsSupported] = useState(true);
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.profile);
+  console.log(user, "dispatched user")
   const savedUser = user?.username;
   const initUser = WebApp.initDataUnsafe?.user;
   console.log(initUser, "initalized user")

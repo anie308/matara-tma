@@ -143,6 +143,12 @@ const userSlice = createSlice({
         localStorage.setItem("matara-user", JSON.stringify(state.profile));
       }
     },
+    setProfilePicture: (state, action) => {
+      if (state.profile) {
+        state.profile.profilePicture = action.payload;
+        localStorage.setItem("matara-user", JSON.stringify(state.profile));
+      }
+    },
     setPoints: (state, action) => {
       if (state.profile) {
         state.profile.points = action.payload;
@@ -226,6 +232,7 @@ const userSlice = createSlice({
 
 export const {
   setUsername,
+  setProfilePicture,
   setPoints,
   setLevel,
   setTasks,

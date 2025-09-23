@@ -49,7 +49,7 @@ function Profile() {
         <div>
           <div className="flex items-center space-x-[10px]">
             <p className="text-[#CDCBC8]">@{username}</p>
-            <img src="./warrior.svg" className="h-[30px]" alt="" />
+            <img src={user?.profilePicture || "./warrior.svg"} className="h-[30px]" alt="" />
           </div>
         </div>
       </div>

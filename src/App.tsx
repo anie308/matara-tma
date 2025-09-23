@@ -22,6 +22,7 @@ function App() {
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
   const initUser = WebApp.initDataUnsafe?.user;
+  console.log(initUser, "initalized user")
 
   useEffect(() => {
     if (!savedUser && initUser) {

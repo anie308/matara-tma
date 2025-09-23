@@ -42,7 +42,7 @@ export default function Example() {
             </button>
           </MenuItem>
           <MenuItem>
-            <button onClick={()=> WebApp.openTelegramLink('https://t.me/FTLDOfficial')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
+            <button onClick={()=> WebApp.openTelegramLink('http://t.me/MATARA_TOKEN')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
             <RiTelegramLine className='text-[#FFC152] text-[25px]'/>
               Our TG Channel
               <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">⌘D</kbd>

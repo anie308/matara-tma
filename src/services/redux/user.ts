@@ -62,8 +62,21 @@ export interface State {
   miningStartDate: string | null;
 }
 
+const defaultProfile: User = {
+  username: null,
+  points: 0,
+  referrals: 0,
+  level: 1,
+  currentTapCount: 0,
+  refillValue: 0,
+  tapTime: null,
+  onboarding: true,
+  referralCode: null,
+  profilePicture: "",
+};
+
 const initialState: State = {
-  profile: getUserFromLocalStorage(),
+  profile: getUserFromLocalStorage() || defaultProfile,
   bonus: null,
   userCabal: null,
   referrals: [],

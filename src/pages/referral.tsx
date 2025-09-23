@@ -36,8 +36,7 @@ function Referral() {
       <div className="flex-col w-full mt-[20px] flex items-center justify-center space-y-[10px]">
         <button
           onClick={handleCopy}
-          className="coin-btn border-[#44F58E] text-white border-[2px] rounded-[8px] justify-center p-[8px_25px] w-[80%] flex items-center space-x-[10px]"
-        >
+          className="coin-btn border-[#44F58E] text-white border-[2px] rounded-[8px] justify-center p-[8px_25px] w-[80%] flex items-center space-x-[10px]">
           <span className="font-[900] text-[18px]">
             {copied ? "Copied!" : "Invite Friends"}
           </span>
@@ -68,7 +67,7 @@ function Referral() {
                   >
                     <td className="px-6 py-4 text-center">@{ref.username}</td>
                     <td className="px-6 py-4 text-center text-[#44F58E]">
-                      +$500 $MARS
+                      +$50 $MARS
                     </td>
                   </tr>
                 ))}

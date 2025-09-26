@@ -30,19 +30,20 @@ function App() {
     }
   }, [savedUser, initUser, dispatch]);
 
-  useEffect(() => {
-    WebApp.ready();
+ useEffect(() => {
+  WebApp.ready();
 
-    // Check for supported platforms
-    if (WebApp.platform !== 'android' && WebApp.platform !== 'ios') {
-      setIsSupported(false);
-    }
+  // Allow only Android, iOS, and Telegram Desktop
+  const allowedPlatforms = ["android", "ios", "tdesktop"];
+  if (!allowedPlatforms.includes(WebApp.platform)) {
+    setIsSupported(false);
+  }
 
-    // Expand the WebApp
-    if (!WebApp.isExpanded) {
-      WebApp.expand();
-    }
-  }, [WebApp]);
+  // Expand the WebApp
+  if (!WebApp.isExpanded) {
+    WebApp.expand();
+  }
+}, [WebApp]);
 
   return (
     <Routes>

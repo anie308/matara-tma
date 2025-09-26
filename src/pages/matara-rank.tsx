@@ -90,7 +90,7 @@ function MataraRank() {
                 {ranks[index].max === Infinity
                   ? "+"
                   : ranks[index].max.toLocaleString()}{" "}
-                $MArS
+                $MARS
               </p>
             </div>
           </div>
@@ -108,7 +108,7 @@ function MataraRank() {
         </p>
         <div className="coin-bnt font-[900] w-[70%] justify-center border-[#44F58E] border p-[5px_15px] rounded-[8px] flex items-center space-x-[5px]">
           <p className="gradient-text text-[14px]">
-            {userPoints.toLocaleString()} MAT
+            {userPoints.toLocaleString()} MARS
           </p>
           <img src={currentRank.icon} className="h-[30px]" alt="" />
           <p className="gradient-text text-[14px]">{currentRank.name}</p>

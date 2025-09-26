@@ -125,7 +125,7 @@ function Singletask() {
       </div>
 
       <div className="task-card bg-[#27334E80] flex items-center p-[10px] rounded-[16px] space-x-[5px] mt-[20px]">
-        <img className="w-[56px] h-[50px]" src={singleTask?.icon?.url} alt="" />
+        <img className="w-[56px] h-[56px] rounded-full object-cover" src={singleTask?.icon?.url} alt="" />
         <div>
           <p className="font-[500] text-white">Reward</p>
           <p className="text-[#FFFFFF99] text-[12px]">

@@ -43,7 +43,7 @@ function TaskModal({ setIsOpen, isOpen, data }: MyModalProps) {
       const newPoints = points + data?.points;
       dispatch(setPoints(newPoints));
       setIsOpen(!isOpen);
-      navigate("/earn");
+      navigate("/tasks");
     } catch (error) {
       console.log(error);
       setIsOpen(!isOpen);

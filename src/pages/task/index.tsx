@@ -79,7 +79,7 @@ function Task() {
                             </span>
                           )}
                         </div>
-                        <p className="text-[18px] font-[500]">{task.title}</p>
+                        <p className="text-[16px] font-[500]">{task.title}</p>
                       </div>
                     </div>
 

@@ -118,7 +118,7 @@ function Singletask() {
         </p>
       </div>
       <div className="mt-[20px] w-full flex flex-col items-start space-y-[10px]">
-        <p className="font-[600] text-white text-[23px]">{singleTask?.title}</p>
+        <p className="font-[600] text-white text-[20px]">{singleTask?.title}</p>
         <p className="text-[#FFFFFF99] text-[12px] font-[600]">
           {singleTask?.description}
         </p>

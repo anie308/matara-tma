@@ -29,7 +29,7 @@ const TopBar = () => {
       default:
         return (
           <button className="coin-btn border-green-400 text-white border-2 rounded-lg font-bold text-sm py-1 px-4">
-            {userPoints} $MARS
+            {userPoints.toFixed(2)} $MARS
           </button>
         );
     }

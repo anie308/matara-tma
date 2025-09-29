@@ -15,7 +15,7 @@ const BottomNav = () => {
     { title: "Ref", link: "/ref" },
     { title: "Rank", link: "/rank" },
     { title: "Tasks", link: "/tasks" },
-    { title: "Game", link: "/game" },
+    { title: "Swap", link: "/swap" },
   ];
 
   return (

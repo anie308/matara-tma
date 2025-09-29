@@ -8,6 +8,7 @@ import Profile from "../pages/profile";
 import MataraRank from "../pages/matara-rank";
 import Task from "../pages/task";
 import Singletask from "../pages/task/[slug]";
+import Swap from "../pages/swap";
 
 const MainRoutes = () => {
   return (
@@ -21,6 +22,7 @@ const MainRoutes = () => {
         <Route path="game" element={<Game />} />
         <Route path="profile" element={<Profile />} />
         <Route path="matara-ranks" element={<MataraRank />} />
+        <Route path="swap" element={<Swap />} />
       </Route>
     </Routes>
   );

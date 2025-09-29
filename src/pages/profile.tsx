@@ -54,7 +54,7 @@ function Profile() {
 
       {/* Referrals Section */}
       <div className="w-full mt-[20px] px-[20px]">
-        <div className="relative overflow-y-auto max-h-[300px]">
+        <div className="relative overflow-y-auto max-h-[400px]">
           <table className="w-full">
             <thead className="sticky top-0 bg-[#1a1a1a] text-[14px] text-white border-b border-[#CDCBC8]">
               <tr>

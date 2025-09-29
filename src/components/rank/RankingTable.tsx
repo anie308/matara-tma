@@ -31,7 +31,7 @@ const RankingTable = () => {
 
   return (
     <div className="w-full mt-10">
-      <div className="relative overflow-x-auto max-h-[300px]">
+      <div className="relative overflow-y-auto max-h-[500px]">
         <table className="w-full">
           <thead className="sticky top-0 bg-[#1a1a1a] text-[14px] text-white border-b border-[#CDCBC8]">
             <tr>
@@ -66,7 +66,7 @@ const RankingTable = () => {
                     {currentRank.name}
                   </td>
                   <td className="px-3 text-[12px] py-4 text-center text-green-400">
-                    {user.points}
+                  {Math.round(user.points)} MARS
                   </td>
                 </tr>
               );

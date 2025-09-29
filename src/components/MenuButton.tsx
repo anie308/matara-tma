@@ -35,7 +35,14 @@ export default function Example() {
           </MenuItem>
           <div className="my-1 h-px bg-white/5" />
           <MenuItem>
-            <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
+            <button onClick={()=> WebApp.openLink('https://drive.google.com/file/d/1HdyuPv6Mmxtvx58GJf3NiYPdfYIsKdsb/view?usp=sharing')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
+            <Files className='text-[#FFC152] text-[14px]' />
+             $MARS Whitepaper
+              <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">⌘A</kbd>
+            </button>
+          </MenuItem>
+          <MenuItem>
+            <button onClick={()=> WebApp.openLink('https://drive.google.com/file/d/1HdyuPv6Mmxtvx58GJf3NiYPdfYIsKdsb/view?usp=sharing')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
             <Files className='text-[#FFC152] text-[14px]' />
               Documentation
               <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">⌘A</kbd>
@@ -49,7 +56,7 @@ export default function Example() {
             </button>
           </MenuItem>
           <MenuItem>
-            <button className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
+            <button onClick={()=> WebApp.openTelegramLink('http://t.me/MATARA_TOKEN')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
             <CircleHelp className='text-[#FFC152] text-[20px]'/>
               Help
               <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">⌘D</kbd>

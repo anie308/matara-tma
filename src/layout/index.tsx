@@ -2,13 +2,14 @@ import { Outlet, useLocation } from "react-router-dom";
 import BottomNav from "../components/BottomNav";
 import TopBar from "../components/TopBar";
 import {
+  useGetLeaderBoardQuery,
   useGetReferralsQuery,
   useGetUserQuery,
   useGetUserTasksQuery,
 } from "../services/routes";
 import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
-import { setReferrals, setTasks } from "../services/redux/user";
+import { setLeaderboard, setReferrals, setTasks } from "../services/redux/user";
 import { useEffect } from "react";
 
 function Layout() {
@@ -31,6 +32,14 @@ function Layout() {
     isSuccess: taskSuccess,
   } = useGetUserTasksQuery({ username }, { pollingInterval: 300000 });
 
+  const {
+    data: leaderBoardData,
+    isSuccess: leaderBoardSuccess,
+    error
+  } = useGetLeaderBoardQuery({ pollingInterval: 300000 });
+
+        console.log(leaderBoardData, error, "leaderboard")
+
   useEffect(() => {
     if (userSuccess) {
       // console.log(userData);
@@ -48,6 +57,12 @@ function Layout() {
       dispatch(setReferrals(referralData?.data));
     }
   }, [referralData, referralSuccess, dispatch]);
+
+  useEffect(() => {
+    if (leaderBoardSuccess) {
+      dispatch(setLeaderboard(leaderBoardData?.data));
+    }
+  }, [leaderBoardData, leaderBoardSuccess, dispatch]);
 
   // const dataLoading = userLoading || referralLoading || taskLoading;
   // const dataSuccess = (userSuccess && referralSuccess) || taskSuccess;

@@ -1,18 +1,39 @@
-const rankingData = [
+import { useSelector } from "react-redux";
+import { RootState } from "../../services/store";
+
+
+
+export const ranks = [
+  { name: "Cub Recruit", min: 0, max: 99, icon: "./recriut.png" },
+  { name: "Scout", min: 100, max: 999, icon: "./scout.png" },
+  { name: "Warrior", min: 1000, max: 9999, icon: "./warrior.png" },
+  { name: "Sergeant", min: 10000, max: 99999, icon: "./sergeant.png" },
+  { name: "Captain", min: 100000, max: 999999, icon: "./captain.png" },
+  { name: "Lieutenant", min: 1000000, max: 9999999, icon: "./lutenantt.png" },
+  { name: "Commander", min: 10000000, max: 99999999, icon: "./commander.png" },
+  { name: "General", min: 100000000, max: 999999999, icon: "./general.png" },
   {
-    username: "@jurstadev",
-    rank: "Sergeant",
-    earnings: "50,022 $MARS",
+    name: "Field Marshal",
+    min: 1000000000,
+    max: 9999999999,
+    icon: "./field.png",
   },
-  // Add more ranking data here
+  {
+    name: "Champion of Matara",
+    min: 10000000000,
+    max: Infinity,
+    icon: "./champion.png",
+  },
 ];
 
 const RankingTable = () => {
+  const leaderboard = useSelector((state: RootState) => state.user.leaderBoard);
+
   return (
     <div className="w-full mt-10">
-      <div className="relative overflow-x-auto">
+      <div className="relative overflow-x-auto max-h-[300px]">
         <table className="w-full">
-          <thead className="text-sm text-white border-b border-gray-400">
+          <thead className="sticky top-0 bg-[#1a1a1a] text-[14px] text-white border-b border-[#CDCBC8]">
             <tr>
               <th scope="col" className="px-3 text-[12px] py-3">
                 User Name
@@ -26,22 +47,30 @@ const RankingTable = () => {
             </tr>
           </thead>
           <tbody>
-            {rankingData.map((user, index) => (
-              <tr key={index} className="text-sm">
-                <th
-                  scope="row"
-                  className="px-3 text-[12px] py-4 font-medium whitespace-nowrap text-center text-gray-300"
-                >
-                  {user.username}
-                </th>
-                <td className="px-3 text-[12px] py-4 text-center text-gray-300">
-                  {user.rank}
-                </td>
-                <td className="px-3 text-[12px] py-4 text-center text-green-400">
-                  {user.earnings}
-                </td>
-              </tr>
-            ))}
+           {leaderboard.map((user, index) => {
+              const currentRank =
+                ranks.find(
+                  (rank) => user.points >= rank.min && user.points <= rank.max
+                ) || ranks[0];
+
+              return (
+                <tr key={index} className="text-sm">
+                  <th
+                    scope="row"
+                    className="px-3 text-[12px] py-4 font-medium whitespace-nowrap text-center text-gray-300"
+                  >
+                    {user.user.username}
+                  </th>
+                  <td className="px-3 text-[12px] py-4 text-center text-gray-300 flex items-center justify-center gap-2">
+                    <img src={currentRank.icon} alt={currentRank.name} className="w-4 h-4" />
+                    {currentRank.name}
+                  </td>
+                  <td className="px-3 text-[12px] py-4 text-center text-green-400">
+                    {user.points}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

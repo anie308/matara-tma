@@ -66,7 +66,7 @@ const RankingTable = () => {
                     {currentRank.name}
                   </td>
                   <td className="px-3 text-[12px] py-4 text-center text-green-400">
-                  {Math.round(user.points)} MARS
+                  {Math.round(user.points)} 
                   </td>
                 </tr>
               );

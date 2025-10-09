@@ -1,3 +1,4 @@
+
 import { CircleChevronLeft, CircleChevronRight } from "lucide-react";
 import { useState } from "react";
 import { motion } from "framer-motion";
@@ -90,7 +91,7 @@ function MataraRank() {
                 {ranks[index].max === Infinity
                   ? "+"
                   : ranks[index].max.toLocaleString()}{" "}
-                $MARS
+                $MARP
               </p>
             </div>
           </div>
@@ -104,11 +105,11 @@ function MataraRank() {
 
       <div className="w-full flex mt-[40%] items-center flex-col justify-center space-y-[10px]">
         <p className="text-[#CDCBC8] text-[14px]">
-          Your Current $MARS and Rank
+          Your Current $MARP and Rank
         </p>
         <div className="coin-bnt font-[900] w-[70%] justify-center border-[#44F58E] border p-[5px_15px] rounded-[8px] flex items-center space-x-[5px]">
           <p className="gradient-text text-[14px]">
-            {userPoints.toLocaleString()} MARS
+            {userPoints.toLocaleString()} MARP
           </p>
           <img src={currentRank.icon} className="h-[30px]" alt="" />
           <p className="gradient-text text-[14px]">{currentRank.name}</p>

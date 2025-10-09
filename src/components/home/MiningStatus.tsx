@@ -114,7 +114,7 @@ const MiningStatus = () => {
   // ✅ Claim mining rewards
   const claimMining = async () => {
     try {
-      console.log(`Claiming ${amountMined.toFixed(3)} $MARS for ${username}...`);
+      console.log(`Claiming ${amountMined.toFixed(3)} $MARP for ${username}...`);
       const data = {
         username,
         mineCount : amountMined
@@ -144,7 +144,7 @@ const MiningStatus = () => {
             <p className="text-green-400 text-xs">Mining Mode</p>
             <p className="font-black text-2xl text-white leading-tight">
               {amountMined.toFixed(3)} <br />
-              $MARS
+              $MARP
             </p>
           </div>
           <div>
@@ -159,7 +159,7 @@ const MiningStatus = () => {
             <p className="font-black text-2xl text-white leading-tight">
               {MINING_RATE_PER_SECOND}
             </p>
-            <p className="text-white font-semibold text-sm">$MARS/Sec</p>
+            <p className="text-white font-semibold text-sm">$MARP/Sec</p>
           </div>
         </div>
         {miningStatus && (

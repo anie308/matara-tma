@@ -129,7 +129,7 @@ function Singletask() {
         <div>
           <p className="font-[500] text-white">Reward</p>
           <p className="text-[#FFFFFF99] text-[12px]">
-            ${singleTask?.points} MARS
+            ${singleTask?.points} MARP
           </p>
         </div>
       </div>

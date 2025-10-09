@@ -43,7 +43,7 @@ function Profile() {
 
       {/* Rank / Points */}
       <div className="coin-bnt mt-[40px] font-[900]  border-[#44F58E] border p-[5px_15px] rounded-[8px] flex items-center space-x-[5px]">
-        <p className="gradient-text text-[12px]">{user?.points} MARS</p>
+        <p className="gradient-text text-[12px]">{user?.points} MARP</p>
         <img src="./warrior.svg" className="h-[30px]" alt="" />
         <p className="gradient-text text-[12px]">{currentRank.name}</p>
       </div>
@@ -73,7 +73,7 @@ function Profile() {
                     @{ref.username}
                   </td>
                   <td className="px-6 py-4 text-center text-[#44F58E]">
-                    +50 $MARS
+                    +50 $MARP
                   </td>
                 </tr>
               ))}

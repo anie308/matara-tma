@@ -38,7 +38,7 @@ function Task() {
         Social Task
       </p>
       <p className="text-[15px] text-center text-white font-[500] w-[90%]">
-        Perform Social Tasks to earn more Matara Tokens ($MARS) and grow your
+        Perform Social Tasks to earn more Matara Tokens ($MARP) and grow your
         rank.
       </p>
 
@@ -87,7 +87,7 @@ function Task() {
                       {task.description}
                     </div>
                     <div className="flex items-center space-x-[10px]">
-                      <p>{task.points} $MARS</p>
+                      <p>{task.points} $MARP</p>
                       {task.completed && (
                         <FaCircleCheck size={20} className="text-[#40D8A1]" />
                       )}

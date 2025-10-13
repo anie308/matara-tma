@@ -1,16 +1,5 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const getUserFromLocalStorage = () => {
-  const user = localStorage.getItem("matara-user");
-  return user ? JSON.parse(user) : null;
-};
-
-const getMissonsFromLocalStorage = () => {
-  const missions = localStorage.getItem("matara-missions");
-  return missions ? JSON.parse(missions) : [];
-};
-
 export interface User {
   username: string | null;
   points: number;
@@ -20,30 +9,7 @@ export interface User {
   refillValue: number;
   tapTime: string | null; // ISO string or null
   onboarding: boolean;
-  referralCode?: string | null; // optional, since it’s commented out
-  profilePicture: string;
-}
-
-const getMiningStatusFromLocalStorage = () => {
-  const status = localStorage.getItem("matara-mining-status");
-  return status ? JSON.parse(status) : false;
-};
-
-const getMiningStartDateFromLocalStorage = () => {
-  const date = localStorage.getItem("matara-mining-start-date");
-  return date ? JSON.parse(date) : null;
-};
-
-export interface User {
-  username: string | null;
-  points: number;
-  referrals: number;
-  level: number;
-  currentTapCount: number;
-  refillValue: number;
-  tapTime: string | null; // ISO string or null
-  onboarding: boolean;
-  referralCode?: string | null; // optional, since it’s commented out
+  referralCode?: string | null;
   profilePicture: string;
 }
 
@@ -76,7 +42,7 @@ const defaultProfile: User = {
 };
 
 const initialState: State = {
-  profile: getUserFromLocalStorage() || defaultProfile,
+  profile: defaultProfile,
   bonus: null,
   userCabal: null,
   referrals: [],
@@ -85,159 +51,88 @@ const initialState: State = {
   leaderBoard: [],
   milestones: [],
   boosts: [],
-  missions: getMissonsFromLocalStorage() || [],
-  miningStatus: getMiningStatusFromLocalStorage(),
-  miningStartDate: getMiningStartDateFromLocalStorage(),
+  missions: [],
+  miningStatus: false,
+  miningStartDate: null,
 };
 
 const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setProfile: (state, action) => {
+    setProfile: (state, action: PayloadAction<User | null>) => {
       state.profile = action.payload;
-      if (action.payload) {
-        localStorage.setItem("matara-user", JSON.stringify(action.payload));
-      } else {
-        localStorage.removeItem("matara-user");
-      }
     },
-    setLevel: (state, action) => {
-      if (state.profile) {
-        state.profile.level = action.payload;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
-      }
+    setUsername: (state, action: PayloadAction<string | null>) => {
+      if (!state.profile) state.profile = { ...defaultProfile };
+      state.profile.username = action.payload;
     },
-    setTapTime: (state, action) => {
-      if (state.profile) {
-        state.profile.tapTime = action.payload;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
-      }
+    setProfilePicture: (state, action: PayloadAction<string>) => {
+      if (!state.profile) state.profile = { ...defaultProfile };
+      state.profile.profilePicture = action.payload;
     },
-    setUsername: (state, action) => {
-      if (!state.profile) {
-        state.profile = {
-          username: action.payload,
-          points: 0,
-          referrals: 0,
-          level: 1,
-          currentTapCount: 0,
-          refillValue: 0,
-          tapTime: null,
-          onboarding: true,
-          profilePicture: "",
-        };
-      } else {
-        state.profile.username = action.payload;
-      }
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+    setPoints: (state, action: PayloadAction<number>) => {
+      if (state.profile) state.profile.points = action.payload;
     },
-    setProfilePicture: (state, action) => {
-      if (!state.profile) {
-        state.profile = {
-          username: null,
-          points: 0,
-          referrals: 0,
-          level: 1,
-          currentTapCount: 0,
-          refillValue: 0,
-          tapTime: null,
-          onboarding: true,
-          profilePicture: action.payload,
-        };
-      } else {
-        state.profile.profilePicture = action.payload;
-      }
-      localStorage.setItem("matara-user", JSON.stringify(state.profile));
+    setLevel: (state, action: PayloadAction<number>) => {
+      if (state.profile) state.profile.level = action.payload;
     },
-    setPoints: (state, action) => {
-      if (state.profile) {
-        state.profile.points = action.payload;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
-      }
+    setOnboarding: (state, action: PayloadAction<boolean>) => {
+      if (state.profile) state.profile.onboarding = action.payload;
     },
-    setOnboarding: (state, action) => {
-      if (state.profile) {
-        state.profile.onboarding = action.payload;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
-      }
+    setTapTime: (state, action: PayloadAction<string | null>) => {
+      if (state.profile) state.profile.tapTime = action.payload;
+    },
+    setRefillValue: (state) => {
+      if (state.profile) state.profile.refillValue += 1;
     },
 
-    startMission: (state, action) => {
-      const missions = state.missions;
-      const singleMission = action.payload;
-      const isAlreadyActive = missions.some(
-        (m: any) => m._id === singleMission._id
-      );
-      if (!isAlreadyActive) {
-        state.missions.push(singleMission);
-      }
-
-      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
+    // Missions
+    startMission: (state, action: PayloadAction<any>) => {
+      const mission = action.payload;
+      const exists = state.missions.some((m: any) => m._id === mission._id);
+      if (!exists) state.missions.push(mission);
     },
     clearMission: (state) => {
       state.missions = [];
-      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
     },
-    removeActiveMission: (state, action) => {
+    removeActiveMission: (state, action: PayloadAction<any>) => {
       state.missions = state.missions.filter(
-        (mission: any) => mission._id !== action.payload._id
+        (m: any) => m._id !== action.payload._id
       );
-      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
     },
-    updateMissionStatus: (state, action) => {
-      const singleMission = action.payload;
-      const mission = state.missions.find(
-        (m: any) => m._id === singleMission?._id
-      );
-      if (mission) {
-        mission.status = singleMission?.status;
-      }
-      localStorage.setItem("matara-missions", JSON.stringify(state.missions));
-    },
-    // setLevel: (state) => {
-    //   state.user.level = state.user.level += 1;
-    //   localStorage.setItem("flower-user", JSON.stringify(state.user));
-    // },
-    setRefillValue: (state) => {
-      if (state.profile) {
-        state.profile.refillValue = state.profile.refillValue + 1;
-        localStorage.setItem("matara-user", JSON.stringify(state.profile));
-      }
+    updateMissionStatus: (state, action: PayloadAction<any>) => {
+      const mission = action.payload;
+      const target = state.missions.find((m: any) => m._id === mission._id);
+      if (target) target.status = mission.status;
     },
 
-    setReferrals: (state, action) => {
+    // Other data
+    setReferrals: (state, action: PayloadAction<any[]>) => {
       state.referrals = action.payload;
     },
-    setMilestones: (state, action) => {
+    setMilestones: (state, action: PayloadAction<any[]>) => {
       state.milestones = action.payload;
     },
-    setTasks: (state, action) => {
+    setTasks: (state, action: PayloadAction<any[]>) => {
       state.tasks = action.payload;
     },
-    setLeaderboard: (state, action) => {
+    setLeaderboard: (state, action: PayloadAction<any[]>) => {
       state.leaderBoard = action.payload;
     },
-    setBoosts: (state, action) => {
+    setBoosts: (state, action: PayloadAction<any[]>) => {
       state.boosts = action.payload;
     },
-    setBonus: (state, action) => {
+    setBonus: (state, action: PayloadAction<any>) => {
       state.bonus = action.payload;
     },
     setMiningStatus: (state, action: PayloadAction<boolean>) => {
       state.miningStatus = action.payload;
-      localStorage.setItem(
-        "matara-mining-status",
-        JSON.stringify(action.payload)
-      );
     },
     setMiningStartDate: (state, action: PayloadAction<string | null>) => {
       state.miningStartDate = action.payload;
-      localStorage.setItem(
-        "matara-mining-start-date",
-        JSON.stringify(action.payload)
-      );
     },
+    clearUser: () => initialState, // reset everything
   },
 });
 
@@ -262,6 +157,7 @@ export const {
   setRefillValue,
   setMiningStatus,
   setMiningStartDate,
+  clearUser,
 } = userSlice.actions;
 
 export default userSlice.reducer;

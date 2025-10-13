@@ -24,7 +24,6 @@ function Home() {
   return (
     <div >
       <MiningStatus />
-     
     </div>
   );
 }

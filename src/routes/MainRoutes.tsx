@@ -8,7 +8,11 @@ import Profile from "../pages/profile";
 import MataraRank from "../pages/matara-rank";
 import Task from "../pages/task";
 import Singletask from "../pages/task/[slug]";
+import Trade from "../pages/trade";
 import Swap from "../pages/swap";
+import Receive from "../pages/receive";
+import SelectToken from "../pages/select-token";
+import Send from "../pages/send";
 
 const MainRoutes = () => {
   return (
@@ -22,7 +26,11 @@ const MainRoutes = () => {
         <Route path="game" element={<Game />} />
         <Route path="profile" element={<Profile />} />
         <Route path="matara-ranks" element={<MataraRank />} />
+        <Route path="trade" element={<Trade />} />
         <Route path="swap" element={<Swap />} />
+        <Route path="receive" element={<Receive />} />
+        <Route path="select-token" element={<SelectToken />} />
+        <Route path="send" element={<Send />} />
       </Route>
     </Routes>
   );

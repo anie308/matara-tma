@@ -1,6 +1,6 @@
 // import React from 'react'
 
-import { ChevronLeft, Copy, Share, TriangleAlert } from "lucide-react"
+import { ChevronLeft, Copy, TriangleAlert } from "lucide-react"
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom"
 import { RootState } from "../services/store";

@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
-import { useHybridWallet } from "../hooks/useHybridWallet";
+import { useReownWallet } from "../services/reownWallet";
 import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
@@ -19,13 +19,13 @@ function SelectToken() {
     
     // Get wallet state including custom tokens
     const { 
-        customTokens, 
         isConnected, 
         address, 
-        getTokenBalances,
+        getAllTokenBalances,
         isTelegramMiniApp,
-        telegramUser
-    } = useHybridWallet();
+        telegramUser,
+        connect
+    } = useReownWallet();
     
     const [balances, setBalances] = useState<Record<string, number>>({});
     const [isLoadingBalances, setIsLoadingBalances] = useState(false);
@@ -40,7 +40,7 @@ function SelectToken() {
         decimals: 18
     }));
     
-    const allTokens = [...TOKENS, ...(customTokens || [])];
+    const allTokens = [...TOKENS];
     
     // Fetch token balances when component mounts
     useEffect(() => {
@@ -54,7 +54,7 @@ function SelectToken() {
             console.log(`Loading balances for ${allTokens.length} tokens...`);
             setIsLoadingBalances(true);
             try {
-                const result = await getTokenBalances(allTokens);
+                const result = await getAllTokenBalances(allTokens);
                 console.log(`Loaded balances for ${Object.keys(result).length} tokens`);
                 setBalances(result);
             } catch (error) {
@@ -67,7 +67,7 @@ function SelectToken() {
         };
         
         loadBalances();
-    }, [isConnected, address, allTokens, getTokenBalances]);
+    }, [isConnected, address, allTokens, getAllTokenBalances]);
     
     const handleSelectToken = (token: any) => {
         dispatch(setTransaction({ 
@@ -105,16 +105,16 @@ function SelectToken() {
                 )}
               </div>
               <button 
-                onClick={() => isTelegramMiniApp ? setShowWalletModal(true) : navigate('/')}
+                onClick={() => isTelegramMiniApp ? setShowWalletModal(true) : connect()}
                 className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
               >
-                {isTelegramMiniApp ? "Connect BSC Wallet" : "Go to Home"}
+                {isTelegramMiniApp ? "Connect BSC Wallet" : "Connect Wallet"}
               </button>
             </div>
           ) : (
           <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">
             {allTokens.map((token) => {
-              const isCustomToken = (customTokens || []).some((ct: any) => ct.address === token.address);
+              const isCustomToken = false; // Custom tokens not supported in Reown implementation
               const balance = balances[token.symbol] || 0;
               const hasBalance = balance > 0;
               

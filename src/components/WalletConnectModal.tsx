@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, QrCode } from 'lucide-react';
-import { useBSCWallet } from '../hooks/useBSCWallet';
+import { useReownWallet } from '../services/reownWallet';
 
 interface WalletConnectModalProps {
   isOpen: boolean;
@@ -8,7 +8,7 @@ interface WalletConnectModalProps {
 }
 
 export const WalletConnectModal: React.FC<WalletConnectModalProps> = ({ isOpen, onClose }) => {
-  const { connectWithAddress, isConnecting, error } = useBSCWallet();
+  const { connectWithAddress, isConnecting, error } = useReownWallet();
   const [address, setAddress] = useState('');
   const [copied, setCopied] = useState(false);
 

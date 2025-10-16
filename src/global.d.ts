@@ -3,6 +3,7 @@ declare global {
       Telegram: {
         WebApp: any;
       };
+      ethereum?: any;
     }
   }
   export {};

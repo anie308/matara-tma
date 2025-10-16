@@ -15,9 +15,12 @@ function Swap() {
         </div>
 
         <div className="flex flex-col mt-[50px] gap-[20px]">
-            <div className="border p-[20px]"></div>
-            <div className="border p-[20px]"></div>
+            <div className="border p-[20px] border-[#44F58E]"></div>
+            <div className="border p-[20px] border-[#44F58E]"></div>
         </div>
+        <button className="btn p-[10px] mt-[20px] w-full rounded-[10px] font-[500] text-[18px]">
+            Preview Swap
+        </button>
     </div>
   )
 }

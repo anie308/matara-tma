@@ -5,18 +5,74 @@ import { useNavigate } from "react-router-dom";
 import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
+import { useWalletRedux } from "../hooks/useWalletRedux";
+import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
+import TokenLogo from "../components/TokenLogo";
+import { getTokenVariant } from "../utils/tokenUtils";
+import { useState, useEffect } from "react";
 
 function SelectToken() {
     const navigate = useNavigate();
     const transaction = useSelector((state: RootState) => state.transaction);
     const dispatch = useDispatch();
-    const mockTokens = [
-        { name: "TON", icon: "/lion.jpg", address: "0x0000000000000000000000000000000000000000" },
-        { name: "BTC", icon: "/scout.jpg", address: "0x0000000000000000000000000000000000000000" },
-        { name: "USDT", icon: "/8.jpg", address: "0x0000000000000000000000000000000000000000" },
-    ]
-    const handleSelectToken = (token: string, address: string, icon: string) => {
-        dispatch(setTransaction({ ...transaction, token, address, icon }));
+    
+    // Get wallet state including custom tokens
+    const { 
+        customTokens, 
+        isConnected, 
+        address, 
+        getTokenBalances 
+    } = useWalletRedux();
+    
+    const [balances, setBalances] = useState<Record<string, number>>({});
+    const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+    
+    // Create token list from popular tokens and custom tokens
+    const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
+        symbol: token.symbol,
+        name: token.name,
+        logo: token.logo,
+        address: token.address,
+        decimals: 18
+    }));
+    
+    const allTokens = [...TOKENS, ...(customTokens || [])];
+    
+    // Fetch token balances when component mounts
+    useEffect(() => {
+        const loadBalances = async () => {
+            if (!isConnected || !address) {
+                console.log('Wallet not connected, skipping balance fetch');
+                setBalances({});
+                return;
+            }
+            
+            console.log(`Loading balances for ${allTokens.length} tokens...`);
+            setIsLoadingBalances(true);
+            try {
+                const result = await getTokenBalances(allTokens);
+                console.log(`Loaded balances for ${Object.keys(result).length} tokens`);
+                setBalances(result);
+            } catch (error) {
+                console.error('Error loading token balances:', error);
+                // Don't clear balances on error, keep previous state
+                console.warn('Failed to load some token balances, but keeping existing data');
+            } finally {
+                setIsLoadingBalances(false);
+            }
+        };
+        
+        loadBalances();
+    }, [isConnected, address, allTokens, getTokenBalances]);
+    
+    const handleSelectToken = (token: any) => {
+        dispatch(setTransaction({ 
+            ...transaction, 
+            token: token.symbol, 
+            address: token.address, 
+            icon: token.logo,
+            name: token.name
+        }));
         navigate(`${transaction.type === "send" ? "/send" : "/receive"}`);
     }
     return (
@@ -28,19 +84,76 @@ function SelectToken() {
               <p className="flex-1 text-center text-[25px] font-[600] gradient-text ml-[-30px]">Select Token</p>
           </div>
 
-          <div className="flex flex-col items-center justify-center w-full gap-[10px] mt-[20px] p-[20px]">
-            {mockTokens.map((token) => (
-              <div key={token.name} onClick={() => handleSelectToken(token.name, token.address, token.icon)} className="flex items-center justify-between w-full border border-gray-500 p-[10px] rounded-[10px] cursor-pointer">
-                <div className="flex items-center gap-[10px]">
-                  <img src={token.icon} alt={token.name} className="w-[40px] h-[40px]  border-[5px] border-[#D9D9D91F] rounded-full" />
-                  <p className="text-white font-[600]">{token.name}</p>
-                </div>
-                
+          {!isConnected ? (
+            <div className="flex flex-col items-center justify-center w-full px-[20px] mt-[40px] gap-[20px]">
+              <div className="text-center">
+                <h2 className="text-white text-xl font-bold mb-2">Wallet Not Connected</h2>
+                <p className="text-gray-400">Please connect your wallet to view token balances</p>
               </div>
-            ))}
+              <button 
+                onClick={() => navigate('/')}
+                className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
+              >
+                Go to Home
+              </button>
+            </div>
+          ) : (
+          <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">
+            {allTokens.map((token) => {
+              const isCustomToken = (customTokens || []).some(ct => ct.address === token.address);
+              const balance = balances[token.symbol] || 0;
+              const hasBalance = balance > 0;
+              
+              return (
+                <div 
+                  key={`${token.symbol}-${token.address}`} 
+                  onClick={() => handleSelectToken(token)} 
+                  className="flex items-center justify-between w-full border-b border-gray-500 p-[15px] cursor-pointer hover:bg-gray-800/30 transition-colors"
+                >
+                  <div className="flex items-center gap-[15px]">
+                    <TokenLogo
+                      symbol={token.symbol}
+                      address={token.address}
+                      size={40}
+                      variant={getTokenVariant(token.symbol, token.name)}
+                      className=" border-gray-300"
+                    />
+                    <div>
+                      <p className="text-white font-[600] text-lg">{token.symbol}</p>
+                      <p className="text-gray-400 text-sm">{token.name}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center gap-[10px]">
+                    <div className="text-right">
+                      {isLoadingBalances ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                          <span className="text-gray-400 text-sm">Loading...</span>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="text-white font-[600]">
+                            {hasBalance ? balance.toFixed(4) : '0.0000'}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {hasBalance ? `≈ $${(balance * 1).toFixed(2)}` : '$0.00'}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                    
+                    {isCustomToken && (
+                      <div className="text-xs text-[#44F58E] bg-[#44F58E]/10 px-2 py-1 rounded">
+                        Imported
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-  
-          
+          )}
       </div>
     )
 }

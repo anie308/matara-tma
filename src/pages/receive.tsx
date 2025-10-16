@@ -46,7 +46,7 @@ function Receive() {
                         <Copy className="text-white text-[20px]" />
                     </button>
                     <button className="w-full mt-[20px] btn p-[10px] font-[500] text-[18px] rounded-[10px]" onClick={handleShare}>
-                        Share
+                        Share Address
                     </button>
                 </div>
 

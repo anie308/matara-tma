@@ -6,6 +6,7 @@ type InitialProp = {
     address: string,
     network: string,
     icon: string
+    name: string
 
 }
 
@@ -14,7 +15,8 @@ const initialState: InitialProp = {
     token: "USDT",
     address: "",
     network: "bsc",
-    icon: ""
+    icon: "",
+    name: ""
 
 }
 
@@ -28,6 +30,7 @@ const transactionSlice = createSlice({
             state.address = action.payload.address;
             state.network = action.payload.network;
             state.icon = action.payload.icon;
+            state.name = action.payload.name;
         },
         clearTransaction: (state) => {
             state.type = "";
@@ -35,6 +38,7 @@ const transactionSlice = createSlice({
             state.address = "";
             state.network = "bsc";
             state.icon = "";
+            state.name = "";
         },
 
         setType: (state, action: PayloadAction<string>) => {
@@ -49,6 +53,9 @@ const transactionSlice = createSlice({
 
         setNetwork: (state, action: PayloadAction<string>) => {
             state.network = action.payload;
+        },
+        setName: (state, action: PayloadAction<string>) => {
+            state.name = action.payload;
         }
     }
 })

@@ -6,7 +6,7 @@ import { clearTransaction } from '../services/redux/transaction';
 import { toast } from 'react-hot-toast';
 import TokenLogo from '../components/TokenLogo';
 import { getTokenVariant } from '../utils/tokenUtils';
-import { useWalletRedux } from '../hooks/useWalletRedux';
+import { useReownWallet } from '../services/reownWallet';
 import { useState, useEffect } from 'react';
 import { POPULAR_BSC_TOKENS } from '../services/coinLogos';
 function Send() {
@@ -22,10 +22,9 @@ function Send() {
     // Get wallet state
     const { 
         isConnected, 
-        address, 
-        getTokenBalances,
-        customTokens 
-    } = useWalletRedux();
+        address,
+        getCustomTokens
+    } = useReownWallet();
 
     // Create token list for balance fetching
     const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
@@ -35,7 +34,8 @@ function Send() {
         address: token.address,
         decimals: 18
     }));
-    const allTokens = [...TOKENS, ...(customTokens || [])];
+    const customTokens = getCustomTokens();
+    const allTokens = [...TOKENS, ...customTokens];
 
     // Fetch token balance when component mounts or transaction changes
     useEffect(() => {
@@ -43,8 +43,9 @@ function Send() {
             if (!isConnected || !address || !transaction.token) return;
             
             try {
-                const balances = await getTokenBalances(allTokens);
-                const balance = balances[transaction.token] || 0;
+                // For now, set balance to 0 - token balance fetching will be implemented later
+                const balances = {};
+                const balance = (balances as any)[transaction.token] || 0;
                 setTokenBalance(balance);
             } catch (error) {
                 console.error('Error fetching token balance:', error);
@@ -53,7 +54,7 @@ function Send() {
         };
 
         fetchTokenBalance();
-    }, [isConnected, address, transaction.token, getTokenBalances, allTokens]);
+    }, [isConnected, address, transaction.token, allTokens]);
 
     const handleSend = async()=> {
         if (!isConnected) {

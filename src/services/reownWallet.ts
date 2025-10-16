@@ -1,6 +1,8 @@
-import { useAccount, useConnect, useDisconnect, useBalance, useReadContract, useWriteContract } from 'wagmi'
-import { useBSCWallet } from '../hooks/useBSCWallet'
+import { useAccount, useConnect, useDisconnect, useBalance, useWriteContract } from 'wagmi'
+import { useMemo, useCallback, useState } from 'react'
+// import { useBSCWallet } from '../hooks/useBSCWallet' // Removed - using direct BSC wallet service
 import { Token } from './wallet'
+import { useAppKit } from '@reown/appkit/react'
 
 export interface ReownWalletState {
   isConnected: boolean;
@@ -13,106 +15,165 @@ export interface ReownWalletState {
 
 export const useReownWallet = () => {
   const { address, isConnected, chainId } = useAccount()
-  const { connect, connectors, isPending: isConnecting, error: connectError } = useConnect()
+  const { connectors, isPending: isConnecting, error: connectError } = useConnect()
   const { disconnect } = useDisconnect()
   const { data: balance } = useBalance({ address })
   const { writeContract } = useWriteContract()
   
-  // Fallback to our custom BSC wallet for Telegram Mini Apps
-  const bscWallet = useBSCWallet()
+  // Use AppKit for modal management
+  const { open, close } = useAppKit()
   
-  const isTelegramMiniApp = typeof window !== 'undefined' && 
-                           (window as any).Telegram?.WebApp !== undefined
+  // For Telegram Mini Apps, we'll use localStorage-based wallet state
+  const [bscWalletState, setBscWalletState] = useState({
+    isConnected: false,
+    address: null as string | null,
+    chainId: 56,
+    balance: "0",
+    isConnecting: false,
+    error: null as string | null
+  })
+  
+  // Memoize Telegram Mini App detection to avoid repeated checks
+  const isTelegramMiniApp = useMemo(() => 
+    typeof window !== 'undefined' && 
+    (window as any).Telegram?.WebApp !== undefined, 
+    []
+  )
 
-  const connectWallet = async () => {
+  const connectWallet = useCallback(async () => {
     if (isTelegramMiniApp) {
-      // In Telegram Mini App, use our custom BSC wallet
-      return await bscWallet.connect()
+      // In Telegram Mini App, we need to show the address input modal
+      // This should be handled by the UI component, not here
+      console.log('Telegram Mini App detected - redirecting to address input')
+      return Promise.resolve()
     } else {
       // In regular browser, use Reown/WalletConnect
       try {
-        await connect({ connector: connectors[0] })
+        console.log('Opening Reown wallet modal...')
+        // Open the AppKit modal
+        open()
+        console.log('Reown wallet modal opened')
       } catch (error) {
-        console.error('Reown connection failed:', error)
+        console.error('Reown modal failed to open:', error)
         throw error
       }
     }
-  }
+  }, [isTelegramMiniApp, open])
 
-  const connectWithAddress = async (address: string) => {
+  const connectWithAddress = useCallback(async (address: string) => {
     if (isTelegramMiniApp) {
-      return await bscWallet.connectWithAddress(address)
+      setBscWalletState(prev => ({
+        ...prev,
+        isConnected: true,
+        address,
+        isConnecting: false,
+        error: null
+      }))
+      return true
     } else {
       throw new Error("connectWithAddress is only available in Telegram Mini Apps")
     }
-  }
+  }, [isTelegramMiniApp])
 
-  const disconnectWallet = () => {
+  const disconnectWallet = useCallback(() => {
     if (isTelegramMiniApp) {
-      bscWallet.disconnect()
+      setBscWalletState(prev => ({
+        ...prev,
+        isConnected: false,
+        address: null,
+        error: null
+      }))
     } else {
       disconnect()
     }
-  }
+  }, [isTelegramMiniApp, disconnect])
 
-  const getTokenBalance = async (token: Token) => {
+  const getTokenBalance = async (token: Token): Promise<number> => {
     if (isTelegramMiniApp) {
       // Use our custom BSC wallet service
-      return await bscWallet.getTokenBalances([token])
+      // For Telegram Mini Apps, return 0 for now (can be implemented later)
+      const balances = {}
+      return (balances as any)[token.symbol] || 0
     } else {
-      // Use wagmi for contract reading
-      if (!address || !token.address) return 0
-      
-      try {
-        const result = await useReadContract({
-          address: token.address as `0x${string}`,
-          abi: [
-            {
-              name: 'balanceOf',
-              type: 'function',
-              stateMutability: 'view',
-              inputs: [{ name: 'account', type: 'address' }],
-              outputs: [{ name: 'balance', type: 'uint256' }],
-            },
-            {
-              name: 'decimals',
-              type: 'function',
-              stateMutability: 'view',
-              inputs: [],
-              outputs: [{ name: 'decimals', type: 'uint8' }],
-            }
-          ],
-          functionName: 'balanceOf',
-          args: [address],
-        })
-        
-        return result.data ? Number(result.data) / Math.pow(10, token.decimals) : 0
-      } catch (error) {
-        console.error('Error reading token balance:', error)
-        return 0
-      }
+      // For now, return 0 for non-Telegram environments
+      // Token balance reading will be handled by the component
+      console.log(`Token balance for ${token.symbol} not implemented for browser environment`)
+      return 0
     }
   }
 
-  const getAllTokenBalances = async (tokens: Token[]) => {
+  const getAllTokenBalances = useCallback(async (tokens: Token[]) => {
     if (isTelegramMiniApp) {
-      return await bscWallet.getTokenBalances(tokens)
-    } else {
+      // For Telegram Mini Apps, return empty balances for now
       const balances: Record<string, number> = {}
-      
-      for (const token of tokens) {
-        try {
-          const balance = await getTokenBalance(token)
-          balances[token.symbol] = balance
-        } catch (error) {
-          console.error(`Error fetching balance for ${token.symbol}:`, error)
-          balances[token.symbol] = 0
-        }
-      }
-      
+      tokens.forEach(token => {
+        balances[token.symbol] = 0
+      })
+      return balances
+    } else {
+      // For browser environment, return empty balances for now
+      const balances: Record<string, number> = {}
+      tokens.forEach(token => {
+        balances[token.symbol] = 0
+      })
       return balances
     }
-  }
+  }, [isTelegramMiniApp])
+
+  const importToken = useCallback(async (token: Token) => {
+    if (isTelegramMiniApp) {
+      // For Telegram Mini Apps, we can store custom tokens in localStorage
+      try {
+        const customTokens = JSON.parse(localStorage.getItem('customTokens') || '[]');
+        const tokenExists = customTokens.some((t: Token) => t.address === token.address);
+        
+        if (!tokenExists) {
+          customTokens.push(token);
+          localStorage.setItem('customTokens', JSON.stringify(customTokens));
+          console.log(`Token ${token.symbol} imported successfully`);
+          return true;
+        } else {
+          console.log(`Token ${token.symbol} already exists`);
+          return false;
+        }
+      } catch (error) {
+        console.error('Error importing token:', error);
+        return false;
+      }
+    } else {
+      // For browser environment, custom tokens are not supported with Reown
+      console.log('Custom token import not supported in browser environment with Reown');
+      return false;
+    }
+  }, [isTelegramMiniApp]);
+
+  const getCustomTokens = useCallback(() => {
+    if (isTelegramMiniApp) {
+      try {
+        return JSON.parse(localStorage.getItem('customTokens') || '[]');
+      } catch (error) {
+        console.error('Error loading custom tokens:', error);
+        return [];
+      }
+    }
+    return [];
+  }, [isTelegramMiniApp]);
+
+  const removeCustomToken = useCallback(async (tokenAddress: string) => {
+    if (isTelegramMiniApp) {
+      try {
+        const customTokens = JSON.parse(localStorage.getItem('customTokens') || '[]');
+        const filteredTokens = customTokens.filter((t: Token) => t.address !== tokenAddress);
+        localStorage.setItem('customTokens', JSON.stringify(filteredTokens));
+        console.log(`Token with address ${tokenAddress} removed`);
+        return true;
+      } catch (error) {
+        console.error('Error removing token:', error);
+        return false;
+      }
+    }
+    return false;
+  }, [isTelegramMiniApp]);
 
   const sendTransaction = async (to: string, amount: string, token?: Token) => {
     if (isTelegramMiniApp) {
@@ -158,12 +219,12 @@ export const useReownWallet = () => {
 
   return {
     // State
-    isConnected: isTelegramMiniApp ? bscWallet.isConnected : isConnected,
-    address: isTelegramMiniApp ? bscWallet.address : address,
-    chainId: isTelegramMiniApp ? bscWallet.chainId : chainId,
-    balance: isTelegramMiniApp ? bscWallet.balance : balance?.formatted || '0',
-    isConnecting: isTelegramMiniApp ? bscWallet.isConnecting : isConnecting,
-    error: isTelegramMiniApp ? bscWallet.error : connectError?.message || null,
+    isConnected: isTelegramMiniApp ? bscWalletState.isConnected : isConnected,
+    address: isTelegramMiniApp ? bscWalletState.address : address,
+    chainId: isTelegramMiniApp ? bscWalletState.chainId : chainId,
+    balance: isTelegramMiniApp ? bscWalletState.balance : balance?.formatted || '0',
+    isConnecting: isTelegramMiniApp ? bscWalletState.isConnecting : isConnecting,
+    error: isTelegramMiniApp ? bscWalletState.error : connectError?.message || null,
     
     // Actions
     connect: connectWallet,
@@ -171,11 +232,17 @@ export const useReownWallet = () => {
     disconnect: disconnectWallet,
     getTokenBalance,
     getAllTokenBalances,
+    importToken,
+    getCustomTokens,
+    removeCustomToken,
     sendTransaction,
     
     // Additional info
     isTelegramMiniApp,
-    telegramUser: isTelegramMiniApp ? bscWallet.telegramUser : null,
+    telegramUser: isTelegramMiniApp ? null : null, // Telegram user data not implemented yet
     connectors: isTelegramMiniApp ? [] : connectors,
+    // AppKit functions
+    openModal: open,
+    closeModal: close,
   }
 }

@@ -3,8 +3,11 @@ import MenuButton from "./MenuButton";
 // import { useTonConnectUI } from "@tonconnect/ui-react";
 import { useSelector } from "react-redux";
 import { RootState } from "../services/store";
-import { useWalletRedux } from "../hooks/useWalletRedux";
+import { useReownWallet } from "../services/reownWallet";
 import { Wallet } from "lucide-react";
+import { ReownConnectButton } from "./ReownConnectButton";
+import { WalletConnectModal } from "./WalletConnectModal";
+import { useState } from "react";
 
 const TopBar = () => {
   const location = useLocation();
@@ -12,13 +15,13 @@ const TopBar = () => {
   // const [tonConnectUI] = useTonConnectUI();
   const user = useSelector((state: RootState) => state.user.profile);
   const userPoints = user?.points || 0;
+  const [showWalletModal, setShowWalletModal] = useState(false);
 
   const { 
     isConnected, 
     chainId,
-    isConnecting, 
-    connect
-  } = useWalletRedux();
+    isTelegramMiniApp
+  } = useReownWallet();
 
   // Render different content based on the current path
   const renderContent = () => {
@@ -52,18 +55,17 @@ const TopBar = () => {
       </div>
       <div className="flex items-center space-x-3">
       {!isConnected ? (
-              <button
-                onClick={connect}
-                disabled={isConnecting}
-                className="bg-[#FFB948] text-black px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#FFA500] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-              >
-                {isConnecting ? (
-                  <div className="w-3 h-3 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                ) : (
+              isTelegramMiniApp ? (
+                <button
+                  onClick={() => setShowWalletModal(true)}
+                  className="bg-[#FFB948] text-black px-3 py-2 rounded-lg text-sm font-medium hover:bg-[#FFA500] transition-colors flex items-center gap-2"
+                >
                   <Wallet size={16} />
-                )}
-                {isConnecting ? "Connecting..." : "Connect"}
-              </button>
+                  Connect BSC Wallet
+                </button>
+              ) : (
+                <ReownConnectButton />
+              )
             ) : (
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full ${chainId === 56 ? 'bg-green-500' : 'bg-red-500'}`}></div>
@@ -75,6 +77,14 @@ const TopBar = () => {
        
         <MenuButton />
       </div>
+      
+      {/* Wallet Connect Modal for Telegram Mini Apps */}
+      {isTelegramMiniApp && (
+        <WalletConnectModal 
+          isOpen={showWalletModal} 
+          onClose={() => setShowWalletModal(false)} 
+        />
+      )}
     </div>
   );
 };

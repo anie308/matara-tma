@@ -9,8 +9,9 @@ import { useReownWallet } from "../services/reownWallet";
 import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { WalletConnectModal } from "../components/WalletConnectModal";
+import { ReownConnectButton } from "../components/ReownConnectButton";
 
 function SelectToken() {
     const navigate = useNavigate();
@@ -23,51 +24,53 @@ function SelectToken() {
         address, 
         getAllTokenBalances,
         isTelegramMiniApp,
-        telegramUser,
-        connect
+        getCustomTokens
     } = useReownWallet();
     
     const [balances, setBalances] = useState<Record<string, number>>({});
     const [isLoadingBalances, setIsLoadingBalances] = useState(false);
     const [showWalletModal, setShowWalletModal] = useState(false);
     
-    // Create token list from popular tokens and custom tokens
-    const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
-        symbol: token.symbol,
-        name: token.name,
-        logo: token.logo,
-        address: token.address,
-        decimals: 18
-    }));
+    // Memoize token list to prevent infinite loops
+    const allTokens = useMemo(() => {
+        const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
+            symbol: token.symbol,
+            name: token.name,
+            logo: token.logo,
+            address: token.address,
+            decimals: 18
+        }));
+        const customTokens = getCustomTokens();
+        return [...TOKENS, ...customTokens];
+    }, [getCustomTokens]);
     
-    const allTokens = [...TOKENS];
-    
+    // Memoize the loadBalances function to prevent infinite loops
+    const loadBalances = useCallback(async () => {
+        if (!isConnected || !address) {
+            console.log('Wallet not connected, skipping balance fetch');
+            setBalances({});
+            return;
+        }
+        
+        console.log(`Loading balances for ${allTokens.length} tokens...`);
+        setIsLoadingBalances(true);
+        try {
+            const result = await getAllTokenBalances(allTokens);
+            console.log(`Loaded balances for ${Object.keys(result).length} tokens`);
+            setBalances(result);
+        } catch (error) {
+            console.error('Error loading token balances:', error);
+            // Don't clear balances on error, keep previous state
+            console.warn('Failed to load some token balances, but keeping existing data');
+        } finally {
+            setIsLoadingBalances(false);
+        }
+    }, [isConnected, address, allTokens]);
+
     // Fetch token balances when component mounts
     useEffect(() => {
-        const loadBalances = async () => {
-            if (!isConnected || !address) {
-                console.log('Wallet not connected, skipping balance fetch');
-                setBalances({});
-                return;
-            }
-            
-            console.log(`Loading balances for ${allTokens.length} tokens...`);
-            setIsLoadingBalances(true);
-            try {
-                const result = await getAllTokenBalances(allTokens);
-                console.log(`Loaded balances for ${Object.keys(result).length} tokens`);
-                setBalances(result);
-            } catch (error) {
-                console.error('Error loading token balances:', error);
-                // Don't clear balances on error, keep previous state
-                console.warn('Failed to load some token balances, but keeping existing data');
-            } finally {
-                setIsLoadingBalances(false);
-            }
-        };
-        
         loadBalances();
-    }, [isConnected, address, allTokens, getAllTokenBalances]);
+    }, [loadBalances]);
     
     const handleSelectToken = (token: any) => {
         dispatch(setTransaction({ 
@@ -98,18 +101,22 @@ function SelectToken() {
                     : "Please connect your wallet to view token balances"
                   }
                 </p>
-                {isTelegramMiniApp && telegramUser && (
-                  <p className="text-gray-500 text-sm mt-2">
-                    Welcome, {telegramUser.first_name}! 👋
-                  </p>
-                )}
+          {isTelegramMiniApp && (
+            <p className="text-gray-500 text-sm mt-2">
+              Welcome to Telegram Mini App! 👋
+            </p>
+          )}
               </div>
-              <button 
-                onClick={() => isTelegramMiniApp ? setShowWalletModal(true) : connect()}
-                className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
-              >
-                {isTelegramMiniApp ? "Connect BSC Wallet" : "Connect Wallet"}
-              </button>
+              {isTelegramMiniApp ? (
+                <button 
+                  onClick={() => setShowWalletModal(true)}
+                  className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
+                >
+                  Connect BSC Wallet
+                </button>
+              ) : (
+                <ReownConnectButton />
+              )}
             </div>
           ) : (
           <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">

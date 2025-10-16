@@ -5,9 +5,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
 import { RootState } from "../services/store";
-import { useWalletRedux } from "../hooks/useWalletRedux";
+import { useReownWallet } from "../services/reownWallet";
 import ImportTokenModal from "../components/modal/ImportTokenModal";
-import { Token } from "../services/wallet";
 import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
@@ -27,11 +26,11 @@ export default function Trade() {
     chainId,
     error, 
     connect, 
-    getTokenBalances,
-    customTokens,
+    getAllTokenBalances,
     importToken,
-    removeToken
-  } = useWalletRedux();
+    getCustomTokens,
+    removeCustomToken,
+  } = useReownWallet();
 
   const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
     symbol: token.symbol,
@@ -44,13 +43,14 @@ export default function Trade() {
   useEffect(() => {
     const loadBalances = async () => {
       if (isConnected && address) {
-        const allTokens = [...TOKENS, ...(customTokens || [])];
-        const result = await getTokenBalances(allTokens);
+        const customTokens = getCustomTokens();
+        const allTokens = [...TOKENS, ...customTokens];
+        const result = await getAllTokenBalances(allTokens);
         setBalances(result);
       }
     };
     loadBalances();
-  }, [isConnected, address, customTokens, getTokenBalances]);
+  }, [isConnected, address, getAllTokenBalances, getCustomTokens]);
 
   const transaction = useSelector((state: RootState) => state.transaction);
 
@@ -69,11 +69,12 @@ export default function Trade() {
     navigate("/select-token");
   }
 
-  const handleImportToken = async (token: Token) => {
+  const handleImportToken = async (token: any) => {
     return await importToken(token);
   }
 
-  const allTokens = [...TOKENS, ...(customTokens || [])];
+  const customTokens = getCustomTokens();
+  const allTokens = [...TOKENS, ...customTokens];
 
   return (
     <>
@@ -173,7 +174,7 @@ export default function Trade() {
               </div>
 
               {allTokens.map((token) => {
-                const isCustomToken = (customTokens || []).some(ct => ct.address === token.address);
+                const isCustomToken = customTokens.some((ct: any) => ct.address === token.address);
                 return (
                   <div key={`${token.symbol}-${token.address}`} className="flex items-center justify-between mt-[20px]">
                     <div className="flex items-center gap-[10px]">
@@ -200,7 +201,7 @@ export default function Trade() {
                       </div>
                       {isCustomToken && (
                         <button
-                          onClick={() => removeToken(token.address)}
+                          onClick={() => removeCustomToken(token.address)}
                           className="text-red-400 hover:text-red-300 p-1"
                           title="Remove token"
                         >

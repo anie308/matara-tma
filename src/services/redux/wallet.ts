@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { walletService } from '../wallet';
+// import { walletService } from '../wallet'; // Removed - using Reown instead
 
 export interface WalletState {
   isConnected: boolean;
@@ -125,26 +125,16 @@ export const {
   clearCustomTokens,
 } = walletSlice.actions;
 
-// Async thunk for connecting wallet
+// Async thunk for connecting wallet - now handled by Reown
 export const connectWalletAsync = () => async (dispatch: any) => {
   dispatch(connectWallet());
-  
-  try {
-    const state = await walletService.connectWallet();
-    dispatch(connectWalletSuccess({
-      address: state.address!,
-      provider: state.provider,
-      chainId: state.chainId!,
-      balance: state.balance,
-    }));
-  } catch (error: any) {
-    dispatch(connectWalletFailure(error.message || "Failed to connect wallet"));
-  }
+  // Connection is now handled by useReownWallet hook in components
+  // This is just for Redux state management
 };
 
-// Async thunk for disconnecting wallet
+// Async thunk for disconnecting wallet - now handled by Reown
 export const disconnectWalletAsync = () => async (dispatch: any) => {
-  walletService.disconnect();
+  // Disconnection is now handled by useReownWallet hook in components
   dispatch(disconnectWallet());
 };
 

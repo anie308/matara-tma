@@ -1,6 +1,6 @@
 import WebApp from "@twa-dev/sdk";
 import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Bell, Eye, EyeOff, ScanLine, TriangleAlert, Plus, Wallet, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Bell, Eye, EyeOff, ScanLine, TriangleAlert, Plus, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
@@ -10,6 +10,18 @@ import ImportTokenModal from "../components/modal/ImportTokenModal";
 import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
+
+// Utility function to format numbers with commas
+const formatNumber = (num: number): string => {
+  if (num === 0) return "0.00";
+  if (num < 0.01) return num.toFixed(6);
+  if (num < 1) return num.toFixed(4);
+  if (num < 1000) return num.toFixed(2);
+  return num.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
+};
 
 export default function Trade() {
   const [balances, setBalances] = useState<Record<string, number>>({});
@@ -29,7 +41,6 @@ export default function Trade() {
     getAllTokenBalances,
     importToken,
     getCustomTokens,
-    removeCustomToken,
   } = useReownWallet();
 
   const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
@@ -42,10 +53,15 @@ export default function Trade() {
 
   useEffect(() => {
     const loadBalances = async () => {
+      console.log('Trade: Loading balances', { isConnected, address });
       if (isConnected && address) {
         const customTokens = getCustomTokens();
         const allTokens = [...TOKENS, ...customTokens];
+        console.log('Trade: Custom tokens:', customTokens);
+        console.log('Trade: All tokens:', allTokens.map(t => ({ symbol: t.symbol, address: t.address })));
+        console.log('Trade: Fetching balances for tokens:', allTokens.length);
         const result = await getAllTokenBalances(allTokens);
+        console.log('Trade: Received balances:', result);
         setBalances(result);
       }
     };
@@ -148,15 +164,7 @@ export default function Trade() {
               <ArrowUpDown className=" text-[20px]" />
             </button>
           </div>
-          {/* <div className="w-full mt-[30px]">
-            <p className="text-white font-[600] flex items-center gap-[10px]">Secure your wallet <span><HelpCircle className="text-[10px]" /></span></p>
-            <div className="border p-[20px] mt-[10px] border-[#FFB948] rounded-[10px] flex items-center gap-[10px]">
-              <TriangleAlert size={35} className="text-[#9B393F] text-[20px]" />
-              <p className="text-white font-[600] leading-[18px]">Click here to find your recovery phrase</p>
-              <ChevronRight size={25} className="text-white text-[20px]" />
-            </div>
-          </div> */}
-
+        
           {isConnected && (
             <div className="w-full mt-[30px]">
               <div className="flex items-center text-white border-b pb-[10px] justify-between">
@@ -174,7 +182,6 @@ export default function Trade() {
               </div>
 
               {allTokens.map((token) => {
-                const isCustomToken = customTokens.some((ct: any) => ct.address === token.address);
                 return (
                   <div key={`${token.symbol}-${token.address}`} className="flex items-center justify-between mt-[20px]">
                     <div className="flex items-center gap-[10px]">
@@ -195,19 +202,11 @@ export default function Trade() {
                     <div className="flex items-center gap-2">
                       <div className="text-right">
                         <p className="font-[600] text-white">
-                          {balances[token.symbol] ? balances[token.symbol].toFixed(2) : "0.00"} {token.symbol}
+                          {formatNumber(balances[token.symbol] || 0)} {token.symbol}
                         </p>
                         <p className="text-[#CDCBC8] text-[14px]">$0.00</p>
                       </div>
-                      {isCustomToken && (
-                        <button
-                          onClick={() => removeCustomToken(token.address)}
-                          className="text-red-400 hover:text-red-300 p-1"
-                          title="Remove token"
-                        >
-                          <X size={16} />
-                        </button>
-                      )}
+                      
                     </div>
                   </div>
                 );

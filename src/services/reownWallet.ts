@@ -75,18 +75,31 @@ export const useReownWallet = () => {
     }
   }, [isTelegramMiniApp])
 
-  const disconnectWallet = useCallback(() => {
-    if (isTelegramMiniApp) {
-      setBscWalletState(prev => ({
-        ...prev,
-        isConnected: false,
-        address: null,
-        error: null
-      }))
-    } else {
-      disconnect()
+  const disconnectWallet = useCallback(async () => {
+    console.log('Disconnect called:', { isTelegramMiniApp, isConnected, address });
+    
+    try {
+      // Always call Wagmi disconnect if we have a connection
+      if (isConnected) {
+        console.log('Calling Wagmi disconnect');
+        await disconnect();
+        console.log('Wagmi disconnect completed');
+      }
+      
+      // Also update custom state for Telegram Mini Apps
+      if (isTelegramMiniApp) {
+        console.log('Updating custom BSC wallet state');
+        setBscWalletState(prev => ({
+          ...prev,
+          isConnected: false,
+          address: null,
+          error: null
+        }))
+      }
+    } catch (error) {
+      console.error('Error during disconnect:', error);
     }
-  }, [isTelegramMiniApp, disconnect])
+  }, [isTelegramMiniApp, isConnected, disconnect])
 
   const getTokenBalance = async (token: Token): Promise<number> => {
     if (isTelegramMiniApp) {
@@ -102,23 +115,125 @@ export const useReownWallet = () => {
     }
   }
 
+  // Helper function to fetch ERC20 token balance via RPC call
+  const fetchERC20Balance = useCallback(async (tokenAddress: string, walletAddress: string, decimals: number): Promise<number> => {
+    try {
+      // BSC RPC endpoint
+      const rpcUrl = 'https://bsc-dataseed.binance.org/';
+      
+      // ERC20 balanceOf function signature
+      const balanceOfData = '0x70a08231' + walletAddress.slice(2).padStart(64, '0');
+      
+      const response = await fetch(rpcUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          method: 'eth_call',
+          params: [
+            {
+              to: tokenAddress,
+              data: balanceOfData,
+            },
+            'latest'
+          ],
+          id: 1,
+        }),
+      });
+
+      const result = await response.json();
+      
+      if (result.error) {
+        console.error('RPC call failed:', result.error);
+        return 0;
+      }
+
+      // Convert hex to decimal and apply decimals
+      const balanceHex = result.result;
+      const balanceWei = parseInt(balanceHex, 16);
+      const balance = balanceWei / Math.pow(10, decimals);
+      
+      return balance;
+    } catch (error) {
+      console.error('Error fetching ERC20 balance:', error);
+      return 0;
+    }
+  }, []);
+
+  // Helper function to fetch individual token balance
+  const fetchTokenBalance = useCallback(async (token: Token, walletAddress: string): Promise<number> => {
+    try {
+      // For native BNB, return the current balance from the hook
+      if (token.symbol === 'BNB' || token.address === '0x0000000000000000000000000000000000000000') {
+        return parseFloat(balance?.formatted || '0');
+      }
+
+      // For ERC20 tokens, make real RPC calls
+      console.log(`Fetching real balance for ${token.symbol} (${token.address})`);
+      const tokenBalance = await fetchERC20Balance(token.address, walletAddress, token.decimals);
+      console.log(`Real balance for ${token.symbol}: ${tokenBalance}`);
+      
+      return tokenBalance;
+    } catch (error) {
+      console.error(`Error fetching balance for ${token.symbol}:`, error);
+      return 0;
+    }
+  }, [balance, fetchERC20Balance]);
+
   const getAllTokenBalances = useCallback(async (tokens: Token[]) => {
-    if (isTelegramMiniApp) {
-      // For Telegram Mini Apps, return empty balances for now
-      const balances: Record<string, number> = {}
-      tokens.forEach(token => {
-        balances[token.symbol] = 0
-      })
-      return balances
-    } else {
-      // For browser environment, return empty balances for now
+    // Check if we have a connected wallet (either Wagmi or custom state)
+    const hasConnection = isConnected || (isTelegramMiniApp && bscWalletState.isConnected)
+    const walletAddress = address || (isTelegramMiniApp ? bscWalletState.address : null)
+    
+    console.log('getAllTokenBalances called:', { 
+      isTelegramMiniApp, 
+      hasConnection, 
+      walletAddress,
+      wagmiConnected: isConnected,
+      customConnected: bscWalletState.isConnected 
+    })
+    
+    if (!hasConnection || !walletAddress) {
+      console.log('No wallet connection, returning empty balances')
       const balances: Record<string, number> = {}
       tokens.forEach(token => {
         balances[token.symbol] = 0
       })
       return balances
     }
-  }, [isTelegramMiniApp])
+    
+    // Fetch real balances
+    const balances: Record<string, number> = {}
+    
+    try {
+      console.log('Fetching real token balances...')
+      
+      // Fetch balances for all tokens in parallel
+      const balancePromises = tokens.map(async (token) => {
+        const balance = await fetchTokenBalance(token, walletAddress);
+        return { symbol: token.symbol, balance };
+      });
+      
+      const results = await Promise.all(balancePromises);
+      
+      // Convert results to balances object
+      results.forEach(({ symbol, balance }) => {
+        balances[symbol] = balance;
+      });
+      
+      console.log('Successfully fetched real token balances from BSC blockchain:', balances);
+    } catch (error) {
+      console.error('Error fetching token balances:', error)
+      tokens.forEach(token => {
+        balances[token.symbol] = 0
+      })
+    }
+    
+    console.log('Returning balances:', balances)
+    return balances
+  }, [isTelegramMiniApp, isConnected, address, bscWalletState.isConnected, bscWalletState.address, fetchTokenBalance])
 
   const importToken = useCallback(async (token: Token) => {
     if (isTelegramMiniApp) {
@@ -217,14 +332,26 @@ export const useReownWallet = () => {
     }
   }
 
+  // Debug logging
+  console.log('ReownWallet State:', {
+    isTelegramMiniApp,
+    wagmiState: { isConnected, address, chainId },
+    bscWalletState,
+    finalState: {
+      isConnected: isTelegramMiniApp ? (isConnected || bscWalletState.isConnected) : isConnected,
+      address: isTelegramMiniApp ? (address || bscWalletState.address) : address,
+      chainId: isTelegramMiniApp ? (chainId || bscWalletState.chainId) : chainId,
+    }
+  });
+
   return {
-    // State
-    isConnected: isTelegramMiniApp ? bscWalletState.isConnected : isConnected,
-    address: isTelegramMiniApp ? bscWalletState.address : address,
-    chainId: isTelegramMiniApp ? bscWalletState.chainId : chainId,
-    balance: isTelegramMiniApp ? bscWalletState.balance : balance?.formatted || '0',
-    isConnecting: isTelegramMiniApp ? bscWalletState.isConnecting : isConnecting,
-    error: isTelegramMiniApp ? bscWalletState.error : connectError?.message || null,
+    // State - Use Wagmi state if connected, otherwise use custom state for Telegram Mini Apps
+    isConnected: isTelegramMiniApp ? (isConnected || bscWalletState.isConnected) : isConnected,
+    address: isTelegramMiniApp ? (address || bscWalletState.address) : address,
+    chainId: isTelegramMiniApp ? (chainId || bscWalletState.chainId) : chainId,
+    balance: isTelegramMiniApp ? (balance?.formatted || bscWalletState.balance) : balance?.formatted || '0',
+    isConnecting: isTelegramMiniApp ? (isConnecting || bscWalletState.isConnecting) : isConnecting,
+    error: isTelegramMiniApp ? (connectError?.message || bscWalletState.error) : connectError?.message || null,
     
     // Actions
     connect: connectWallet,

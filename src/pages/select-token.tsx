@@ -13,6 +13,18 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { WalletConnectModal } from "../components/WalletConnectModal";
 import { ReownConnectButton } from "../components/ReownConnectButton";
 
+// Utility function to format numbers with commas
+const formatNumber = (num: number): string => {
+  if (num === 0) return "0.00";
+  if (num < 0.01) return num.toFixed(6);
+  if (num < 1) return num.toFixed(4);
+  if (num < 1000) return num.toFixed(2);
+  return num.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
+};
+
 function SelectToken() {
     const navigate = useNavigate();
     const transaction = useSelector((state: RootState) => state.transaction);
@@ -52,6 +64,9 @@ function SelectToken() {
             return;
         }
         
+        const customTokens = getCustomTokens();
+        console.log('SelectToken: Custom tokens:', customTokens);
+        console.log('SelectToken: All tokens:', allTokens.map(t => ({ symbol: t.symbol, address: t.address })));
         console.log(`Loading balances for ${allTokens.length} tokens...`);
         setIsLoadingBalances(true);
         try {
@@ -65,7 +80,7 @@ function SelectToken() {
         } finally {
             setIsLoadingBalances(false);
         }
-    }, [isConnected, address, allTokens]);
+    }, [isConnected, address, allTokens, getCustomTokens]);
 
     // Fetch token balances when component mounts
     useEffect(() => {
@@ -121,7 +136,8 @@ function SelectToken() {
           ) : (
           <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">
             {allTokens.map((token) => {
-              const isCustomToken = false; // Custom tokens not supported in Reown implementation
+              const customTokens = getCustomTokens();
+              const isCustomToken = customTokens.some((ct: any) => ct.address === token.address);
               const balance = balances[token.symbol] || 0;
               const hasBalance = balance > 0;
               
@@ -155,10 +171,10 @@ function SelectToken() {
                       ) : (
                         <>
                           <p className="text-white font-[600]">
-                            {hasBalance ? balance.toFixed(4) : '0.0000'}
+                            {hasBalance ? formatNumber(balance) : '0.00'}
                           </p>
                           <p className="text-gray-400 text-sm">
-                            {hasBalance ? `≈ $${(balance * 1).toFixed(2)}` : '$0.00'}
+                            {hasBalance ? `≈ $${formatNumber(balance * 1)}` : '$0.00'}
                           </p>
                         </>
                       )}

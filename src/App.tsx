@@ -36,7 +36,7 @@ function App() {
   // Allow only Android, iOS, and Telegram Desktop
   const allowedPlatforms = ["android", "ios", "tdesktop"];
   if (!allowedPlatforms.includes(WebApp.platform)) {
-    setIsSupported(true);
+    setIsSupported(false);
   }
 
   // Expand the WebApp

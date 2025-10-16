@@ -33,6 +33,11 @@ export class WalletService {
 
   async connectWallet(): Promise<WalletState> {
     try {
+      // Check if we're in a Telegram Mini App environment
+      if (this.isTelegramMiniApp()) {
+        throw new Error("Telegram Mini App detected. Please use the BSC wallet service instead.");
+      }
+
       if (!window.ethereum) {
         throw new Error("No wallet found. Please install MetaMask or another Web3 wallet.");
       }
@@ -333,6 +338,12 @@ export class WalletService {
     this.provider = null;
     this.account = null;
     this.chainId = null;
+  }
+
+  // Method to check if we're in a Telegram Mini App environment
+  isTelegramMiniApp(): boolean {
+    return typeof window !== 'undefined' && 
+           (window as any).Telegram?.WebApp !== undefined;
   }
 }
 

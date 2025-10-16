@@ -5,11 +5,12 @@ import { useNavigate } from "react-router-dom";
 import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
-import { useWalletRedux } from "../hooks/useWalletRedux";
+import { useHybridWallet } from "../hooks/useHybridWallet";
 import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { useState, useEffect } from "react";
+import { WalletConnectModal } from "../components/WalletConnectModal";
 
 function SelectToken() {
     const navigate = useNavigate();
@@ -21,11 +22,14 @@ function SelectToken() {
         customTokens, 
         isConnected, 
         address, 
-        getTokenBalances 
-    } = useWalletRedux();
+        getTokenBalances,
+        isTelegramMiniApp,
+        telegramUser
+    } = useHybridWallet();
     
     const [balances, setBalances] = useState<Record<string, number>>({});
     const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+    const [showWalletModal, setShowWalletModal] = useState(false);
     
     // Create token list from popular tokens and custom tokens
     const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
@@ -88,19 +92,29 @@ function SelectToken() {
             <div className="flex flex-col items-center justify-center w-full px-[20px] mt-[40px] gap-[20px]">
               <div className="text-center">
                 <h2 className="text-white text-xl font-bold mb-2">Wallet Not Connected</h2>
-                <p className="text-gray-400">Please connect your wallet to view token balances</p>
+                <p className="text-gray-400">
+                  {isTelegramMiniApp 
+                    ? "Please connect your BSC wallet to view token balances" 
+                    : "Please connect your wallet to view token balances"
+                  }
+                </p>
+                {isTelegramMiniApp && telegramUser && (
+                  <p className="text-gray-500 text-sm mt-2">
+                    Welcome, {telegramUser.first_name}! 👋
+                  </p>
+                )}
               </div>
               <button 
-                onClick={() => navigate('/')}
+                onClick={() => isTelegramMiniApp ? setShowWalletModal(true) : navigate('/')}
                 className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
               >
-                Go to Home
+                {isTelegramMiniApp ? "Connect BSC Wallet" : "Go to Home"}
               </button>
             </div>
           ) : (
           <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">
             {allTokens.map((token) => {
-              const isCustomToken = (customTokens || []).some(ct => ct.address === token.address);
+              const isCustomToken = (customTokens || []).some((ct: any) => ct.address === token.address);
               const balance = balances[token.symbol] || 0;
               const hasBalance = balance > 0;
               
@@ -154,6 +168,12 @@ function SelectToken() {
             })}
           </div>
           )}
+          
+          {/* Wallet Connect Modal for Telegram Mini Apps */}
+          <WalletConnectModal 
+            isOpen={showWalletModal}
+            onClose={() => setShowWalletModal(false)}
+          />
       </div>
     )
 }

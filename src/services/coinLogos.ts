@@ -195,3 +195,61 @@ export const POPULAR_BSC_TOKENS = {
     logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png'
   }
 };
+
+// BSC Testnet Token Addresses for testing
+export const POPULAR_BSC_TESTNET_TOKENS = {
+  'BNB': {
+    symbol: 'tBNB',
+    name: 'Testnet BNB',
+    address: '0x0000000000000000000000000000000000000000', // Native BNB on testnet
+    logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png'
+  },
+  'USDT': {
+    symbol: 'USDT',
+    name: 'Tether USD (Testnet)',
+    address: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd', // BSC Testnet USDT
+    logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png'
+  },
+  'USDC': {
+    symbol: 'USDC',
+    name: 'USD Coin (Testnet)',
+    address: '0x64544969ed7EBf5f083679233325356EbE738930', // BSC Testnet USDC
+    logo: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png'
+  },
+  'BUSD': {
+    symbol: 'BUSD',
+    name: 'Binance USD (Testnet)',
+    address: '0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7', // BSC Testnet BUSD
+    logo: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png'
+  },
+  'CAKE': {
+    symbol: 'CAKE',
+    name: 'PancakeSwap Token (Testnet)',
+    address: '0xFa60D973F7642B748046464c1653B2b8c0b5C4c0', // BSC Testnet CAKE
+    logo: 'https://assets.coingecko.com/coins/images/12632/small/pancakeswap-cake-logo_%281%29.png'
+  },
+  'ADA': {
+    symbol: 'ADA',
+    name: 'Cardano (Testnet)',
+    address: '0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5', // BSC Testnet ADA
+    logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png'
+  },
+  'DOT': {
+    symbol: 'DOT',
+    name: 'Polkadot (Testnet)',
+    address: '0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5', // BSC Testnet DOT
+    logo: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png'
+  },
+  'LINK': {
+    symbol: 'LINK',
+    name: 'ChainLink Token (Testnet)',
+    address: '0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06', // BSC Testnet LINK
+    logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png'
+  },
+  'UNI': {
+    symbol: 'UNI',
+    name: 'Uniswap (Testnet)',
+    address: '0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5', // BSC Testnet UNI
+    logo: 'https://assets.coingecko.com/coins/images/12504/small/uniswap-uni.png'
+  }
+};

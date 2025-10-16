@@ -7,7 +7,7 @@ import { setTransaction } from "../services/redux/transaction";
 import { RootState } from "../services/store";
 import { useReownWallet } from "../services/reownWallet";
 import ImportTokenModal from "../components/modal/ImportTokenModal";
-import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
+import { POPULAR_BSC_TESTNET_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 
@@ -43,7 +43,7 @@ export default function Trade() {
     getCustomTokens,
   } = useReownWallet();
 
-  const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
+  const TOKENS = Object.values(POPULAR_BSC_TESTNET_TOKENS).map(token => ({
     symbol: token.symbol,
     name: token.name,
     logo: token.logo,

@@ -6,7 +6,7 @@ import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
 import { useReownWallet } from "../services/reownWallet";
-import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
+import { POPULAR_BSC_TESTNET_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -45,7 +45,7 @@ function SelectToken() {
     
     // Memoize token list to prevent infinite loops
     const allTokens = useMemo(() => {
-        const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
+        const TOKENS = Object.values(POPULAR_BSC_TESTNET_TOKENS).map(token => ({
             symbol: token.symbol,
             name: token.name,
             logo: token.logo,

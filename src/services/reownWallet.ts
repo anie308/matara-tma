@@ -118,16 +118,18 @@ export const useReownWallet = () => {
   // Helper function to fetch ERC20 token balance via RPC call
   const fetchERC20Balance = useCallback(async (tokenAddress: string, walletAddress: string, decimals: number): Promise<number> => {
     try {
-      // BSC RPC endpoint
-      const rpcUrl = 'https://bsc-dataseed.binance.org/';
+      // BSC Testnet RPC endpoint
+      const rpcUrl = 'https://bnb-testnet.api.onfinality.io/public';
+      
       
       // ERC20 balanceOf function signature
       const balanceOfData = '0x70a08231' + walletAddress.slice(2).padStart(64, '0');
       
+      
       const response = await fetch(rpcUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json', 
         },
         body: JSON.stringify({
           jsonrpc: '2.0',
@@ -165,8 +167,8 @@ export const useReownWallet = () => {
   // Helper function to fetch individual token balance
   const fetchTokenBalance = useCallback(async (token: Token, walletAddress: string): Promise<number> => {
     try {
-      // For native BNB, return the current balance from the hook
-      if (token.symbol === 'BNB' || token.address === '0x0000000000000000000000000000000000000000') {
+      // For native BNB (both mainnet and testnet), return the current balance from the hook
+      if (token.symbol === 'BNB' || token.symbol === 'tBNB' || token.address === '0x0000000000000000000000000000000000000000') {
         return parseFloat(balance?.formatted || '0');
       }
 

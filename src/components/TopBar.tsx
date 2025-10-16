@@ -82,12 +82,12 @@ const TopBar = () => {
 
       {isConnected && (
         <div className="flex items-center gap-3 mt-[10px]">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${chainId === 56 ? 'bg-green-500' : 'bg-red-500'}`}></div>
-            <span className={`text-xs ${chainId === 56 ? 'text-green-400' : 'text-red-400'}`}>
-              {chainId === 56 ? 'BSC' : 'Wrong Network'}
-            </span>
-          </div>
+                <div className="flex items-center gap-2">
+                  <div className={`w-2 h-2 rounded-full ${chainId === 97 ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                  <span className={`text-xs ${chainId === 97 ? 'text-green-400' : 'text-red-400'}`}>
+                    {chainId === 97 ? 'BSC Testnet' : 'Wrong Network'}
+                  </span>
+                </div>
           {address && (
             <span className="text-xs text-gray-400">
               {address.slice(0, 6)}...{address.slice(-4)}

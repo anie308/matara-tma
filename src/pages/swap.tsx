@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { ChevronLeft, ArrowUpDown, Settings, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useReownWallet } from "../services/reownWallet";
-import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
+import { POPULAR_BSC_TESTNET_TOKENS } from "../services/coinLogos";
 import TokenIcon from "../components/TokenIcon";
 
 // Utility function to format numbers with commas
@@ -38,10 +38,10 @@ function Swap() {
   const [slippage, setSlippage] = useState(0.5);
   const [showSlippage, setShowSlippage] = useState(false);
 
-  // Initialize with BNB and USDT
+  // Initialize with tBNB and USDT (testnet tokens)
   useEffect(() => {
-    const bnbToken = Object.values(POPULAR_BSC_TOKENS).find(token => token.symbol === 'BNB');
-    const usdtToken = Object.values(POPULAR_BSC_TOKENS).find(token => token.symbol === 'USDT');
+    const bnbToken = Object.values(POPULAR_BSC_TESTNET_TOKENS).find(token => token.symbol === 'tBNB');
+    const usdtToken = Object.values(POPULAR_BSC_TESTNET_TOKENS).find(token => token.symbol === 'USDT');
     
     if (bnbToken && usdtToken) {
       setFromToken({ ...bnbToken, decimals: 18 });
@@ -55,7 +55,7 @@ function Swap() {
       if (!isConnected) return;
       
       const allTokens = [
-        ...Object.values(POPULAR_BSC_TOKENS),
+        ...Object.values(POPULAR_BSC_TESTNET_TOKENS),
         ...getCustomTokens()
       ];
       

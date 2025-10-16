@@ -28,7 +28,7 @@ function Receive() {
                 <button onClick={() => navigate(-1)} className="p-[5px] z-20 rounded-full border border-[#44F58E] bg-black">
                     <ChevronLeft color="#44F58E" />
                 </button>
-                <p className="flex-1 text-center text-[25px] font-[600] gradient-text ml-[-30px]">Reciever {transaction.token}</p>
+                <p className="flex-1 text-center text-[25px] font-[600] gradient-text ml-[-30px]">Recieve {transaction.token}</p>
             </div>
 
             <div className="flex flex-col w-full  justify-center items-center mt-[20px] self-center gap-[20px]">

@@ -1,11 +1,11 @@
 import { createAppKit } from '@reown/appkit/react'
 import { WagmiProvider } from 'wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { bsc, mainnet, polygon, arbitrum } from '@reown/appkit/networks'
+import { bsc, bscTestnet, mainnet, polygon, arbitrum } from '@reown/appkit/networks'
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi'
 
-// Configure supported chains - focus on BSC
-export const networks = [bsc, mainnet, polygon, arbitrum]
+// Configure supported chains - focus on BSC Testnet for testing
+export const networks = [bscTestnet, bsc, mainnet, polygon, arbitrum]
 
 // Create query client
 export const queryClient = new QueryClient()
@@ -31,7 +31,7 @@ const wagmiAdapter = new WagmiAdapter({
 // Create AppKit
 createAppKit({
   adapters: [wagmiAdapter],
-  networks: [bsc] as any, // Type assertion to fix network type issue
+  networks: [bscTestnet] as any, // Use BSC Testnet for testing
   projectId,
   metadata,
   features: {

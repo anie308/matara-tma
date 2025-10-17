@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ArrowUpDown, Settings, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useReownWallet } from "../services/reownWallet";
-import { POPULAR_BSC_TESTNET_TOKENS } from "../services/coinLogos";
+import { useSelector } from "react-redux";
+import { useBackendWallet } from "../hooks/useBackendWallet";
+import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenIcon from "../components/TokenIcon";
+import TokenSelectModal from "../components/modal/TokenSelectModal";
+import { RootState } from "../services/store";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -27,7 +30,8 @@ interface Token {
 
 function Swap() {
   const navigate = useNavigate();
-  const { isConnected, getAllTokenBalances, getCustomTokens } = useReownWallet();
+  const { isConnected } = useBackendWallet();
+  const profile = useSelector((state: RootState) => state.user.profile);
   
   const [fromToken, setFromToken] = useState<Token | null>(null);
   const [toToken, setToToken] = useState<Token | null>(null);
@@ -37,11 +41,13 @@ function Swap() {
   const [isLoading, setIsLoading] = useState(false);
   const [slippage, setSlippage] = useState(0.5);
   const [showSlippage, setShowSlippage] = useState(false);
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [selectingFor, setSelectingFor] = useState<'from' | 'to'>('from');
 
   // Initialize with tBNB and USDT (testnet tokens)
   useEffect(() => {
-    const bnbToken = Object.values(POPULAR_BSC_TESTNET_TOKENS).find(token => token.symbol === 'tBNB');
-    const usdtToken = Object.values(POPULAR_BSC_TESTNET_TOKENS).find(token => token.symbol === 'USDT');
+    const bnbToken = Object.values(POPULAR_BSC_TOKENS).find(token => token.symbol === 'BNB');
+    const usdtToken = Object.values(POPULAR_BSC_TOKENS).find(token => token.symbol === 'USDT');
     
     if (bnbToken && usdtToken) {
       setFromToken({ ...bnbToken, decimals: 18 });
@@ -54,17 +60,12 @@ function Swap() {
     const loadBalances = async () => {
       if (!isConnected) return;
       
-      const allTokens = [
-        ...Object.values(POPULAR_BSC_TESTNET_TOKENS),
-        ...getCustomTokens()
-      ];
-      
-      const balances = await getAllTokenBalances(allTokens);
+      const balances = {};
       setTokenBalances(balances);
     };
 
     loadBalances();
-  }, [isConnected, getAllTokenBalances, getCustomTokens]);
+  }, [isConnected]); // Remove getCustomTokens from dependencies
 
   const handleSwapTokens = () => {
     const tempToken = fromToken;
@@ -119,6 +120,24 @@ function Swap() {
     }
   };
 
+  const handleTokenSelect = (tokenSymbol: string) => {
+    const token = Object.values(POPULAR_BSC_TOKENS).find(t => t.symbol === tokenSymbol);
+    if (token) {
+      const tokenData = { ...token, decimals: 18 };
+      if (selectingFor === 'from') {
+        setFromToken(tokenData);
+      } else {
+        setToToken(tokenData);
+      }
+    }
+    setShowTokenModal(false);
+  };
+
+  const openTokenModal = (type: 'from' | 'to') => {
+    setSelectingFor(type);
+    setShowTokenModal(true);
+  };
+
   return (
     <div className="h-full p-[20px] flex-col items-center justify-center w-full">
       {/* Header */}
@@ -169,12 +188,15 @@ function Swap() {
           <label className="text-gray-400 text-sm mb-2 block">From</label>
           <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+              <button 
+                onClick={() => openTokenModal('from')}
+                className="flex items-center gap-2 hover:bg-gray-700 rounded-lg p-2 transition-colors"
+              >
                 {fromToken && <TokenIcon symbol={fromToken.symbol} size={24} />}
                 <span className="text-white font-medium">
                   {fromToken?.symbol || 'Select Token'}
                 </span>
-              </div>
+              </button>
               <span className="text-gray-400 text-sm">
                 Balance: {formatNumber(getTokenBalance(fromToken))}
               </span>
@@ -212,12 +234,15 @@ function Swap() {
           <label className="text-gray-400 text-sm mb-2 block">To</label>
           <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
+              <button 
+                onClick={() => openTokenModal('to')}
+                className="flex items-center gap-2 hover:bg-gray-700 rounded-lg p-2 transition-colors"
+              >
                 {toToken && <TokenIcon symbol={toToken.symbol} size={24} />}
                 <span className="text-white font-medium">
                   {toToken?.symbol || 'Select Token'}
                 </span>
-              </div>
+              </button>
               <span className="text-gray-400 text-sm">
                 Balance: {formatNumber(getTokenBalance(toToken))}
               </span>
@@ -261,10 +286,20 @@ function Swap() {
         <div className="flex items-center gap-2 mt-4 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
           <AlertCircle color="#F59E0B" size={16} />
           <span className="text-yellow-400 text-sm">
-            Please connect your wallet to start swapping
+            {!profile?.walletAddress 
+              ? 'Please ensure your wallet is set up in your profile to start swapping'
+              : 'Please connect your wallet to start swapping'
+            }
           </span>
         </div>
       )}
+
+      {/* Token Selection Modal */}
+      <TokenSelectModal 
+        isOpen={showTokenModal}
+        setIsOpen={setShowTokenModal}
+        onSelectToken={handleTokenSelect}
+      />
     </div>
   );
 }

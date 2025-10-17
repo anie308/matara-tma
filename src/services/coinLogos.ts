@@ -144,112 +144,56 @@ export class CoinLogoService {
   }
 }
 
-// Pre-defined popular BSC tokens with their contract addresses
+
+// BSC Testnet Token Addresses for testing
 export const POPULAR_BSC_TOKENS = {
   'BNB': {
     symbol: 'BNB',
     name: 'BNB',
-    address: 'native',
-    logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png'
+    address: 'native', // Native BNB
+    logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png',
+    decimals: 18
   },
   'USDT': {
     symbol: 'USDT',
     name: 'Tether USD',
-    address: '0x55d398326f99059fF775485246999027B3197955',
-    logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png'
+    address: '0x55d398326f99059fF775485246999027B3197955', // BSC Mainnet USDT
+    logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png',
+    decimals: 18
   },
   'USDC': {
     symbol: 'USDC',
     name: 'USD Coin',
-    address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d',
-    logo: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png'
+    address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', // BSC Mainnet USDC
+    logo: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png',
+    decimals: 18
   },
   'BUSD': {
     symbol: 'BUSD',
     name: 'Binance USD',
-    address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56',
-    logo: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png'
+    address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', // BSC Mainnet BUSD
+    logo: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png',
+    decimals: 18
   },
   'CAKE': {
     symbol: 'CAKE',
-    name: 'PancakeSwap',
-    address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82',
-    logo: 'https://assets.coingecko.com/coins/images/12632/small/pancakeswap-cake-logo_1194099.png'
+    name: 'PancakeSwap Token',
+    address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', // BSC Mainnet CAKE
+    logo: 'https://assets.coingecko.com/coins/images/12632/small/pancakeswap-cake-logo_%281%29.png',
+    decimals: 18
   },
-  'ADA': {
-    symbol: 'ADA',
-    name: 'Cardano',
-    address: '0x3EE2200Efb3400fAbB9AacF31297cBdD1d435D47',
-    logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png'
+  'ETH': {
+    symbol: 'ETH',
+    name: 'Ethereum Token',
+    address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', // BSC Mainnet ETH
+    logo: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png',
+    decimals: 18
   },
-  'DOT': {
-    symbol: 'DOT',
-    name: 'Polkadot',
-    address: '0x7083609fCE4d1d8Dc0C979AAb8c869Ea2C873402',
-    logo: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png'
-  },
-  'LINK': {
-    symbol: 'LINK',
-    name: 'ChainLink',
-    address: '0xF8A0BF9cF54Bb92F17374d9e9A321E6a111a51bD',
-    logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png'
-  }
-};
-
-// BSC Testnet Token Addresses for testing
-export const POPULAR_BSC_TESTNET_TOKENS = {
-  'BNB': {
-    symbol: 'tBNB',
-    name: 'Testnet BNB',
-    address: '0x0000000000000000000000000000000000000000', // Native BNB on testnet
-    logo: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png'
-  },
-  'USDT': {
-    symbol: 'USDT',
-    name: 'Tether USD (Testnet)',
-    address: '0x337610d27c682E347C9cD60BD4b3b107C9d34dDd', // BSC Testnet USDT
-    logo: 'https://assets.coingecko.com/coins/images/325/small/Tether.png'
-  },
-  'USDC': {
-    symbol: 'USDC',
-    name: 'USD Coin (Testnet)',
-    address: '0x64544969ed7EBf5f083679233325356EbE738930', // BSC Testnet USDC
-    logo: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png'
-  },
-  'BUSD': {
-    symbol: 'BUSD',
-    name: 'Binance USD (Testnet)',
-    address: '0x78867BbEeF44f2326bF8DDd1941a4439382EF2A7', // BSC Testnet BUSD
-    logo: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png'
-  },
-  'CAKE': {
-    symbol: 'CAKE',
-    name: 'PancakeSwap Token (Testnet)',
-    address: '0xFa60D973F7642B748046464c1653B2b8c0b5C4c0', // BSC Testnet CAKE
-    logo: 'https://assets.coingecko.com/coins/images/12632/small/pancakeswap-cake-logo_%281%29.png'
-  },
-  'ADA': {
-    symbol: 'ADA',
-    name: 'Cardano (Testnet)',
-    address: '0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5', // BSC Testnet ADA
-    logo: 'https://assets.coingecko.com/coins/images/975/small/cardano.png'
-  },
-  'DOT': {
-    symbol: 'DOT',
-    name: 'Polkadot (Testnet)',
-    address: '0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5', // BSC Testnet DOT
-    logo: 'https://assets.coingecko.com/coins/images/12171/small/polkadot.png'
-  },
-  'LINK': {
-    symbol: 'LINK',
-    name: 'ChainLink Token (Testnet)',
-    address: '0x84b9B910527Ad5C03A9Ca831909E21e236EA7b06', // BSC Testnet LINK
-    logo: 'https://assets.coingecko.com/coins/images/877/small/chainlink-new-logo.png'
-  },
-  'UNI': {
-    symbol: 'UNI',
-    name: 'Uniswap (Testnet)',
-    address: '0xE02dF9e3e622DeBdD69fb838bB799E3F168902c5', // BSC Testnet UNI
-    logo: 'https://assets.coingecko.com/coins/images/12504/small/uniswap-uni.png'
+  'BTCB': {
+    symbol: 'BTCB',
+    name: 'Bitcoin BEP2',
+    address: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', // BSC Mainnet BTCB
+    logo: 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png',
+    decimals: 18
   }
 };

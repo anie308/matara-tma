@@ -5,13 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
-import { useReownWallet } from "../services/reownWallet";
-import { POPULAR_BSC_TESTNET_TOKENS } from "../services/coinLogos";
+import { useBackendWallet } from "../hooks/useBackendWallet";
+import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { WalletConnectModal } from "../components/WalletConnectModal";
-import { ReownConnectButton } from "../components/ReownConnectButton";
+import { useState, useEffect, useMemo } from "react";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -33,19 +31,16 @@ function SelectToken() {
     // Get wallet state including custom tokens
     const { 
         isConnected, 
-        address, 
-        getAllTokenBalances,
-        isTelegramMiniApp,
+        balances: walletBalances,
+        isLoadingBalances,
         getCustomTokens
-    } = useReownWallet();
+    } = useBackendWallet();
     
     const [balances, setBalances] = useState<Record<string, number>>({});
-    const [isLoadingBalances, setIsLoadingBalances] = useState(false);
-    const [showWalletModal, setShowWalletModal] = useState(false);
     
     // Memoize token list to prevent infinite loops
     const allTokens = useMemo(() => {
-        const TOKENS = Object.values(POPULAR_BSC_TESTNET_TOKENS).map(token => ({
+        const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
             symbol: token.symbol,
             name: token.name,
             logo: token.logo,
@@ -56,36 +51,12 @@ function SelectToken() {
         return [...TOKENS, ...customTokens];
     }, [getCustomTokens]);
     
-    // Memoize the loadBalances function to prevent infinite loops
-    const loadBalances = useCallback(async () => {
-        if (!isConnected || !address) {
-            console.log('Wallet not connected, skipping balance fetch');
-            setBalances({});
-            return;
-        }
-        
-        const customTokens = getCustomTokens();
-        console.log('SelectToken: Custom tokens:', customTokens);
-        console.log('SelectToken: All tokens:', allTokens.map(t => ({ symbol: t.symbol, address: t.address })));
-        console.log(`Loading balances for ${allTokens.length} tokens...`);
-        setIsLoadingBalances(true);
-        try {
-            const result = await getAllTokenBalances(allTokens);
-            console.log(`Loaded balances for ${Object.keys(result).length} tokens`);
-            setBalances(result);
-        } catch (error) {
-            console.error('Error loading token balances:', error);
-            // Don't clear balances on error, keep previous state
-            console.warn('Failed to load some token balances, but keeping existing data');
-        } finally {
-            setIsLoadingBalances(false);
-        }
-    }, [isConnected, address, allTokens, getCustomTokens]);
-
-    // Fetch token balances when component mounts
+    // Use wallet balances directly when available
     useEffect(() => {
-        loadBalances();
-    }, [loadBalances]);
+        if (Object.keys(walletBalances).length > 0) {
+            setBalances(walletBalances);
+        }
+    }, [walletBalances]);
     
     const handleSelectToken = (token: any) => {
         dispatch(setTransaction({ 
@@ -111,27 +82,15 @@ function SelectToken() {
               <div className="text-center">
                 <h2 className="text-white text-xl font-bold mb-2">Wallet Not Connected</h2>
                 <p className="text-gray-400">
-                  {isTelegramMiniApp 
-                    ? "Please connect your BSC wallet to view token balances" 
-                    : "Please connect your wallet to view token balances"
-                  }
+                  Please connect your wallet to view token balances
                 </p>
-          {isTelegramMiniApp && (
-            <p className="text-gray-500 text-sm mt-2">
-              Welcome to Telegram Mini App! 👋
-            </p>
-          )}
               </div>
-              {isTelegramMiniApp ? (
-                <button 
-                  onClick={() => setShowWalletModal(true)}
-                  className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
-                >
-                  Connect BSC Wallet
-                </button>
-              ) : (
-                <ReownConnectButton />
-              )}
+              <button 
+                onClick={() => {/* Connect wallet logic will be handled by backend */}}
+                className="btn p-[15px] text-[18px] font-[600] rounded-[15px]"
+              >
+                Connect Wallet
+              </button>
             </div>
           ) : (
           <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">
@@ -191,12 +150,6 @@ function SelectToken() {
             })}
           </div>
           )}
-          
-          {/* Wallet Connect Modal for Telegram Mini Apps */}
-          <WalletConnectModal 
-            isOpen={showWalletModal}
-            onClose={() => setShowWalletModal(false)}
-          />
       </div>
     )
 }

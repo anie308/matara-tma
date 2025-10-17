@@ -11,6 +11,7 @@ export interface User {
   onboarding: boolean;
   referralCode?: string | null;
   profilePicture: string;
+  walletAddress: string | null;
 }
 
 export interface State {
@@ -39,6 +40,7 @@ const defaultProfile: User = {
   onboarding: true,
   referralCode: null,
   profilePicture: "",
+  walletAddress: null,
 };
 
 const initialState: State = {
@@ -86,7 +88,9 @@ const userSlice = createSlice({
     setRefillValue: (state) => {
       if (state.profile) state.profile.refillValue += 1;
     },
-
+    setWalletAddress: (state, action: PayloadAction<string | null>) => {
+      if (state.profile) state.profile.walletAddress = action.payload;
+    },
     // Missions
     startMission: (state, action: PayloadAction<any>) => {
       const mission = action.payload;
@@ -158,6 +162,7 @@ export const {
   setMiningStatus,
   setMiningStartDate,
   clearUser,
+  setWalletAddress,
 } = userSlice.actions;
 
 export default userSlice.reducer;

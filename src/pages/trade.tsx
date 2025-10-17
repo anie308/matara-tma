@@ -1,13 +1,12 @@
 import WebApp from "@twa-dev/sdk";
-import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Bell, Eye, EyeOff, ScanLine, TriangleAlert, Plus, Wallet } from "lucide-react";
+import { useState } from "react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, EyeOff, Plus, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
 import { RootState } from "../services/store";
-import { useReownWallet } from "../services/reownWallet";
+import { useBackendWallet } from "../hooks/useBackendWallet";
 import ImportTokenModal from "../components/modal/ImportTokenModal";
-import { POPULAR_BSC_TESTNET_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 
@@ -24,7 +23,6 @@ const formatNumber = (num: number): string => {
 };
 
 export default function Trade() {
-  const [balances, setBalances] = useState<Record<string, number>>({});
   const [showImportModal, setShowImportModal] = useState(false);
   
   WebApp.BackButton.hide();
@@ -34,39 +32,12 @@ export default function Trade() {
   const { 
     isConnected, 
     address, 
-    balance, 
-    chainId,
-    error, 
-    connect, 
-    getAllTokenBalances,
+    isLoadingBalances,
+    getAvailableTokens,
     importToken,
-    getCustomTokens,
-  } = useReownWallet();
+  } = useBackendWallet();
 
-  const TOKENS = Object.values(POPULAR_BSC_TESTNET_TOKENS).map(token => ({
-    symbol: token.symbol,
-    name: token.name,
-    logo: token.logo,
-    address: token.address,
-    decimals: 18
-  }));
 
-  useEffect(() => {
-    const loadBalances = async () => {
-      console.log('Trade: Loading balances', { isConnected, address });
-      if (isConnected && address) {
-        const customTokens = getCustomTokens();
-        const allTokens = [...TOKENS, ...customTokens];
-        console.log('Trade: Custom tokens:', customTokens);
-        console.log('Trade: All tokens:', allTokens.map(t => ({ symbol: t.symbol, address: t.address })));
-        console.log('Trade: Fetching balances for tokens:', allTokens.length);
-        const result = await getAllTokenBalances(allTokens);
-        console.log('Trade: Received balances:', result);
-        setBalances(result);
-      }
-    };
-    loadBalances();
-  }, [isConnected, address, getAllTokenBalances, getCustomTokens]);
 
   const transaction = useSelector((state: RootState) => state.transaction);
 
@@ -85,24 +56,27 @@ export default function Trade() {
     navigate("/select-token");
   }
 
-  const handleImportToken = async (token: any) => {
-    return await importToken(token);
+  const handleImportToken = async () => {
+    return await importToken();
   }
 
-  const customTokens = getCustomTokens();
-  const allTokens = [...TOKENS, ...customTokens];
+  const availableTokens = getAvailableTokens();
+  
+  // Show all popular BSC tokens with their balances
+  const tokensWithBalances = availableTokens.map(token => {
+    return {
+      symbol: token.symbol,
+      name: token.name,
+      address: token.address,
+      logo: token.logoURI,
+      balance: token.balance
+    };
+  });
 
   return (
     <>
       <div className="flex flex-col items-center justify-center w-full p-[20px]">
-        <div className="w-full flex items-center justify-between mt-[10px]">
-          <div></div>
-          <div className="flex items-center gap-[10px]">
-           
-            <Bell className="text-white text-[20px]" />
-            <ScanLine className="text-white text-[20px]" />
-          </div>
-        </div>
+        
 
         <div className="flex flex-col items-center justify-center w-full mt-[20px]	">
           {!isConnected ? (
@@ -112,15 +86,20 @@ export default function Trade() {
               <p className="text-gray-400 text-center">
                 Use the "Connect" button in the top bar to connect your wallet
               </p>
-              {error && (
-                <p className="text-red-400 text-sm text-center">{error}</p>
-              )}
+            </div>
+          ) : isLoadingBalances ? (
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-16 h-16 border-4 border-[#FFB948] border-t-transparent rounded-full animate-spin"></div>
+              <h2 className="text-white text-xl font-bold">Loading Balances...</h2>
+              <p className="text-gray-400 text-center">
+                Fetching your token balances from BSC network
+              </p>
             </div>
           ) : (
             <>
               <div className="flex items-center gap-[10px]">
                 <p className="font-[900] text-[32px] gradient-text">
-                  {isVisible ? `$${parseFloat(balance).toFixed(4)}` : "****"}
+                  {isVisible ? `$${parseFloat("0").toFixed(4)}` : "****"}
                 </p>
                 <button onClick={() => setIsVisible(!isVisible)}>
                   {isVisible ? <Eye className="text-white text-[20px]" /> : <EyeOff className="text-white text-[20px]" />}
@@ -135,23 +114,6 @@ export default function Trade() {
             </>
           )}
 
-          {isConnected && chainId !== 56 && (
-            <div className="w-full mt-4 p-3 bg-red-900/20 border border-red-500/30 rounded-lg">
-              <div className="flex items-center gap-2 text-red-400">
-                <TriangleAlert size={16} />
-                <span className="text-sm font-medium">Wrong Network</span>
-              </div>
-              <p className="text-red-300 text-xs mt-1">
-                Please switch to Binance Smart Chain (BSC) to view your tokens.
-              </p>
-              <button
-                onClick={connect}
-                className="mt-2 bg-red-600 text-white px-3 py-1 rounded text-xs hover:bg-red-700 transition-colors"
-              >
-                Switch to BSC
-              </button>
-            </div>
-          )}
 
           <div className="flex items-center justify-center gap-[15px] mt-[20px]">
             <button onClick={handleSend} className="btn p-[8px] rounded-[10px]">
@@ -181,36 +143,44 @@ export default function Trade() {
                 </div>
               </div>
 
-              {allTokens.map((token) => {
-                return (
-                  <div key={`${token.symbol}-${token.address}`} className="flex items-center justify-between mt-[20px]">
-                    <div className="flex items-center gap-[10px]">
-                      <TokenLogo
-                        symbol={token.symbol}
-                        address={token.address}
-                        size={40}
-                        variant={getTokenVariant(token.symbol, token.name)}
-                        className=""
-                      />
-                      <div>
-                        <p className="text-white font-[600]">
-                          {token.symbol} <span className="text-[#44F58E]">+0.00%</span>
-                        </p>
-                        <p className="text-[#CDCBC8] text-[14px]">{token.name}</p>
+              {tokensWithBalances.length > 0 ? (
+                tokensWithBalances.map((token) => {
+                  return (
+                    <div key={`${token.symbol}-${token.address}`} className="flex items-center justify-between mt-[20px]">
+                      <div className="flex items-center gap-[10px]">
+                        <TokenLogo
+                          symbol={token.symbol}
+                          address={token.address}
+                          size={40}
+                          variant={getTokenVariant(token.symbol, token.name)}
+                          className=""
+                        />
+                        <div>
+                          <p className="text-white font-[600]">
+                            {token.symbol} <span className="text-[#44F58E]">+0.00%</span>
+                          </p>
+                          <p className="text-[#CDCBC8] text-[14px]">{token.name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-right">
+                          <p className="font-[600] text-white">
+                            {formatNumber(token.balance || 0)} {token.symbol}
+                          </p>
+                          <p className="text-[#CDCBC8] text-[14px]">$0.00</p>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <p className="font-[600] text-white">
-                          {formatNumber(balances[token.symbol] || 0)} {token.symbol}
-                        </p>
-                        <p className="text-[#CDCBC8] text-[14px]">$0.00</p>
-                      </div>
-                      
-                    </div>
+                  );
+                })
+              ) : (
+                <div className="flex flex-col items-center gap-4 mt-8">
+                  <div className="text-gray-400 text-center">
+                    <p className="text-lg font-medium">Loading tokens...</p>
+                    <p className="text-sm">Checking your wallet for BSC tokens</p>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           )}
         </div>

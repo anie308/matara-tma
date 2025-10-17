@@ -6,7 +6,7 @@ import { clearTransaction } from '../services/redux/transaction';
 import { toast } from 'react-hot-toast';
 import TokenLogo from '../components/TokenLogo';
 import { getTokenVariant } from '../utils/tokenUtils';
-import { useReownWallet } from '../services/reownWallet';
+import { useBackendWallet } from '../hooks/useBackendWallet';
 import { useState, useEffect } from 'react';
 import { POPULAR_BSC_TOKENS } from '../services/coinLogos';
 function Send() {
@@ -24,7 +24,7 @@ function Send() {
         isConnected, 
         address,
         getCustomTokens
-    } = useReownWallet();
+    } = useBackendWallet();
 
     // Create token list for balance fetching
     const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({

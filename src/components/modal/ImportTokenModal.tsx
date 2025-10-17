@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { X, Plus, AlertCircle } from "lucide-react";
-import { Token } from "../../services/wallet";
+
+interface Token {
+  symbol: string;
+  name: string;
+  logo: string;
+  address: string;
+  decimals: number;
+}
 
 interface ImportTokenModalProps {
   isOpen: boolean;

@@ -4,13 +4,11 @@ import storage from "redux-persist/lib/storage"; // localStorage for web
 import { apiSlice } from "./api";
 import userReducer from "./redux/user";
 import transactionReducer from "./redux/transaction";
-import walletReducer from "./redux/wallet";
 
 // ✅ Combine all reducers first
 const rootReducer = combineReducers({
   user: userReducer,
   transaction: transactionReducer,
-  wallet: walletReducer,
   [apiSlice.reducerPath]: apiSlice.reducer,
 });
 
@@ -18,7 +16,7 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["transaction", "user", "wallet"], // persist only these slices
+  whitelist: ["transaction", "user"], // persist only these slices
 };
 
 // ✅ Create persisted reducer

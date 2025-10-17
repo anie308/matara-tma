@@ -6,6 +6,8 @@ import {
   TransitionChild,
 } from "@headlessui/react";
 import { GoPlus } from "react-icons/go";
+import { POPULAR_BSC_TOKENS } from "../../services/coinLogos";
+import TokenIcon from "../TokenIcon";
 
 type TokenSelectModalProps = {
   setIsOpen: (isOpen: boolean) => void;
@@ -13,11 +15,12 @@ type TokenSelectModalProps = {
   onSelectToken: (token: string) => void;
 };
 
-const tokens = [
-    { name: 'TON', icon: '/lion.jpg' },
-    { name: 'BTC', icon: '/scout.jpg' },
-    { name: 'USDT', icon: '/8.jpg' },
-];
+// Use the popular BSC tokens from the service
+const tokens = Object.values(POPULAR_BSC_TOKENS).map(token => ({
+  name: token.symbol,
+  icon: token.logo,
+  symbol: token.symbol
+}));
 
 function TokenSelectModal({ setIsOpen, isOpen, onSelectToken }: TokenSelectModalProps) {
   function close() {
@@ -61,12 +64,12 @@ function TokenSelectModal({ setIsOpen, isOpen, onSelectToken }: TokenSelectModal
                   <div className="flex flex-col gap-2">
                     {tokens.map((token) => (
                         <button
-                            key={token.name}
-                            onClick={() => handleSelectToken(token.name)}
+                            key={token.symbol}
+                            onClick={() => handleSelectToken(token.symbol)}
                             className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-700"
                         >
-                            <img src={token.icon} alt={token.name} className="w-8 h-8"/>
-                            <span className="text-white font-inter font-[500] text-[18px]">{token.name}</span>
+                            <TokenIcon symbol={token.symbol} size={32} />
+                            <span className="text-white font-inter font-[500] text-[18px]">{token.symbol}</span>
                         </button>
                     ))}
                   </div>

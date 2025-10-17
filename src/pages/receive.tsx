@@ -6,19 +6,26 @@ import { useNavigate } from "react-router-dom"
 import { RootState } from "../services/store";
 import { QRCodeSVG } from 'qrcode.react';
 import { toast } from "react-hot-toast";
+import { useBackendWallet } from "../hooks/useBackendWallet";
 
 function Receive() {
     const navigate = useNavigate();
     const transaction = useSelector((state: RootState) => state.transaction);
-    console.log(transaction);
+    const { address } = useBackendWallet();
+    
+    // Use your actual wallet address instead of transaction.address
+    const walletAddress = address || "0x29dA601410A3b7886F2D752098089b62f21202ab";
+    
+    console.log('Transaction:', transaction);
+    console.log('Wallet Address:', walletAddress);
 
     const handleCopy = async () => {
-        await navigator.clipboard.writeText(transaction.address);
+        await navigator.clipboard.writeText(walletAddress);
         toast.success("Address copied to clipboard");
     }
 
     const handleShare = async () => {
-        await navigator.clipboard.writeText(transaction.address);
+        await navigator.clipboard.writeText(walletAddress);
         toast.success("Address shared");
     }
 
@@ -35,13 +42,13 @@ function Receive() {
                 <div className="border flex items-center p-[10px] space-x-[10px] bg-[#FFB94821] w-[90%]">
                     <TriangleAlert size={35} className="text-[#FFB948] text-[20px]" />
 
-                    <p className="text-[#FFB948] font-[500] text-[14px]">This is {transaction.token} address. only send BSC token here</p>
+                    <p className="text-[#FFB948] font-[500] text-[14px]">This is your BSC wallet address. You can receive {transaction.token} and all other BSC tokens here</p>
                 </div>
                 <div className="w-[60%] bg-white h-[240px] flex items-center justify-center p-[10px] rounded-[10px]">
-                    <QRCodeSVG value={transaction.address} size={200} />
+                    <QRCodeSVG value={walletAddress} size={200} />
                 </div>
                 <div className="flex items-center flex-col justify-center px-[20px] w-full">
-                    <p className="gradient-text text-center text-wrap break-all">{transaction.address}</p>
+                    <p className="gradient-text text-center text-wrap break-all">{walletAddress}</p>
                     <button className="mt-[10px]" onClick={handleCopy}>
                         <Copy className="text-white text-[20px]" />
                     </button>

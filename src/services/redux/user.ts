@@ -12,6 +12,8 @@ export interface User {
   referralCode?: string | null;
   profilePicture: string;
   walletAddress: string | null;
+  hasPassword: boolean;
+  isAuthenticated: boolean;
 }
 
 export interface State {
@@ -41,6 +43,8 @@ const defaultProfile: User = {
   referralCode: null,
   profilePicture: "",
   walletAddress: null,
+  hasPassword: false,
+  isAuthenticated: false,
 };
 
 const initialState: State = {
@@ -90,6 +94,12 @@ const userSlice = createSlice({
     },
     setWalletAddress: (state, action: PayloadAction<string | null>) => {
       if (state.profile) state.profile.walletAddress = action.payload;
+    },
+    setHasPassword: (state, action: PayloadAction<boolean>) => {
+      if (state.profile) state.profile.hasPassword = action.payload;
+    },
+    setIsAuthenticated: (state, action: PayloadAction<boolean>) => {
+      if (state.profile) state.profile.isAuthenticated = action.payload;
     },
     // Missions
     startMission: (state, action: PayloadAction<any>) => {
@@ -163,6 +173,8 @@ export const {
   setMiningStartDate,
   clearUser,
   setWalletAddress,
+  setHasPassword,
+  setIsAuthenticated,
 } = userSlice.actions;
 
 export default userSlice.reducer;

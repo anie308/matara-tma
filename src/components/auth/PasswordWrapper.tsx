@@ -35,7 +35,8 @@ const PasswordWrapper: React.FC = () => {
       triggerVerifyToken()
         .unwrap()
         .then(() => dispatch(setIsAuthenticated(true)))
-        .catch(() => {
+        .catch((err: any) => {
+          console.log(err, "token-verify-error")
           localStorage.removeItem('jwt_token');
           dispatch(setIsAuthenticated(false));
         });
@@ -63,6 +64,8 @@ const PasswordWrapper: React.FC = () => {
       </div>
     );
   }
+
+  console.log(isAuthenticated, "isAuthenticated")
 
   // If user is authenticated, show the app
   if (isAuthenticated) {

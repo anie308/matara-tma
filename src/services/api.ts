@@ -22,7 +22,7 @@ export const apiSlice = createApi({
     }),
     createPassword: builder.mutation<{ token?: string; message?: string }, { username: string; password: string }>({
       query: (body) => ({
-        url: '/api/auth/create-password',
+        url: '/auth/create-password',
         method: 'POST',
         body,
       }),

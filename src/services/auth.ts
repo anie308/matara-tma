@@ -24,6 +24,7 @@ export const {
   useCreatePasswordMutation,
   useLoginMutation,
   useVerifyTokenQuery,
+  useLazyVerifyTokenQuery
 } = apiSlice;
 
 // Helper functions for auth operations

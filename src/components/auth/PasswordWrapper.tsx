@@ -18,6 +18,7 @@ const PasswordWrapper: React.FC = () => {
   const hasPassword = profile?.hasPassword || false;
   const isAuthenticated = profile?.isAuthenticated || false;
   const username = profile?.username;
+  console.log("loaded-username", username)
 
   // Check if user has password set
   const { 

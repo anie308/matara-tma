@@ -18,7 +18,7 @@ export const apiSlice = createApi({
   endpoints: (builder) => ({
     // Auth endpoints
     checkPasswordStatus: builder.query<{ hasPassword: boolean; message?: string }, string>({
-      query: (username) => `/api/auth/check-password?username=${encodeURIComponent(username)}`,
+      query: (username) => `/auth/check-password?username=${encodeURIComponent(username)}`,
     }),
     createPassword: builder.mutation<{ token?: string; message?: string }, { username: string; password: string }>({
       query: (body) => ({
@@ -29,13 +29,13 @@ export const apiSlice = createApi({
     }),
     login: builder.mutation<{ token?: string; message?: string }, { username: string; password: string }>({
       query: (body) => ({
-        url: '/api/auth/login',
+        url: '/auth/login',
         method: 'POST',
         body,
       }),
     }),
     verifyToken: builder.query<{ message?: string }, void>({
-      query: () => '/api/auth/verify-token',
+      query: () => '/auth/verify-token',
     }),
   }),
   tagTypes: ['tasks', 'user', 'milestone', 'mining', 'bonus', 'auth']

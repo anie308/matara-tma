@@ -4,11 +4,9 @@ import { RootState } from '../../services/store';
 import { setHasPassword, setIsAuthenticated } from '../../services/redux/user';
 import CreatePassword from './CreatePassword';
 import LoginPassword from './LoginPassword';
-import App from '../../App';
+import MainRoutes from '../../routes/MainRoutes';
 import { useCheckPasswordStatusQuery, useVerifyTokenQuery } from '../../services/auth';
-import eruda from 'eruda';
 
-eruda.init();
 
 
 const PasswordWrapper: React.FC = () => {
@@ -68,7 +66,7 @@ const PasswordWrapper: React.FC = () => {
 
   // If user is authenticated, show the app
   if (isAuthenticated) {
-    return <App />;
+    return <MainRoutes />;
   }
 
   // If user has password but is not authenticated, show login

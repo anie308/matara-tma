@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes } from 'react-router-dom';
 import { setUsername, setProfilePicture } from './services/redux/user';
-import MainRoutes from './routes/MainRoutes';
 import Unsupported from './pages/unsupported';
+import PasswordWrapper from './components/auth/PasswordWrapper';
 import { RootState } from './services/store';
 
 function App() {
@@ -46,7 +46,7 @@ function App() {
   return (
     <Routes>
       {isSupported ? (
-        <Route path="/*" element={<MainRoutes />} />
+        <Route path="/*" element={<PasswordWrapper />} />
       ) : (
         <Route path="/*" element={<Unsupported />} />
       )}

@@ -2,7 +2,7 @@ import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import storage from "redux-persist/lib/storage"; // localStorage for web
 import { apiSlice } from "./api";
-import userReducer from "./redux/user";
+import userReducer, { localStorageSyncMiddleware } from "./redux/user";
 import transactionReducer from "./redux/transaction";
 
 // ✅ Combine all reducers first
@@ -28,7 +28,7 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: false, // required for redux-persist
-    }).concat(apiSlice.middleware),
+    }).concat(apiSlice.middleware, localStorageSyncMiddleware),
   devTools: true,
 });
 

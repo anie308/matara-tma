@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+import { Middleware } from '@reduxjs/toolkit';
 
 export interface User {
   username: string | null;
@@ -160,6 +161,16 @@ const userSlice = createSlice({
     clearJwtToken: (state) => {
       state.jwtToken = null;
     },
+    logout: (state) => {
+      // Clear authentication state
+      state.isAuthenticated = false;
+      state.jwtToken = null;
+      if (state.profile) {
+        state.profile.isAuthenticated = false;
+      }
+      // Clear localStorage
+      localStorage.removeItem('jwt_token');
+    },
     clearUser: () => initialState, // reset everything
   },
 });
@@ -192,6 +203,29 @@ export const {
   setJwtToken,
   clearJwtToken,
   clearIsAuthenticated,
+  logout,
 } = userSlice.actions;
+
+// Middleware to sync localStorage with Redux state
+export const localStorageSyncMiddleware: Middleware = () => (next) => (action: any) => {
+  const result = next(action);
+  
+  // Sync JWT token changes to localStorage
+  if (action.type === 'user/setJwtToken') {
+    const token = action.payload;
+    if (token) {
+      localStorage.setItem('jwt_token', token);
+    } else {
+      localStorage.removeItem('jwt_token');
+    }
+  }
+  
+  // Sync logout to localStorage
+  if (action.type === 'user/logout') {
+    localStorage.removeItem('jwt_token');
+  }
+  
+  return result;
+};
 
 export default userSlice.reducer;

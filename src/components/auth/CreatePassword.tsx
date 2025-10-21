@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Shield } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../services/store';
-import { setIsAuthenticated, setHasPassword } from '../../services/redux/user';
+import { setIsAuthenticated, setHasPassword, setJwtToken } from '../../services/redux/user';
 import { toast } from 'react-hot-toast';
 import { useCreatePasswordMutation } from '../../services/auth';
 
@@ -18,9 +18,15 @@ const CreatePassword: React.FC<CreatePasswordProps> = ({ onSuccess }) => {
   
   const dispatch = useDispatch();
   const profile = useSelector((state: RootState) => state.user.profile);
+  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
   const username = profile?.username;
   
   const [createPassword, { isLoading }] = useCreatePasswordMutation();
+
+  // If user is already authenticated, don't render the create password form
+  if (isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,14 +49,22 @@ const CreatePassword: React.FC<CreatePasswordProps> = ({ onSuccess }) => {
     try {
       const result = await createPassword({ username, password }).unwrap();
 
-      // Store JWT token if provided
+      // Store JWT token in Redux (localStorage will be synced by middleware)
       if (result.token) {
-        localStorage.setItem('jwt_token', result.token);
+        dispatch(setJwtToken(result.token));
       }
       
       dispatch(setHasPassword(true));
       dispatch(setIsAuthenticated(true));
+      
+      // Clear form state
+      setPassword('');
+      setConfirmPassword('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+      
       toast.success('Password created successfully!');
+      console.log('Password created successfully, calling onSuccess');
       onSuccess();
     } catch (error: any) {
       console.error('Error creating password:', error);

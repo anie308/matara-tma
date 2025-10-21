@@ -16,9 +16,15 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
   
   const dispatch = useDispatch();
   const profile = useSelector((state: RootState) => state.user.profile);
+  const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
   const username = profile?.username;
   
   const [login, { isLoading }] = useLoginMutation();
+
+  // If user is already authenticated, don't render the login form
+  if (isAuthenticated) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,11 +42,20 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
     try {
       const result = await login({ username, password }).unwrap();
 
-      console.log("result", result)
+      console.log("Login result:", result);
 
-      dispatch(setJwtToken(result.token as string | null));
+      // Store token in Redux (localStorage will be synced by middleware)
+      if (result.token) {
+        dispatch(setJwtToken(result.token));
+      }
       dispatch(setIsAuthenticated(true));
+      
+      // Clear form state
+      setPassword('');
+      setShowPassword(false);
+      
       toast.success('Login successful!');
+      console.log('Login successful, calling onSuccess');
       onSuccess();
     } catch (error: any) {
       console.error('Error logging in:', error);

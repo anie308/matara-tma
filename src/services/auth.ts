@@ -27,27 +27,3 @@ export const {
   useLazyVerifyTokenQuery
 } = apiSlice;
 
-// Helper functions for auth operations
-export class AuthService {
-  // Logout user
-  static logout(): void {
-    localStorage.removeItem('jwt_token');  
-  }
-
-  // Store JWT token
-  static setToken(token: string): void {
-    localStorage.setItem('jwt_token', token);
-  }
-
-  // Get JWT token
-  static getToken(): string | null {
-    return localStorage.getItem('jwt_token');
-  }
-
-  // Check if user is authenticated
-  static isAuthenticated(): boolean {
-    return !!this.getToken();
-  }
-}
-
-export default AuthService;

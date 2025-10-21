@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../services/store';
-import { setHasPassword, setIsAuthenticated } from '../../services/redux/user';
+import { clearIsAuthenticated, clearJwtToken, setHasPassword, setIsAuthenticated, setJwtToken } from '../../services/redux/user';
 import CreatePassword from './CreatePassword';
 import LoginPassword from './LoginPassword';
 import MainRoutes from '../../routes/MainRoutes';
@@ -34,11 +34,14 @@ const PasswordWrapper: React.FC = () => {
     if (token && !isAuthenticated) {
       triggerVerifyToken()
         .unwrap()
-        .then(() => dispatch(setIsAuthenticated(true)))
+        .then(() => {
+          dispatch(setIsAuthenticated(true));
+          dispatch(setJwtToken(token));
+        })
         .catch((err: any) => {
           console.log(err, "token-verify-error")
-          localStorage.removeItem('jwt_token');
-          dispatch(setIsAuthenticated(false));
+          dispatch(clearIsAuthenticated());
+          dispatch(clearJwtToken());
         });
     }
   }, []);

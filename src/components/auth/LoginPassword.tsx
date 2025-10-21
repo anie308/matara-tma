@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, Shield, User } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../services/store';
-import { setIsAuthenticated } from '../../services/redux/user';
+import { setIsAuthenticated, setJwtToken } from '../../services/redux/user';
 import { toast } from 'react-hot-toast';
 import { useLoginMutation } from '../../services/auth';
 
@@ -38,11 +38,7 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
 
       console.log("result", result)
 
-      // Store JWT token
-      if (result.token) {
-        localStorage.setItem('jwt_token', result.token);
-      }
-      
+      dispatch(setJwtToken(result.token as string | null));
       dispatch(setIsAuthenticated(true));
       toast.success('Login successful!');
       onSuccess();

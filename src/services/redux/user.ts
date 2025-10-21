@@ -29,6 +29,8 @@ export interface State {
   missions: any[];
   miningStatus: boolean;
   miningStartDate: string | null;
+  isAuthenticated: boolean;
+  jwtToken: string | null;
 }
 
 const defaultProfile: User = {
@@ -60,6 +62,8 @@ const initialState: State = {
   missions: [],
   miningStatus: false,
   miningStartDate: null,
+  isAuthenticated: false,   
+  jwtToken: null,
 };
 
 const userSlice = createSlice({
@@ -146,6 +150,16 @@ const userSlice = createSlice({
     setMiningStartDate: (state, action: PayloadAction<string | null>) => {
       state.miningStartDate = action.payload;
     },
+    
+    clearIsAuthenticated: (state) => {
+      state.isAuthenticated = false;
+    },
+    setJwtToken: (state, action: PayloadAction<string | null>) => {
+      state.jwtToken = action.payload;
+    },
+    clearJwtToken: (state) => {
+      state.jwtToken = null;
+    },
     clearUser: () => initialState, // reset everything
   },
 });
@@ -175,6 +189,9 @@ export const {
   setWalletAddress,
   setHasPassword,
   setIsAuthenticated,
+  setJwtToken,
+  clearJwtToken,
+  clearIsAuthenticated,
 } = userSlice.actions;
 
 export default userSlice.reducer;

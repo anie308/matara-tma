@@ -30,7 +30,7 @@ export const {
 export class AuthService {
   // Logout user
   static logout(): void {
-    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('jwt_token');  
   }
 
   // Store JWT token

@@ -6,6 +6,10 @@ import CreatePassword from './CreatePassword';
 import LoginPassword from './LoginPassword';
 import App from '../../App';
 import { useCheckPasswordStatusQuery, useVerifyTokenQuery } from '../../services/auth';
+import eruda from 'eruda';
+
+eruda.init();
+
 
 const PasswordWrapper: React.FC = () => {
   const dispatch = useDispatch();

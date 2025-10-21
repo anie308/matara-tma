@@ -3,9 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes } from 'react-router-dom';
 import { setUsername, setProfilePicture } from './services/redux/user';
 import Unsupported from './pages/unsupported';
-// import PasswordWrapper from './components/auth/PasswordWrapper';
 import { RootState } from './services/store';
-import MainRoutes from './routes/MainRoutes';
 import PasswordWrapper from './components/auth/PasswordWrapper';
 
 function App() {

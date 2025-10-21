@@ -32,7 +32,7 @@ const PasswordWrapper: React.FC = () => {
     isLoading: isCheckingToken,
     error: tokenError 
   } = useVerifyTokenQuery(undefined, {
-    skip: !localStorage.getItem('jwt_token'),
+    skip: !localStorage.getItem('jwt_token') || isAuthenticated,
   });
 
   console.log("passwordStatus", passwordStatus, "tokenStatus", tokenStatus)

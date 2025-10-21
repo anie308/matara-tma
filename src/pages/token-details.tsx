@@ -1,9 +1,10 @@
 import WebApp from "@twa-dev/sdk";
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, TrendingUp, TrendingDown, BarChart3, Info, ExternalLink, Send, ArrowDown, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, ExternalLink, Send, ArrowDown, ArrowUpDown } from "lucide-react";
 import { useBackendWallet } from "../hooks/useBackendWallet";
 import TokenLogo from "../components/TokenLogo";
+import TradingViewChart from "../components/TradingViewChart";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { useDispatch } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
@@ -23,15 +24,26 @@ const getMockPriceData = (symbol: string) => {
   };
 };
 
-// Mock chart data
-const generateChartData = (price: number) => {
+// Mock chart data with more realistic price movements
+const generateChartData = (price: number, timeframe: string) => {
   const data = [];
   let currentPrice = price;
-  for (let i = 0; i < 30; i++) {
-    const change = (Math.random() - 0.5) * 0.02;
-    currentPrice = currentPrice * (1 + change);
+  const now = Date.now();
+  
+  // Generate different amounts of data based on timeframe
+  const dataPoints = timeframe === '1h' ? 24 : timeframe === '24h' ? 24 : timeframe === '7d' ? 168 : 720;
+  const interval = timeframe === '1h' ? 60 * 60 * 1000 : timeframe === '24h' ? 60 * 60 * 1000 : timeframe === '7d' ? 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
+  
+  for (let i = 0; i < dataPoints; i++) {
+    // More realistic price movement with trend
+    const trend = Math.sin(i / dataPoints * Math.PI * 2) * 0.01; // Cyclical trend
+    const volatility = (Math.random() - 0.5) * 0.02; // Random volatility
+    const change = trend + volatility;
+    
+    currentPrice = Math.max(currentPrice * (1 + change), price * 0.1); // Prevent negative prices
+    
     data.push({
-      time: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000).toISOString(),
+      time: new Date(now - (dataPoints - 1 - i) * interval).toISOString(),
       price: currentPrice,
     });
   }
@@ -44,6 +56,7 @@ export default function TokenDetails() {
   const dispatch = useDispatch();
   const [priceData, setPriceData] = useState<any>(null);
   const [chartData, setChartData] = useState<any[]>([]);
+  console.log(chartData, "chartData")
   const [timeframe, setTimeframe] = useState('24h');
   
   const { getAvailableTokens } = useBackendWallet();
@@ -58,9 +71,9 @@ export default function TokenDetails() {
     if (symbol) {
       const mockData = getMockPriceData(symbol);
       setPriceData(mockData);
-      setChartData(generateChartData(mockData.price));
+      setChartData(generateChartData(mockData.price, timeframe));
     }
-  }, [symbol]);
+  }, [symbol, timeframe]);
 
   const availableTokens = getAvailableTokens();
   const token = availableTokens.find(t => t.symbol === symbol && t.address === address);
@@ -216,14 +229,15 @@ export default function TokenDetails() {
           </div>
         </div>
         
-        {/* Mock Chart - In a real app, you'd use a charting library like Chart.js or TradingView */}
-        <div className="h-48 bg-gray-900 rounded-lg flex items-center justify-center">
-          <div className="text-center">
-            <BarChart3 className="w-12 h-12 text-gray-600 mx-auto mb-2" />
-            <p className="text-gray-400">Chart would be displayed here</p>
-            <p className="text-gray-500 text-sm">Integration with charting library needed</p>
-          </div>
-        </div>
+        {/* TradingView Chart */}
+        {chartData.length > 0 && token && (
+          <TradingViewChart
+            data={chartData}
+            symbol={token.symbol}
+            timeframe={timeframe}
+            height={300}
+          />
+        )}
       </div>
 
       {/* Price Statistics */}

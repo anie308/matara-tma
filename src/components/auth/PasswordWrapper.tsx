@@ -79,12 +79,12 @@ const PasswordWrapper: React.FC = () => {
 
   // MetaMask-style: Lock session when app loses focus or after timeout
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden && sessionActive) {
-        console.log('App lost focus, locking session');
-        dispatch({ type: 'user/lockSession' });
-      }
-    };
+    // const handleVisibilityChange = () => {
+    //   if (document.hidden && sessionActive) {
+    //     console.log('App lost focus, locking session');
+    //     dispatch({ type: 'user/lockSession' });
+    //   }
+    // };
 
     const handleBeforeUnload = () => {
       if (sessionActive) {
@@ -99,14 +99,14 @@ const PasswordWrapper: React.FC = () => {
         console.log('Session timeout, locking session');
         dispatch({ type: 'user/lockSession' });
       }
-    }, 5 * 60 * 1000); // 5 minutes
+    }, 30 * 60 * 1000); // 30 minutes
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     return () => {
       clearTimeout(inactivityTimeout);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      // document.removeEventListener('visibilitychange', handleVisibilityChange);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, [sessionActive, dispatch]);

@@ -21,6 +21,7 @@
     "eruda": "^3.4.1",
     "ethers": "^6.15.0",
     "framer-motion": "^12.6.2",
+    "lightweight-charts": "^5.0.9",
     "lucide-react": "^0.484.0",
     "postcss": "^8.5.3",
     "qrcode.react": "^4.2.0",

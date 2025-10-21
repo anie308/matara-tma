@@ -28,13 +28,15 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
       return;
     }
 
-    if (!password) {
+    if (!password.trim()) {
       toast.error('Please enter your password');
       return;
     }
 
     try {
       const result = await login({ username, password }).unwrap();
+
+      console.log("result", result)
 
       // Store JWT token
       if (result.token) {

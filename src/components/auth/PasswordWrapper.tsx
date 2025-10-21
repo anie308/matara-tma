@@ -35,6 +35,8 @@ const PasswordWrapper: React.FC = () => {
     skip: !localStorage.getItem('jwt_token'),
   });
 
+  console.log("passwordStatus", passwordStatus, "tokenStatus", tokenStatus)
+
   useEffect(() => {
     if (passwordStatus) {
       dispatch(setHasPassword(passwordStatus.hasPassword));

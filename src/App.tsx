@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes } from 'react-router-dom';
-import eruda from 'eruda';
 import { setUsername, setProfilePicture } from './services/redux/user';
 import MainRoutes from './routes/MainRoutes';
 import Unsupported from './pages/unsupported';
@@ -9,7 +8,6 @@ import { RootState } from './services/store';
 
 function App() {
   // Initialize Eruda for debugging
-  eruda.init();
 
   const WebApp = window.Telegram.WebApp;
 
@@ -30,20 +28,20 @@ function App() {
     }
   }, [savedUser, initUser, dispatch]);
 
- useEffect(() => {
-  WebApp.ready();
+  useEffect(() => {
+    WebApp.ready();
 
-  // Allow only Android, iOS, and Telegram Desktop
-  const allowedPlatforms = ["android", "ios", "tdesktop"];
-  if (!allowedPlatforms.includes(WebApp.platform)) {
-    setIsSupported(true);
-  }
+    // Allow only Android, iOS, and Telegram Desktop
+    const allowedPlatforms = ["android", "ios", "tdesktop"];
+    if (!allowedPlatforms.includes(WebApp.platform)) {
+      setIsSupported(true);
+    }
 
-  // Expand the WebApp
-  if (!WebApp.isExpanded) {
-    WebApp.expand();
-  }
-}, [WebApp]);
+    // Expand the WebApp
+    if (!WebApp.isExpanded) {
+      WebApp.expand();
+    }
+  }, [WebApp]);
 
   return (
     <Routes>

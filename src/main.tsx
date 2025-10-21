@@ -7,10 +7,14 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './services/store.ts';
 import { TonConnectUIProvider } from '@tonconnect/ui-react';
+import eruda from 'eruda';
 
+eruda.init();
 
 
 createRoot(document.getElementById('root')!).render(
+
+  
   <StrictMode>
     <TonConnectUIProvider manifestUrl='https://matara-tma.vercel.app/tonconnect-manifest.json'>
         <BrowserRouter>

@@ -17,6 +17,7 @@ import Send from "../pages/send";
 const MainRoutes = () => {
   return (
     <Routes>
+      
       <Route path="/" element={<Layout />}>
         <Route index element={<Home />} />
         <Route path="ref" element={<Referral />} />

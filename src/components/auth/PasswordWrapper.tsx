@@ -17,6 +17,10 @@ const PasswordWrapper: React.FC = () => {
   const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
   const jwtToken = useSelector((state: RootState) => state.user.jwtToken);
   const username = profile?.username;
+  console.log(username, "username")
+  console.log(hasPassword, "hasPassword")
+  console.log(isAuthenticated, "isAuthenticated")
+  console.log(jwtToken, "jwtToken")
 
   // Check if user has password set
   const {
@@ -25,6 +29,10 @@ const PasswordWrapper: React.FC = () => {
   } = useCheckPasswordStatusQuery(username || '', {
     skip: !username,
   });
+
+  useEffect(() => {
+    console.log(passwordStatus, "passwordStatus")
+  }, [passwordStatus])
 
   // Verify JWT token
   const [triggerVerifyToken, { isLoading: isCheckingToken }] = useLazyVerifyTokenQuery();

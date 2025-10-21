@@ -3,8 +3,9 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Route, Routes } from 'react-router-dom';
 import { setUsername, setProfilePicture } from './services/redux/user';
 import Unsupported from './pages/unsupported';
-import PasswordWrapper from './components/auth/PasswordWrapper';
+// import PasswordWrapper from './components/auth/PasswordWrapper';
 import { RootState } from './services/store';
+import MainRoutes from './routes/MainRoutes';
 
 function App() {
   // Initialize Eruda for debugging
@@ -19,11 +20,11 @@ function App() {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
-  const initUser = WebApp.initDataUnsafe?.user;
+  const initUser = WebApp.initDataUnsafe?.user ;
 
   useEffect(() => {
     if (!savedUser && initUser) {
-      dispatch(setUsername(initUser?.username));
+      dispatch(setUsername(initUser?.username || "jurstadev"));
       dispatch(setProfilePicture(initUser?.photo_url));
     }
   }, [savedUser, initUser, dispatch]);
@@ -46,7 +47,7 @@ function App() {
   return (
     <Routes>
       {isSupported ? (
-        <Route path="/*" element={<PasswordWrapper />} />
+        <Route path="/*" element={<MainRoutes />} />
       ) : (
         <Route path="/*" element={<Unsupported />} />
       )}

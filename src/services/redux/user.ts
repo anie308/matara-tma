@@ -14,7 +14,6 @@ export interface User {
   profilePicture: string;
   walletAddress: string | null;
   hasPassword: boolean;
-  isAuthenticated: boolean;
 }
 
 export interface State {
@@ -47,7 +46,6 @@ const defaultProfile: User = {
   profilePicture: "",
   walletAddress: null,
   hasPassword: false,
-  isAuthenticated: false,
 };
 
 const initialState: State = {
@@ -104,7 +102,7 @@ const userSlice = createSlice({
       if (state.profile) state.profile.hasPassword = action.payload;
     },
     setIsAuthenticated: (state, action: PayloadAction<boolean>) => {
-      if (state.profile) state.profile.isAuthenticated = action.payload;
+      state.isAuthenticated = action.payload;
     },
     // Missions
     startMission: (state, action: PayloadAction<any>) => {
@@ -165,9 +163,6 @@ const userSlice = createSlice({
       // Clear authentication state
       state.isAuthenticated = false;
       state.jwtToken = null;
-      if (state.profile) {
-        state.profile.isAuthenticated = false;
-      }
       // Clear localStorage
       localStorage.removeItem('jwt_token');
     },

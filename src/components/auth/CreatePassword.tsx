@@ -121,7 +121,7 @@ const CreatePassword: React.FC<CreatePasswordProps> = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={isLoading || !password || !confirmPassword}
-            className="w-full bg-gradient-to-r from-[#FFB948] to-[#44F58E] text-black font-semibold py-3 px-4 rounded-lg hover:from-[#FFA500] hover:to-[#3DDC84] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="w-full btn text-black font-semibold py-3 px-4 rounded-lg  disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             {isLoading ? 'Creating Password...' : 'Create Password'}
           </button>

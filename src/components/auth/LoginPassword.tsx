@@ -99,7 +99,7 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
           <button
             type="submit"
             disabled={isLoading || !password}
-            className="w-full bg-gradient-to-r from-[#FFB948] to-[#44F58E] text-black font-semibold py-3 px-4 rounded-lg hover:from-[#FFA500] hover:to-[#3DDC84] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="w-full btn text-black font-semibold py-3 px-4 rounded-lg  disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             {isLoading ? 'Signing In...' : 'Sign In'}
           </button>

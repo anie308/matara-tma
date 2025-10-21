@@ -6,6 +6,7 @@ import Unsupported from './pages/unsupported';
 // import PasswordWrapper from './components/auth/PasswordWrapper';
 import { RootState } from './services/store';
 import MainRoutes from './routes/MainRoutes';
+import PasswordWrapper from './components/auth/PasswordWrapper';
 
 function App() {
   // Initialize Eruda for debugging
@@ -47,7 +48,7 @@ function App() {
   return (
     <Routes>
       {isSupported ? (
-        <Route path="/*" element={<MainRoutes />} />
+        <Route path="/*" element={<PasswordWrapper />} />
       ) : (
         <Route path="/*" element={<Unsupported />} />
       )}

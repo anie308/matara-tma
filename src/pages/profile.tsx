@@ -1,13 +1,16 @@
 import WebApp from "@twa-dev/sdk";
 import { useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { RootState } from "../services/store";
 import { ranks } from "./matara-rank";
+import { lockSession } from "../services/redux/user";
+import { Lock } from "lucide-react";
 
 function Profile() {
   WebApp.BackButton.show();
 
+  const dispatch = useDispatch();
   const referralList = useSelector((state: RootState) => state.user.referrals);
   const user = useSelector((state: RootState) => state.user.profile);
   const userPoints = user?.points || 0;
@@ -15,6 +18,11 @@ function Profile() {
     ranks.find((rank) => userPoints >= rank.min && userPoints <= rank.max) ||
     ranks[0];
   const navigate = useNavigate();
+
+  const handleLockSession = () => {
+    dispatch(lockSession());
+    navigate('/');
+  };
 
   useEffect(() => {
     WebApp.BackButton.onClick(() => navigate(-1));
@@ -43,10 +51,19 @@ function Profile() {
 
       {/* Rank / Points */}
       <div className="coin-bnt mt-[40px] font-[900]  border-[#44F58E] border p-[5px_15px] rounded-[8px] flex items-center space-x-[5px]">
-        <p className="gradient-text text-[12px]">{user?.points} MARP</p>
+        <p className="gradient-text text-[12px]">{user?.points.toFixed(2)} MARP</p>
         <img src="./warrior.svg" className="h-[30px]" alt="" />
         <p className="gradient-text text-[12px]">{currentRank.name}</p>
       </div>
+
+      {/* Lock Session Button */}
+      <button
+        onClick={handleLockSession}
+        className="flex items-center space-x-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 my-4"
+      >
+        <Lock className="w-4 h-4" />
+        <span>Lock Session</span>
+      </button>
 
       <p className="text-[17px] my-[20px] font-[800] text-[#FFB948]">
         My Earnings

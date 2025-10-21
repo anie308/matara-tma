@@ -31,6 +31,7 @@ export interface State {
   miningStartDate: string | null;
   isAuthenticated: boolean;
   jwtToken: string | null;
+  sessionActive: boolean; // MetaMask-style session state
 }
 
 const defaultProfile: User = {
@@ -63,6 +64,7 @@ const initialState: State = {
   miningStartDate: null,
   isAuthenticated: false,   
   jwtToken: null,
+  sessionActive: false, // MetaMask-style: session starts as inactive
 };
 
 const userSlice = createSlice({
@@ -163,8 +165,17 @@ const userSlice = createSlice({
       // Clear authentication state
       state.isAuthenticated = false;
       state.jwtToken = null;
+      state.sessionActive = false;
       // Clear localStorage
       localStorage.removeItem('jwt_token');
+    },
+    unlockSession: (state) => {
+      // MetaMask-style: unlock session with password
+      state.sessionActive = true;
+    },
+    lockSession: (state) => {
+      // MetaMask-style: lock session (user needs to enter password again)
+      state.sessionActive = false;
     },
     clearUser: () => initialState, // reset everything
   },
@@ -199,6 +210,8 @@ export const {
   clearJwtToken,
   clearIsAuthenticated,
   logout,
+  unlockSession,
+  lockSession,
 } = userSlice.actions;
 
 // Middleware to sync localStorage with Redux state

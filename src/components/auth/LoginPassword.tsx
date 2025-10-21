@@ -21,10 +21,8 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
   
   const [login, { isLoading }] = useLoginMutation();
 
-  // If user is already authenticated, don't render the login form
-  if (isAuthenticated) {
-    return null;
-  }
+  // MetaMask-style: Always show login form for security, even if authenticated
+  // Remove the early return for authenticated users
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,8 +68,15 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
           <div className="mx-auto w-16 h-16 bg-gradient-to-r from-[#FFB948] to-[#44F58E] rounded-full flex items-center justify-center mb-4">
             <Shield className="w-8 h-8 text-black" />
           </div>
-          <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
-          <p className="text-gray-400">Enter your password to continue</p>
+          <h1 className="text-2xl font-bold text-white mb-2">
+            {isAuthenticated ? 'Unlock Your Account' : 'Welcome Back'}
+          </h1>
+          <p className="text-gray-400">
+            {isAuthenticated 
+              ? 'Enter your password to unlock the app' 
+              : 'Enter your password to continue'
+            }
+          </p>
         </div>
 
         <div className="bg-gray-800 rounded-lg p-4 mb-6">
@@ -112,7 +117,10 @@ const LoginPassword: React.FC<LoginPasswordProps> = ({ onSuccess }) => {
             disabled={isLoading || !password}
             className="w-full btn text-black font-semibold py-3 px-4 rounded-lg  disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading 
+              ? (isAuthenticated ? 'Unlocking...' : 'Signing In...') 
+              : (isAuthenticated ? 'Unlock' : 'Sign In')
+            }
           </button>
         </form>
 

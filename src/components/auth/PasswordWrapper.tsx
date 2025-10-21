@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../services/store';
-import { clearIsAuthenticated, clearJwtToken, setHasPassword, setIsAuthenticated } from '../../services/redux/user';
+import { clearIsAuthenticated, clearJwtToken, setHasPassword, setIsAuthenticated, unlockSession } from '../../services/redux/user';
 import CreatePassword from './CreatePassword';
 import LoginPassword from './LoginPassword';
 import MainRoutes from '../../routes/MainRoutes';
@@ -16,6 +16,7 @@ const PasswordWrapper: React.FC = () => {
   const hasPassword = profile?.hasPassword || false;
   const isAuthenticated = useSelector((state: RootState) => state.user.isAuthenticated);
   const jwtToken = useSelector((state: RootState) => state.user.jwtToken);
+  const sessionActive = useSelector((state: RootState) => state.user.sessionActive);
   const username = profile?.username;
   console.log(username, "username")
   console.log(hasPassword, "hasPassword")
@@ -71,9 +72,44 @@ const PasswordWrapper: React.FC = () => {
     console.log('Authentication state changed:', {
       isAuthenticated,
       hasPassword,
+      sessionActive,
       jwtToken: jwtToken ? 'Present' : 'Not present'
     });
-  }, [isAuthenticated, hasPassword, jwtToken]);
+  }, [isAuthenticated, hasPassword, sessionActive, jwtToken]);
+
+  // MetaMask-style: Lock session when app loses focus or after timeout
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && sessionActive) {
+        console.log('App lost focus, locking session');
+        dispatch({ type: 'user/lockSession' });
+      }
+    };
+
+    const handleBeforeUnload = () => {
+      if (sessionActive) {
+        console.log('App closing, locking session');
+        dispatch({ type: 'user/lockSession' });
+      }
+    };
+
+    // Lock session after 5 minutes of inactivity (MetaMask-style)
+    const inactivityTimeout = setTimeout(() => {
+      if (sessionActive) {
+        console.log('Session timeout, locking session');
+        dispatch({ type: 'user/lockSession' });
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearTimeout(inactivityTimeout);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [sessionActive, dispatch]);
 
   // Show loading while initializing or checking
   if (!isInitialized || isCheckingPassword || isCheckingToken) {
@@ -96,21 +132,23 @@ const PasswordWrapper: React.FC = () => {
     isInitialized
   });
 
-  // If user is authenticated, show the app
-  if (isAuthenticated) {
-    console.log('User is authenticated, showing MainRoutes');
-    return <MainRoutes />;
-  }
-
-  // If user has password but is not authenticated, show login
-  if (hasPassword) {
+  // MetaMask-style security: Always require password to access the app
+  // Only show app if user has password AND session is active
+  if (hasPassword && !sessionActive) {
     return (
       <LoginPassword
         onSuccess={() => {
           dispatch(setIsAuthenticated(true));
+          dispatch(unlockSession()); // Unlock the session
         }}
       />
     );
+  }
+
+  // If user has password and session is active, show the app
+  if (hasPassword && sessionActive) {
+    console.log('Session is active, showing MainRoutes');
+    return <MainRoutes />;
   }
 
   // If user doesn't have password, show create password

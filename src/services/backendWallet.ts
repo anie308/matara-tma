@@ -6,7 +6,7 @@ export interface BackendWallet {
 }
 
 export interface TokenBalance {
-  symbol: string;
+  symbol: string; 
   balance: number;
   usdValue: number;
 }

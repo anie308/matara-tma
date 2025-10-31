@@ -28,22 +28,22 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     // Create chart
     const chart = createChart(chartContainerRef.current, {
       layout: {
-        background: { type: ColorType.Solid, color: '#1a1a1a' },
-        textColor: '#ffffff',
+        background: { type: ColorType.Solid, color: '#44F58E' },
+        textColor: '#000000',
       },
       grid: {
-        vertLines: { color: '#2a2a2a' },
-        horzLines: { color: '#2a2a2a' },
+        vertLines: { color: 'rgba(0, 0, 0, 0.2)' },
+        horzLines: { color: 'rgba(0, 0, 0, 0.2)' },
       },
       crosshair: {
         mode: 1,
       },
       rightPriceScale: {
-        borderColor: '#2a2a2a',
-        textColor: '#ffffff',
+        borderColor: 'rgba(0, 0, 0, 0.2)',
+        textColor: '#000000',
       },
       timeScale: {
-        borderColor: '#2a2a2a',
+        borderColor: 'rgba(0, 0, 0, 0.2)',
         timeVisible: true,
         secondsVisible: false,
       },

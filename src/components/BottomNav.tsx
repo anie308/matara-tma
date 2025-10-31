@@ -19,11 +19,11 @@ const BottomNav = () => {
   ];
 
   return (
-    <div className="fixed bottom-0 w-full text-white flex items-center justify-center">
+    <div className="fixed z-30 bottom-0 w-full text-white flex items-center justify-center">
       {/* Central navigation button */}
       <div
         onClick={() => navigate('/')}
-        className="absolute z-20 w-20 h-20 flex items-center justify-center bottom-9 cursor-pointer"
+        className="absolute z-40 w-20 h-20 flex items-center justify-center bottom-9 cursor-pointer"
       >
         <img
           src="/circle.png"

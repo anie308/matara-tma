@@ -156,7 +156,7 @@ export default function TokenDetails() {
   };
 
   return (
-    <div className="flex flex-col w-full min-h-screen bg-black">
+    <div className="flex flex-col w-full min-h-screen">
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <button

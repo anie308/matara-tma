@@ -22,6 +22,22 @@ const formatNumber = (num: number): string => {
   });
 };
 
+// Get token price in USD (mock data - replace with API call)
+const getTokenPrice = (symbol: string): number => {
+  const prices: Record<string, number> = {
+    'BNB': 300,
+    'USDT': 1,
+    'USDC': 1,
+    'BUSD': 1,
+    'ETH': 2000,
+    'BTC': 40000,
+  };
+  return prices[symbol.toUpperCase()] || 0.5;
+};
+
+// Calculate USD value
+
+
 export default function Trade() {
   const [showImportModal, setShowImportModal] = useState(false);
   
@@ -149,7 +165,7 @@ export default function Trade() {
                     <button
                       key={`${token.symbol}-${token.address}`}
                       onClick={() => navigate(`/token/${token.symbol}/${token.address}`)}
-                      className="w-full flex items-center justify-between mt-[20px] p-3 rounded-lg hover:bg-gray-800 transition-colors duration-200"
+                      className="w-full flex items-center justify-between mt-[20px] rounded-lg hover:bg-gray-800 transition-colors duration-200"
                     >
                       <div className="flex items-center gap-[10px]">
                         <TokenLogo
@@ -171,13 +187,15 @@ export default function Trade() {
                           <p className="font-[600] text-white">
                             {formatNumber(token.balance || 0)} {token.symbol}
                           </p>
-                          <p className="text-[#CDCBC8] text-[14px]">$0.00</p>
+                          <p className="text-[#CDCBC8] text-[14px]">
+                            ${formatNumber(getTokenPrice(token.symbol))}
+                          </p>
                         </div>
-                        <div className="text-gray-400 ml-2">
+                        {/* <div className="text-gray-400 ml-2">
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                           </svg>
-                        </div>
+                        </div> */}
                       </div>
                     </button>
                   );

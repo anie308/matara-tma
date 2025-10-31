@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { createChart, ColorType, IChartApi, ISeriesApi, CandlestickData, LineData } from 'lightweight-charts';
+import { createChart, ColorType, IChartApi, ISeriesApi, LineData, LineStyle, LineSeries } from 'lightweight-charts';
 
 interface TradingViewChartProps {
   data: Array<{
@@ -44,7 +44,6 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
       },
       timeScale: {
         borderColor: '#2a2a2a',
-        textColor: '#ffffff',
         timeVisible: true,
         secondsVisible: false,
       },
@@ -53,15 +52,20 @@ const TradingViewChart: React.FC<TradingViewChartProps> = ({
     });
 
     // Create line series
-    const lineSeries = chart.addLineSeries({
+    // const lineSeries = chart.addLineSeries({
+    //   color: '#FFB948',
+    //   lineStyle: LineStyle.Solid,
+    //   lineWidth: 2,
+    // });
+
+    const lineSeries = chart.addSeries(LineSeries, {
       color: '#FFB948',
+      lineStyle: LineStyle.Solid,
       lineWidth: 2,
-      priceFormat: {
-        type: 'price',
-        precision: 6,
-        minMove: 0.000001,
-      },
     });
+    
+    chartRef.current = chart;
+    seriesRef.current = lineSeries;
 
     chartRef.current = chart;
     seriesRef.current = lineSeries;

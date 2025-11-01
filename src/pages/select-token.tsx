@@ -10,6 +10,7 @@ import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { useState, useEffect, useMemo } from "react";
+import { getMultipleTokenPrices } from "../services/cryptoPrice";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -31,12 +32,23 @@ function SelectToken() {
     // Get wallet state including custom tokens
     const { 
         isConnected, 
+        address,
         balances: walletBalances,
         isLoadingBalances,
-        getCustomTokens
+        getCustomTokens,
+        getTokenBalances
     } = useBackendWallet();
     
     const [balances, setBalances] = useState<Record<string, number>>({});
+    const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
+    const [isLoadingPrices, setIsLoadingPrices] = useState(true);
+
+    // Refresh balances when component mounts or address changes
+    useEffect(() => {
+        if (isConnected && address) {
+            getTokenBalances();
+        }
+    }, [isConnected, address, getTokenBalances]);
     
     // Memoize token list to prevent infinite loops
     const allTokens = useMemo(() => {
@@ -51,12 +63,55 @@ function SelectToken() {
         return [...TOKENS, ...customTokens];
     }, [getCustomTokens]);
     
-    // Use wallet balances directly when available
+    // Use wallet balances directly when available and merge with any new balances
     useEffect(() => {
         if (Object.keys(walletBalances).length > 0) {
-            setBalances(walletBalances);
+            // Merge with existing balances to preserve any custom token balances
+            setBalances(prevBalances => ({
+                ...prevBalances,
+                ...walletBalances
+            }));
         }
     }, [walletBalances]);
+
+    // Fetch real token prices
+    useEffect(() => {
+        if (!isConnected) {
+            setIsLoadingPrices(false);
+            return;
+        }
+
+        let isMounted = true;
+
+        const fetchPrices = async () => {
+            try {
+                const symbols = allTokens.map(t => t.symbol).filter(s => s);
+                
+                if (symbols.length === 0) {
+                    if (isMounted) setIsLoadingPrices(false);
+                    return;
+                }
+
+                const prices = await getMultipleTokenPrices(symbols);
+                
+                if (isMounted && Object.keys(prices).length > 0) {
+                    setTokenPrices(prices);
+                }
+            } catch (error) {
+                console.error('Error fetching token prices:', error);
+            } finally {
+                if (isMounted) {
+                    setIsLoadingPrices(false);
+                }
+            }
+        };
+
+        fetchPrices();
+        
+        return () => {
+            isMounted = false;
+        };
+    }, [isConnected, allTokens]);
     
     const handleSelectToken = (token: any) => {
         dispatch(setTransaction({ 
@@ -133,7 +188,15 @@ function SelectToken() {
                             {hasBalance ? formatNumber(balance) : '0.00'}
                           </p>
                           <p className="text-gray-400 text-sm">
-                            {hasBalance ? `≈ $${formatNumber(balance * 1)}` : '$0.00'}
+                            {isLoadingPrices ? (
+                              <span className="text-gray-500">Loading...</span>
+                            ) : tokenPrices[token.symbol] && tokenPrices[token.symbol] > 0 ? (
+                              hasBalance 
+                                ? `≈ $${formatNumber(balance * tokenPrices[token.symbol])}`
+                                : `$${formatNumber(tokenPrices[token.symbol])}`
+                            ) : (
+                              '$0.00'
+                            )}
                           </p>
                         </>
                       )}

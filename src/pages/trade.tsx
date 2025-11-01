@@ -38,11 +38,19 @@ export default function Trade() {
     address, 
     isLoadingBalances,
     getAvailableTokens,
+    getTokenBalances,
     importToken,
   } = useBackendWallet();
 
   const transaction = useSelector((state: RootState) => state.transaction);
   const dispatch = useDispatch();
+
+  // Refresh balances when component mounts or address changes
+  useEffect(() => {
+    if (isConnected && address) {
+      getTokenBalances();
+    }
+  }, [isConnected, address, getTokenBalances]);
 
   // Fetch real token prices
   useEffect(() => {

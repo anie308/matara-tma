@@ -3,11 +3,14 @@ import { backendWalletService, BackendWallet } from '../services/backendWallet';
 import { ethers } from 'ethers';
 import { useSelector } from 'react-redux';
 import { RootState } from '../services/store';
+import { getMultipleTokenPrices } from '../services/cryptoPrice';
 
 export const useBackendWallet = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState<string | null>(null);
   const [balances, setBalances] = useState<Record<string, number>>({});
+  const [usdValues, setUsdValues] = useState<Record<string, number>>({});
+  const [totalBalanceUsd, setTotalBalanceUsd] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   
@@ -175,6 +178,37 @@ export const useBackendWallet = () => {
       setBalances(allTokenBalances);
       backendWalletService.setBalances(allTokenBalances);
       
+      // Fetch prices and calculate USD values
+      try {
+        const symbols = Object.keys(allTokenBalances).filter(s => allTokenBalances[s] > 0);
+        if (symbols.length > 0) {
+          const prices = await getMultipleTokenPrices(symbols);
+          const newUsdValues: Record<string, number> = {};
+          let totalUsd = 0;
+          
+          symbols.forEach(symbol => {
+            const balance = allTokenBalances[symbol];
+            const price = prices[symbol] || 0;
+            const usdValue = balance * price;
+            if (usdValue > 0) {
+              newUsdValues[symbol] = usdValue;
+              totalUsd += usdValue;
+            }
+          });
+          
+          setUsdValues(newUsdValues);
+          setTotalBalanceUsd(totalUsd);
+          console.log('Total USD balance:', totalUsd);
+        } else {
+          setUsdValues({});
+          setTotalBalanceUsd(0);
+        }
+      } catch (error) {
+        console.error('Error fetching prices for total balance:', error);
+        setUsdValues({});
+        setTotalBalanceUsd(0);
+      }
+      
       clearTimeout(timeoutId);
     } catch (error) {
       console.error('Failed to fetch balances:', error);
@@ -272,6 +306,8 @@ export const useBackendWallet = () => {
     isConnected,
     address,
     balances,
+    usdValues,
+    totalBalanceUsd,
     isLoading,
     isLoadingBalances,
     connectWallet,

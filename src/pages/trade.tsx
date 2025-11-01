@@ -37,6 +37,7 @@ export default function Trade() {
     isConnected, 
     address, 
     isLoadingBalances,
+    totalBalanceUsd,
     getAvailableTokens,
     getTokenBalances,
     importToken,
@@ -187,13 +188,20 @@ export default function Trade() {
             <>
               <div className="flex items-center gap-[10px]">
                 <p className="font-[900] text-[32px] gradient-text">
-                  {isVisible ? `$${parseFloat("0").toFixed(4)}` : "****"}
+                  {isVisible ? (
+                    isLoadingBalances ? (
+                      <span className="text-gray-500">Loading...</span>
+                    ) : (
+                      `$${formatNumber(totalBalanceUsd || 0)}`
+                    )
+                  ) : (
+                    "****"
+                  )}
                 </p>
                 <button onClick={() => setIsVisible(!isVisible)}>
                   {isVisible ? <Eye className="text-white text-[20px]" /> : <EyeOff className="text-white text-[20px]" />}
                 </button>
               </div>
-              <p className="gradient-text">+$0.03856 (+2.87%) Today</p>
               <div className="flex items-center gap-2 mt-2">
                 <p className="text-gray-400 text-sm">
                   {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}

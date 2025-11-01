@@ -26,7 +26,6 @@ const TOKEN_ID_MAP: Record<string, string> = {
   'ETH': 'ethereum',
   'BTC': 'bitcoin',
   'CAKE': 'pancakeswap-token',
-  'BUSD': 'binance-usd',
 };
 
 // Fallback token IDs for common tokens

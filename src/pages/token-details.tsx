@@ -31,44 +31,83 @@ export default function TokenDetails() {
 
   // Fetch real price data
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchPriceData = async () => {
-      if (!symbol) return;
+      if (!symbol) {
+        if (isMounted) setIsLoadingPrice(false);
+        return;
+      }
       
-      setIsLoadingPrice(true);
-      setPriceError(null);
+      if (isMounted) {
+        setIsLoadingPrice(true);
+        setPriceError(null);
+      }
+      
+      // Set timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        if (isMounted) {
+          setIsLoadingPrice(false);
+          setPriceError('Request timeout - please try again');
+        }
+      }, 15000); // 15 second timeout
       
       try {
         const data = await getTokenMarketData(symbol);
-        if (data) {
-          setPriceData({
-            price: data.price,
-            change: data.change24h,
-            changePercent: data.changePercent24h,
-            volume24h: data.volume24h,
-            marketCap: data.marketCap,
-            high24h: data.high24h,
-            low24h: data.low24h,
-          });
-        } else {
-          setPriceError('Price data not available');
+        clearTimeout(timeoutId);
+        
+        if (isMounted) {
+          if (data) {
+            setPriceData({
+              price: data.price,
+              change: data.change24h,
+              changePercent: data.changePercent24h,
+              volume24h: data.volume24h,
+              marketCap: data.marketCap,
+              high24h: data.high24h,
+              low24h: data.low24h,
+            });
+          } else {
+            setPriceError('Price data not available for this token');
+          }
+          setIsLoadingPrice(false);
         }
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error('Error fetching price data:', error);
-        setPriceError('Failed to load price data');
-      } finally {
-        setIsLoadingPrice(false);
+        if (isMounted) {
+          setPriceError('Failed to load price data');
+          setIsLoadingPrice(false);
+        }
       }
     };
 
     fetchPriceData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [symbol]);
 
   // Fetch real chart data
   useEffect(() => {
+    let isMounted = true;
+    
     const fetchChartData = async () => {
-      if (!symbol) return;
+      if (!symbol) {
+        if (isMounted) setIsLoadingChart(false);
+        return;
+      }
       
-      setIsLoadingChart(true);
+      if (isMounted) setIsLoadingChart(true);
+      
+      // Set timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        if (isMounted) {
+          setIsLoadingChart(false);
+          setChartData([]); // Set empty data on timeout
+        }
+      }, 15000); // 15 second timeout
       
       try {
         // Map timeframe to days for API
@@ -81,15 +120,27 @@ export default function TokenDetails() {
         
         const days = daysMap[timeframe] || 7;
         const data = await getHistoricalPriceData(symbol, days);
-        setChartData(data);
+        clearTimeout(timeoutId);
+        
+        if (isMounted) {
+          setChartData(data);
+          setIsLoadingChart(false);
+        }
       } catch (error) {
+        clearTimeout(timeoutId);
         console.error('Error fetching chart data:', error);
-      } finally {
-        setIsLoadingChart(false);
+        if (isMounted) {
+          setChartData([]);
+          setIsLoadingChart(false);
+        }
       }
     };
 
     fetchChartData();
+    
+    return () => {
+      isMounted = false;
+    };
   }, [symbol, timeframe]);
 
   const availableTokens = getAvailableTokens();

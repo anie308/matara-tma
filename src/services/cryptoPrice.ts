@@ -25,7 +25,9 @@ const TOKEN_ID_MAP: Record<string, string> = {
   'BUSD': 'binance-usd',
   'ETH': 'ethereum',
   'BTC': 'bitcoin',
+  'BTCB': 'bitcoin', // Bitcoin BEP2 uses bitcoin price
   'CAKE': 'pancakeswap-token',
+  'WBNB': 'binancecoin', // Wrapped BNB uses BNB price
 };
 
 // Fallback token IDs for common tokens
@@ -33,14 +35,33 @@ const getTokenId = (symbol: string): string => {
   return TOKEN_ID_MAP[symbol.toUpperCase()] || symbol.toLowerCase();
 };
 
+// Helper function to fetch with timeout
+const fetchWithTimeout = async (url: string, timeout: number = 10000): Promise<Response> => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timeout');
+    }
+    throw error;
+  }
+};
+
 // Get current token price and market data
 export const getTokenPriceData = async (symbol: string): Promise<TokenPriceData | null> => {
   try {
     const tokenId = getTokenId(symbol);
     
-    // CoinGecko simple price endpoint
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true&include_last_updated_at=true`
+    // CoinGecko simple price endpoint with timeout
+    const response = await fetchWithTimeout(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true&include_market_cap=true&include_last_updated_at=true`,
+      8000 // 8 second timeout
     );
     
     if (!response.ok) {
@@ -49,21 +70,28 @@ export const getTokenPriceData = async (symbol: string): Promise<TokenPriceData 
     
     const data = await response.json();
     
-    if (!data[tokenId]) {
-      console.warn(`Token ${symbol} not found in CoinGecko`);
+    if (!data || !data[tokenId]) {
+      console.warn(`Token ${symbol} (ID: ${tokenId}) not found in CoinGecko`);
       return null;
     }
     
     const tokenData = data[tokenId];
+    const price = tokenData.usd;
+    
+    // If price is 0 or undefined, token might not be supported
+    if (!price || price === 0) {
+      console.warn(`Invalid price data for ${symbol}`);
+      return null;
+    }
     
     return {
-      price: tokenData.usd || 0,
-      change24h: (tokenData.usd_24h_change || 0) / 100 * (tokenData.usd || 1),
+      price: price,
+      change24h: (tokenData.usd_24h_change || 0) / 100 * price,
       changePercent24h: tokenData.usd_24h_change || 0,
       volume24h: tokenData.usd_24h_vol || 0,
       marketCap: tokenData.usd_market_cap || 0,
-      high24h: (tokenData.usd || 0) * 1.05, // Approximate - CoinGecko simple endpoint doesn't include high/low
-      low24h: (tokenData.usd || 0) * 0.95, // Approximate
+      high24h: price * 1.05, // Approximate - CoinGecko simple endpoint doesn't include high/low
+      low24h: price * 0.95, // Approximate
     };
   } catch (error) {
     console.error('Error fetching token price data:', error);
@@ -76,12 +104,18 @@ export const getTokenMarketData = async (symbol: string): Promise<TokenPriceData
   try {
     const tokenId = getTokenId(symbol);
     
-    // CoinGecko market data endpoint
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${tokenId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`
+    // CoinGecko market data endpoint with timeout
+    const response = await fetchWithTimeout(
+      `https://api.coingecko.com/api/v3/coins/${tokenId}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false&sparkline=false`,
+      10000 // 10 second timeout
     );
     
     if (!response.ok) {
+      // If 404, token not found - try fallback
+      if (response.status === 404) {
+        console.warn(`Token ${symbol} (ID: ${tokenId}) not found in CoinGecko, trying fallback`);
+        return await getTokenPriceData(symbol);
+      }
       throw new Error(`Failed to fetch market data: ${response.statusText}`);
     }
     
@@ -89,11 +123,19 @@ export const getTokenMarketData = async (symbol: string): Promise<TokenPriceData
     
     if (!data.market_data) {
       console.warn(`Market data not available for ${symbol}`);
-      return null;
+      // Try fallback
+      return await getTokenPriceData(symbol);
     }
     
     const marketData = data.market_data;
     const currentPrice = marketData.current_price?.usd || 0;
+    
+    // If price is 0, token might not have valid data
+    if (currentPrice === 0) {
+      console.warn(`Invalid price data for ${symbol}, trying fallback`);
+      return await getTokenPriceData(symbol);
+    }
+    
     const priceChange24h = marketData.price_change_24h || 0;
     const priceChangePercent24h = marketData.price_change_percentage_24h || 0;
     
@@ -109,7 +151,12 @@ export const getTokenMarketData = async (symbol: string): Promise<TokenPriceData
   } catch (error) {
     console.error('Error fetching market data:', error);
     // Fallback to simple price endpoint
-    return await getTokenPriceData(symbol);
+    try {
+      return await getTokenPriceData(symbol);
+    } catch (fallbackError) {
+      console.error('Fallback price fetch also failed:', fallbackError);
+      return null;
+    }
   }
 };
 
@@ -121,13 +168,20 @@ export const getHistoricalPriceData = async (
   try {
     const tokenId = getTokenId(symbol);
     
-    // CoinGecko market chart endpoint
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}&interval=${days <= 1 ? 'hourly' : 'daily'}`
+    // CoinGecko market chart endpoint with timeout
+    const response = await fetchWithTimeout(
+      `https://api.coingecko.com/api/v3/coins/${tokenId}/market_chart?vs_currency=usd&days=${days}&interval=${days <= 1 ? 'hourly' : 'daily'}`,
+      10000 // 10 second timeout
     );
     
     if (!response.ok) {
-      throw new Error(`Failed to fetch historical data: ${response.statusText}`);
+      // If 404, token not found
+      if (response.status === 404) {
+        console.warn(`Token ${symbol} (ID: ${tokenId}) not found in CoinGecko for historical data`);
+      } else {
+        throw new Error(`Failed to fetch historical data: ${response.statusText}`);
+      }
+      return [];
     }
     
     const data = await response.json();
@@ -160,8 +214,10 @@ export const getMultipleTokenPrices = async (symbols: string[]): Promise<Record<
 
     const tokenIds = uniqueSymbols.map(getTokenId).join(',');
     
-    const response = await fetch(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds}&vs_currencies=usd`
+    // Use timeout to prevent hanging
+    const response = await fetchWithTimeout(
+      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds}&vs_currencies=usd`,
+      10000 // 10 second timeout
     );
     
     if (!response.ok) {

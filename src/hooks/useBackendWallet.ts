@@ -68,22 +68,44 @@ export const useBackendWallet = () => {
 
   // Fetch real balances from BSC with dynamic token detection
   const fetchRealBalances = async () => {
-    if (!address) return;
+    if (!address) {
+      setIsLoadingBalances(false);
+      return;
+    }
     
     setIsLoadingBalances(true);
     console.log('Starting balance fetch for address:', address);
     
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.warn('Balance fetch timeout, setting loading to false');
+      setIsLoadingBalances(false);
+    }, 30000); // 30 second timeout
+    
     try {
-      // Fetch token list from PancakeSwap
-      const tokenList = await fetchTokenList();
+      // Fetch token list from PancakeSwap with timeout
+      const tokenListPromise = fetchTokenList();
+      const tokenListTimeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Token list fetch timeout')), 10000)
+      );
+      
+      const tokenList = await Promise.race([tokenListPromise, tokenListTimeout]) as any[];
       console.log('Fetched token list:', tokenList.length, 'tokens');
       
       // Use a reliable BSC RPC endpoint
       const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
       
-      // Test connection first
-      await provider.getBlockNumber();
-      console.log('Connected to BSC RPC');
+      // Test connection first with timeout
+      try {
+        await Promise.race([
+          provider.getBlockNumber(),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('RPC timeout')), 5000))
+        ]);
+        console.log('Connected to BSC RPC');
+      } catch (error) {
+        console.error('Failed to connect to BSC RPC:', error);
+        throw new Error('Failed to connect to blockchain');
+      }
       
       const newBalances: Record<string, number> = {};
       const ERC20_ABI = [
@@ -93,24 +115,34 @@ export const useBackendWallet = () => {
       
       // Process tokens in batches to avoid overwhelming the RPC
       const batchSize = 10;
-      for (let i = 0; i < tokenList.length; i += batchSize) {
-        const batch = tokenList.slice(i, i + batchSize);
+      const maxBatches = 5; // Limit to first 50 tokens to prevent timeout
+      const tokensToCheck = tokenList.slice(0, batchSize * maxBatches);
+      
+      for (let i = 0; i < tokensToCheck.length; i += batchSize) {
+        const batch = tokensToCheck.slice(i, i + batchSize);
         
-        await Promise.all(batch.map(async (token: any) => {
+        // Add timeout for each batch
+        const batchPromise = Promise.all(batch.map(async (token: any) => {
           try {
             let balance = 0;
             
             if (token.address === 'native') {
-              // Fetch BNB balance
-              const bnbBalance = await provider.getBalance(address);
+              // Fetch BNB balance with timeout
+              const bnbBalance = await Promise.race([
+                provider.getBalance(address),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+              ]) as bigint;
               balance = Number(ethers.formatEther(bnbBalance));
             } else {
-              // Fetch ERC20 token balance
+              // Fetch ERC20 token balance with timeout
               const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
-              const [rawBalance, decimals] = await Promise.all([
-                contract.balanceOf(address),
-                contract.decimals()
-              ]);
+              const [rawBalance, decimals] = await Promise.race([
+                Promise.all([
+                  contract.balanceOf(address),
+                  contract.decimals()
+                ]),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+              ]) as [bigint, number];
               balance = Number(ethers.formatUnits(rawBalance, decimals));
             }
             
@@ -124,8 +156,10 @@ export const useBackendWallet = () => {
           }
         }));
         
+        await batchPromise;
+        
         // Small delay between batches to avoid rate limiting
-        if (i + batchSize < tokenList.length) {
+        if (i + batchSize < tokensToCheck.length) {
           await new Promise(resolve => setTimeout(resolve, 100));
         }
       }
@@ -140,9 +174,11 @@ export const useBackendWallet = () => {
       setBalances(allTokenBalances);
       backendWalletService.setBalances(allTokenBalances);
       
+      clearTimeout(timeoutId);
     } catch (error) {
       console.error('Failed to fetch balances:', error);
       setBalances({});
+      clearTimeout(timeoutId);
     } finally {
       setIsLoadingBalances(false);
     }

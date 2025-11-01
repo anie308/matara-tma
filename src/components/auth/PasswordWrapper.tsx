@@ -40,25 +40,50 @@ const PasswordWrapper: React.FC = () => {
 
   // Initialize authentication state on component mount
   useEffect(() => {
+    let isMounted = true;
+    
     const initializeAuth = async () => {
-      // If we have a token in Redux state, verify it
-      if (jwtToken && !isAuthenticated) {
+      // Check if we have a token in localStorage but not in Redux
+      const storedToken = localStorage.getItem('jwt_token');
+      
+      // If we have a token in localStorage but not in Redux, set it
+      if (storedToken && !jwtToken && isMounted) {
+        dispatch({ type: 'user/setJwtToken', payload: storedToken });
+        // Wait a tick for Redux to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Re-check jwtToken from state after potential update
+      const currentJwtToken = jwtToken || storedToken;
+      
+      // If we have a token, verify it (only if not authenticated and session not active)
+      if (currentJwtToken && !isAuthenticated && !sessionActive && isMounted) {
         try {
           await triggerVerifyToken().unwrap();
-          dispatch(setIsAuthenticated(true));
+          if (isMounted) {
+            dispatch(setIsAuthenticated(true));
+          }
         } catch (error) {
           console.log('Token verification failed:', error);
           // Clear invalid token from Redux (localStorage will be cleared by middleware)
-          dispatch(clearJwtToken());
-          dispatch(clearIsAuthenticated());
+          if (isMounted) {
+            dispatch(clearJwtToken());
+            dispatch(clearIsAuthenticated());
+          }
         }
       }
       
-      setIsInitialized(true);
+      if (isMounted) {
+        setIsInitialized(true);
+      }
     };
 
     initializeAuth();
-  }, [dispatch, jwtToken, isAuthenticated, triggerVerifyToken]);
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Only run once on mount
 
   // Update password status when API returns
   useEffect(() => {
@@ -111,7 +136,16 @@ const PasswordWrapper: React.FC = () => {
     };
   }, [sessionActive, dispatch]);
 
-  // Show loading while initializing or checking
+  // Safety timeout - if initialization takes too long, show password screen anyway
+  useEffect(() => {
+    const initTimeout = setTimeout(() => {
+      setIsInitialized(true);
+      console.warn('Initialization timeout, proceeding anyway');
+    }, 5000); // 5 second timeout
+
+    return () => clearTimeout(initTimeout);
+  }, []); // Only run once on mount
+
   if (!isInitialized || isCheckingPassword || isCheckingToken) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
@@ -127,6 +161,7 @@ const PasswordWrapper: React.FC = () => {
   console.log('PasswordWrapper State:', {
     isAuthenticated,
     hasPassword,
+    sessionActive,
     jwtToken: jwtToken ? 'Present' : 'Not present',
     username,
     isInitialized
@@ -135,6 +170,7 @@ const PasswordWrapper: React.FC = () => {
   // MetaMask-style security: Always require password to access the app
   // Only show app if user has password AND session is active
   if (hasPassword && !sessionActive) {
+    console.log('Session not active, showing login password');
     return (
       <LoginPassword
         onSuccess={() => {
@@ -157,6 +193,7 @@ const PasswordWrapper: React.FC = () => {
       onSuccess={() => {
         dispatch(setHasPassword(true));
         dispatch(setIsAuthenticated(true));
+        dispatch(unlockSession()); // Also unlock session when password is created
       }}
     />
   );

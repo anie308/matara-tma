@@ -45,10 +45,17 @@ function SelectToken() {
 
     // Refresh balances when component mounts or address changes
     useEffect(() => {
-        if (isConnected && address) {
-            getTokenBalances();
+        if (!isConnected || !address) {
+            return;
         }
-    }, [isConnected, address, getTokenBalances]);
+        
+        // Small delay to prevent multiple calls
+        const timeoutId = setTimeout(() => {
+            getTokenBalances();
+        }, 500);
+        
+        return () => clearTimeout(timeoutId);
+    }, [isConnected, address]); // Removed getTokenBalances from dependencies
     
     // Memoize token list to prevent infinite loops
     const allTokens = useMemo(() => {
@@ -82,36 +89,58 @@ function SelectToken() {
         }
 
         let isMounted = true;
+        let priceTimeoutId: NodeJS.Timeout | null = null;
 
         const fetchPrices = async () => {
+            // Set timeout for price fetch
+            priceTimeoutId = setTimeout(() => {
+                if (isMounted) {
+                    setIsLoadingPrices(false);
+                    console.warn('Price fetch timeout');
+                }
+            }, 15000); // 15 second timeout
+            
             try {
                 const symbols = allTokens.map(t => t.symbol).filter(s => s);
                 
                 if (symbols.length === 0) {
                     if (isMounted) setIsLoadingPrices(false);
+                    if (priceTimeoutId) clearTimeout(priceTimeoutId);
                     return;
                 }
 
                 const prices = await getMultipleTokenPrices(symbols);
                 
-                if (isMounted && Object.keys(prices).length > 0) {
-                    setTokenPrices(prices);
+                if (priceTimeoutId) clearTimeout(priceTimeoutId);
+                
+                if (isMounted) {
+                    if (Object.keys(prices).length > 0) {
+                        setTokenPrices(prices);
+                    }
+                    setIsLoadingPrices(false);
                 }
             } catch (error) {
                 console.error('Error fetching token prices:', error);
-            } finally {
+                if (priceTimeoutId) clearTimeout(priceTimeoutId);
                 if (isMounted) {
                     setIsLoadingPrices(false);
                 }
             }
         };
 
-        fetchPrices();
+        // Initial fetch with delay to prevent race conditions
+        const initialTimeout = setTimeout(() => {
+            fetchPrices();
+        }, 1000);
         
         return () => {
             isMounted = false;
+            clearTimeout(initialTimeout);
+            if (priceTimeoutId) {
+                clearTimeout(priceTimeoutId);
+            }
         };
-    }, [isConnected, allTokens]);
+    }, [isConnected]); // Only depend on isConnected, not allTokens
     
     const handleSelectToken = (token: any) => {
         dispatch(setTransaction({ 

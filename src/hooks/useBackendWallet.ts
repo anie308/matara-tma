@@ -80,7 +80,8 @@ export const useBackendWallet = () => {
     const timeoutId = setTimeout(() => {
       console.warn('Balance fetch timeout, setting loading to false');
       setIsLoadingBalances(false);
-    }, 30000); // 30 second timeout
+      setBalances({});
+    }, 20000); // 20 second timeout - reduced to prevent long waits
     
     try {
       // Fetch token list from PancakeSwap with timeout
@@ -114,8 +115,8 @@ export const useBackendWallet = () => {
       ];
       
       // Process tokens in batches to avoid overwhelming the RPC
-      const batchSize = 10;
-      const maxBatches = 5; // Limit to first 50 tokens to prevent timeout
+      const batchSize = 5; // Reduced batch size
+      const maxBatches = 4; // Limit to first 20 tokens to prevent timeout
       const tokensToCheck = tokenList.slice(0, batchSize * maxBatches);
       
       for (let i = 0; i < tokensToCheck.length; i += batchSize) {

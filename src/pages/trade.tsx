@@ -46,30 +46,52 @@ export default function Trade() {
 
   // Fetch real token prices
   useEffect(() => {
+    if (!isConnected) {
+      setIsLoadingPrices(false);
+      return;
+    }
+
+    let isMounted = true;
+    let intervalId: NodeJS.Timeout | null = null;
+
     const fetchPrices = async () => {
-      if (!isConnected) return;
-      
-      setIsLoadingPrices(true);
       try {
         const availableTokens = getAvailableTokens();
-        const symbols = availableTokens.map(t => t.symbol);
-        if (symbols.length > 0) {
-          const prices = await getMultipleTokenPrices(symbols);
+        const symbols = availableTokens.map(t => t.symbol).filter(s => s); // Filter out empty symbols
+        
+        if (symbols.length === 0) {
+          if (isMounted) setIsLoadingPrices(false);
+          return;
+        }
+
+        const prices = await getMultipleTokenPrices(symbols);
+        
+        // Only update state if component is still mounted
+        if (isMounted && Object.keys(prices).length > 0) {
           setTokenPrices(prices);
         }
       } catch (error) {
         console.error('Error fetching token prices:', error);
       } finally {
-        setIsLoadingPrices(false);
+        if (isMounted) {
+          setIsLoadingPrices(false);
+        }
       }
     };
 
+    // Initial fetch
     fetchPrices();
     
     // Refresh prices every 60 seconds
-    const interval = setInterval(fetchPrices, 60000);
-    return () => clearInterval(interval);
-  }, [isConnected, getAvailableTokens]);
+    intervalId = setInterval(fetchPrices, 60000);
+    
+    return () => {
+      isMounted = false;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [isConnected]); // Removed getAvailableTokens from dependencies
 
 
 
@@ -202,8 +224,10 @@ export default function Trade() {
                           <p className="text-[#CDCBC8] text-[14px]">
                             {isLoadingPrices ? (
                               <span className="text-gray-500">Loading...</span>
+                            ) : tokenPrices[token.symbol] && tokenPrices[token.symbol] > 0 ? (
+                              `$${formatNumber(tokenPrices[token.symbol])}`
                             ) : (
-                              `$${formatNumber(tokenPrices[token.symbol] || 0)}`
+                              <span className="text-gray-500">N/A</span>
                             )}
                           </p>
                         </div>

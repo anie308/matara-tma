@@ -151,7 +151,14 @@ export const getHistoricalPriceData = async (
 // Get multiple token prices at once
 export const getMultipleTokenPrices = async (symbols: string[]): Promise<Record<string, number>> => {
   try {
-    const tokenIds = symbols.map(getTokenId).join(',');
+    // Filter out empty symbols and deduplicate
+    const uniqueSymbols = [...new Set(symbols.filter(s => s && s.trim()))];
+    
+    if (uniqueSymbols.length === 0) {
+      return {};
+    }
+
+    const tokenIds = uniqueSymbols.map(getTokenId).join(',');
     
     const response = await fetch(
       `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds}&vs_currencies=usd`
@@ -163,11 +170,20 @@ export const getMultipleTokenPrices = async (symbols: string[]): Promise<Record<
     
     const data = await response.json();
     
+    if (!data || typeof data !== 'object') {
+      console.warn('Invalid API response format');
+      return {};
+    }
+    
     // Convert back to symbol-based map
     const prices: Record<string, number> = {};
-    symbols.forEach((symbol) => {
+    uniqueSymbols.forEach((symbol) => {
       const tokenId = getTokenId(symbol);
-      prices[symbol] = data[tokenId]?.usd || 0;
+      const price = data[tokenId]?.usd;
+      // Only set price if it's a valid number
+      if (typeof price === 'number' && price > 0) {
+        prices[symbol] = price;
+      }
     });
     
     return prices;

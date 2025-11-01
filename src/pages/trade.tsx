@@ -1,5 +1,5 @@
 import WebApp from "@twa-dev/sdk";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowDown, ArrowUp, ArrowUpDown, Eye, EyeOff, Plus, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -9,6 +9,7 @@ import { useBackendWallet } from "../hooks/useBackendWallet";
 import ImportTokenModal from "../components/modal/ImportTokenModal";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
+import { getMultipleTokenPrices } from "../services/cryptoPrice";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -22,24 +23,11 @@ const formatNumber = (num: number): string => {
   });
 };
 
-// Get token price in USD (mock data - replace with API call)
-const getTokenPrice = (symbol: string): number => {
-  const prices: Record<string, number> = {
-    'BNB': 300,
-    'USDT': 1,
-    'USDC': 1,
-    'BUSD': 1,
-    'ETH': 2000,
-    'BTC': 40000,
-  };
-  return prices[symbol.toUpperCase()] || 0.5;
-};
-
-// Calculate USD value
-
 
 export default function Trade() {
   const [showImportModal, setShowImportModal] = useState(false);
+  const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
+  const [isLoadingPrices, setIsLoadingPrices] = useState(true);
   
   WebApp.BackButton.hide();
   const navigate = useNavigate();
@@ -53,11 +41,35 @@ export default function Trade() {
     importToken,
   } = useBackendWallet();
 
-
-
   const transaction = useSelector((state: RootState) => state.transaction);
-
   const dispatch = useDispatch();
+
+  // Fetch real token prices
+  useEffect(() => {
+    const fetchPrices = async () => {
+      if (!isConnected) return;
+      
+      setIsLoadingPrices(true);
+      try {
+        const availableTokens = getAvailableTokens();
+        const symbols = availableTokens.map(t => t.symbol);
+        if (symbols.length > 0) {
+          const prices = await getMultipleTokenPrices(symbols);
+          setTokenPrices(prices);
+        }
+      } catch (error) {
+        console.error('Error fetching token prices:', error);
+      } finally {
+        setIsLoadingPrices(false);
+      }
+    };
+
+    fetchPrices();
+    
+    // Refresh prices every 60 seconds
+    const interval = setInterval(fetchPrices, 60000);
+    return () => clearInterval(interval);
+  }, [isConnected, getAvailableTokens]);
 
 
 
@@ -188,7 +200,11 @@ export default function Trade() {
                             {formatNumber(token.balance || 0)} {token.symbol}
                           </p>
                           <p className="text-[#CDCBC8] text-[14px]">
-                            ${formatNumber(getTokenPrice(token.symbol))}
+                            {isLoadingPrices ? (
+                              <span className="text-gray-500">Loading...</span>
+                            ) : (
+                              `$${formatNumber(tokenPrices[token.symbol] || 0)}`
+                            )}
                           </p>
                         </div>
                         {/* <div className="text-gray-400 ml-2">

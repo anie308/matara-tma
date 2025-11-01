@@ -8,47 +8,7 @@ import TradingViewChart from "../components/TradingViewChart";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { useDispatch } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
-
-// Mock price data - in a real app, this would come from an API
-const getMockPriceData = (symbol: string) => {
-  const basePrice = symbol === 'BNB' ? 300 : symbol === 'USDT' ? 1 : symbol === 'USDC' ? 1 : 0.5;
-  const change = (Math.random() - 0.5) * 0.1; // Random change between -5% and +5%
-  return {
-    price: basePrice,
-    change: change,
-    changePercent: (change / basePrice) * 100,
-    volume24h: Math.random() * 1000000,
-    marketCap: Math.random() * 1000000000,
-    high24h: basePrice * (1 + Math.random() * 0.05),
-    low24h: basePrice * (1 - Math.random() * 0.05),
-  };
-};
-
-// Mock chart data with more realistic price movements
-const generateChartData = (price: number, timeframe: string) => {
-  const data = [];
-  let currentPrice = price;
-  const now = Date.now();
-  
-  // Generate different amounts of data based on timeframe
-  const dataPoints = timeframe === '1h' ? 24 : timeframe === '24h' ? 24 : timeframe === '7d' ? 168 : 720;
-  const interval = timeframe === '1h' ? 60 * 60 * 1000 : timeframe === '24h' ? 60 * 60 * 1000 : timeframe === '7d' ? 60 * 60 * 1000 : 2 * 60 * 60 * 1000;
-  
-  for (let i = 0; i < dataPoints; i++) {
-    // More realistic price movement with trend
-    const trend = Math.sin(i / dataPoints * Math.PI * 2) * 0.01; // Cyclical trend
-    const volatility = (Math.random() - 0.5) * 0.02; // Random volatility
-    const change = trend + volatility;
-    
-    currentPrice = Math.max(currentPrice * (1 + change), price * 0.1); // Prevent negative prices
-    
-    data.push({
-      time: new Date(now - (dataPoints - 1 - i) * interval).toISOString(),
-      price: currentPrice,
-    });
-  }
-  return data;
-};
+import { getTokenMarketData, getHistoricalPriceData } from "../services/cryptoPrice";
 
 export default function TokenDetails() {
   const { symbol, address } = useParams<{ symbol: string; address: string }>();
@@ -56,7 +16,9 @@ export default function TokenDetails() {
   const dispatch = useDispatch();
   const [priceData, setPriceData] = useState<any>(null);
   const [chartData, setChartData] = useState<any[]>([]);
-  console.log(chartData, "chartData")
+  const [isLoadingPrice, setIsLoadingPrice] = useState(true);
+  const [isLoadingChart, setIsLoadingChart] = useState(true);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [timeframe, setTimeframe] = useState('24h');
   
   const { getAvailableTokens } = useBackendWallet();
@@ -67,12 +29,67 @@ export default function TokenDetails() {
     WebApp.BackButton.onClick(() => navigate(-1));
   }, [navigate]);
 
+  // Fetch real price data
   useEffect(() => {
-    if (symbol) {
-      const mockData = getMockPriceData(symbol);
-      setPriceData(mockData);
-      setChartData(generateChartData(mockData.price, timeframe));
-    }
+    const fetchPriceData = async () => {
+      if (!symbol) return;
+      
+      setIsLoadingPrice(true);
+      setPriceError(null);
+      
+      try {
+        const data = await getTokenMarketData(symbol);
+        if (data) {
+          setPriceData({
+            price: data.price,
+            change: data.change24h,
+            changePercent: data.changePercent24h,
+            volume24h: data.volume24h,
+            marketCap: data.marketCap,
+            high24h: data.high24h,
+            low24h: data.low24h,
+          });
+        } else {
+          setPriceError('Price data not available');
+        }
+      } catch (error) {
+        console.error('Error fetching price data:', error);
+        setPriceError('Failed to load price data');
+      } finally {
+        setIsLoadingPrice(false);
+      }
+    };
+
+    fetchPriceData();
+  }, [symbol]);
+
+  // Fetch real chart data
+  useEffect(() => {
+    const fetchChartData = async () => {
+      if (!symbol) return;
+      
+      setIsLoadingChart(true);
+      
+      try {
+        // Map timeframe to days for API
+        const daysMap: Record<string, number> = {
+          '1h': 1,
+          '24h': 1,
+          '7d': 7,
+          '30d': 30,
+        };
+        
+        const days = daysMap[timeframe] || 7;
+        const data = await getHistoricalPriceData(symbol, days);
+        setChartData(data);
+      } catch (error) {
+        console.error('Error fetching chart data:', error);
+      } finally {
+        setIsLoadingChart(false);
+      }
+    };
+
+    fetchChartData();
   }, [symbol, timeframe]);
 
   const availableTokens = getAvailableTokens();
@@ -114,45 +131,87 @@ export default function TokenDetails() {
   };
 
   const handleSend = () => {
-    if (token) {
-      dispatch(setTransaction({
-        type: "send",
-        token: token.symbol,
-        address: token.address,
-        network: "bsc",
-        icon: token.logoURI || "",
-        name: token.name
-      }));
-      navigate("/send");
+    if (!token) {
+      console.error('Token not found');
+      return;
     }
+    
+    // Set complete transaction state with all token details
+    dispatch(setTransaction({
+      type: "send",
+      token: token.symbol,
+      address: token.address,
+      network: "bsc",
+      icon: token.logoURI || "",
+      name: token.name
+    }));
+    
+    console.log('Transaction state set for send:', {
+      type: "send",
+      token: token.symbol,
+      address: token.address,
+      network: "bsc",
+      icon: token.logoURI || "",
+      name: token.name
+    });
+    
+    navigate("/send");
   };
 
   const handleReceive = () => {
-    if (token) {
-      dispatch(setTransaction({
-        type: "receive",
-        token: token.symbol,
-        address: token.address,
-        network: "bsc",
-        icon: token.logoURI || "",
-        name: token.name
-      }));
-      navigate("/receive");
+    if (!token) {
+      console.error('Token not found');
+      return;
     }
+    
+    // Set complete transaction state with all token details
+    dispatch(setTransaction({
+      type: "receive",
+      token: token.symbol,
+      address: token.address,
+      network: "bsc",
+      icon: token.logoURI || "",
+      name: token.name
+    }));
+    
+    console.log('Transaction state set for receive:', {
+      type: "receive",
+      token: token.symbol,
+      address: token.address,
+      network: "bsc",
+      icon: token.logoURI || "",
+      name: token.name
+    });
+    
+    navigate("/receive");
   };
 
   const handleSwap = () => {
-    if (token) {
-      dispatch(setTransaction({
-        type: "swap",
-        token: token.symbol,
-        address: token.address,
-        network: "bsc",
-        icon: token.logoURI || "",
-        name: token.name
-      }));
-      navigate("/swap");
+    if (!token) {
+      console.error('Token not found');
+      return;
     }
+    
+    // Set complete transaction state with all token details
+    dispatch(setTransaction({
+      type: "swap",
+      token: token.symbol,
+      address: token.address,
+      network: "bsc",
+      icon: token.logoURI || "",
+      name: token.name
+    }));
+    
+    console.log('Transaction state set for swap:', {
+      type: "swap",
+      token: token.symbol,
+      address: token.address,
+      network: "bsc",
+      icon: token.logoURI || "",
+      name: token.name
+    });
+    
+    navigate("/swap");
   };
 
   return (
@@ -185,7 +244,14 @@ export default function TokenDetails() {
           </div>
         </div>
 
-        {priceData && (
+        {isLoadingPrice ? (
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 border-2 border-[#FFB948] border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-gray-400">Loading price...</span>
+          </div>
+        ) : priceError ? (
+          <div className="text-red-400 text-sm">{priceError}</div>
+        ) : priceData ? (
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2">
               <span className="text-white text-2xl font-bold">
@@ -205,7 +271,7 @@ export default function TokenDetails() {
               </div>
             </div>
           </div>
-        )}
+        ) : null}
       </div>
 
       {/* Chart Section */}
@@ -230,13 +296,24 @@ export default function TokenDetails() {
         </div>
         
         {/* TradingView Chart */}
-        {chartData.length > 0 && token && (
+        {isLoadingChart ? (
+          <div className="h-[300px] flex items-center justify-center bg-gray-900 rounded-lg">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 border-2 border-[#FFB948] border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-white">Loading chart data...</span>
+            </div>
+          </div>
+        ) : chartData.length > 0 && token ? (
           <TradingViewChart
             data={chartData}
             symbol={token.symbol}
             timeframe={timeframe}
             height={300}
           />
+        ) : (
+          <div className="h-[300px] flex items-center justify-center bg-gray-900 rounded-lg">
+            <span className="text-gray-400">Chart data not available</span>
+          </div>
         )}
       </div>
 

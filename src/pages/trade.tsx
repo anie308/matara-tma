@@ -176,14 +176,6 @@ export default function Trade() {
                 Use the "Connect" button in the top bar to connect your wallet
               </p>
             </div>
-          ) : isLoadingBalances ? (
-            <div className="flex flex-col items-center gap-4">
-              <div className="w-16 h-16 border-4 border-[#FFB948] border-t-transparent rounded-full animate-spin"></div>
-              <h2 className="text-white text-xl font-bold">Loading Balances...</h2>
-              <p className="text-gray-400 text-center">
-                Fetching your token balances from BSC network
-              </p>
-            </div>
           ) : (
             <>
               <div className="flex items-center gap-[10px]">

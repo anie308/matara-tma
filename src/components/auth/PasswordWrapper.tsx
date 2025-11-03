@@ -18,10 +18,10 @@ const PasswordWrapper: React.FC = () => {
   const jwtToken = useSelector((state: RootState) => state.user.jwtToken);
   const sessionActive = useSelector((state: RootState) => state.user.sessionActive);
   const username = profile?.username;
-  console.log(username, "username")
-  console.log(hasPassword, "hasPassword")
-  console.log(isAuthenticated, "isAuthenticated")
-  console.log(jwtToken, "jwtToken")
+  // console.log(username, "username")
+  // console.log(hasPassword, "hasPassword")
+  // console.log(isAuthenticated, "isAuthenticated")
+  // console.log(jwtToken, "jwtToken")
 
   // Check if user has password set
   const {
@@ -118,13 +118,13 @@ const PasswordWrapper: React.FC = () => {
       }
     };
 
-    // Lock session after 5 minutes of inactivity (MetaMask-style)
+    // Lock session after 10 minutes of inactivity (MetaMask-style)
     const inactivityTimeout = setTimeout(() => {
       if (sessionActive) {
         console.log('Session timeout, locking session');
         dispatch({ type: 'user/lockSession' });
       }
-    }, 30 * 60 * 1000); // 30 minutes
+    }, 10 * 60 * 1000); // 10 minutes
 
     // document.addEventListener('visibilitychange', handleVisibilityChange);
     window.addEventListener('beforeunload', handleBeforeUnload);

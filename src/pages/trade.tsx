@@ -1,6 +1,6 @@
 import WebApp from "@twa-dev/sdk";
 import { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Eye, EyeOff, Plus, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Eye, EyeOff, Plus, RefreshCw, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
@@ -28,6 +28,7 @@ export default function Trade() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [tokenPrices, setTokenPrices] = useState<Record<string, number>>({});
   const [isLoadingPrices, setIsLoadingPrices] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   WebApp.BackButton.hide();
   const navigate = useNavigate();
@@ -149,6 +150,32 @@ export default function Trade() {
     return await importToken();
   }
 
+  const handleRefresh = async () => {
+    if (!isConnected || isRefreshing) return;
+    
+    setIsRefreshing(true);
+    
+    try {
+      // Refresh balances
+      await getTokenBalances();
+      
+      // Refresh prices
+      const availableTokens = getAvailableTokens();
+      const symbols = availableTokens.map(t => t.symbol).filter(s => s);
+      
+      if (symbols.length > 0) {
+        const prices = await getMultipleTokenPrices(symbols);
+        if (Object.keys(prices).length > 0) {
+          setTokenPrices(prices);
+        }
+      }
+    } catch (error) {
+      console.error('Error refreshing data:', error);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }
+
   const availableTokens = getAvailableTokens();
   
   // Show all popular BSC tokens with their balances
@@ -190,6 +217,14 @@ export default function Trade() {
                     "****"
                   )}
                 </p>
+                <button 
+                  onClick={handleRefresh}
+                  disabled={isRefreshing || isLoadingBalances}
+                  className="disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Refresh balance"
+                >
+                  <RefreshCw className={`text-white text-[20px] ${isRefreshing ? 'animate-spin' : ''}`} />
+                </button>
                 <button onClick={() => setIsVisible(!isVisible)}>
                   {isVisible ? <Eye className="text-white text-[20px]" /> : <EyeOff className="text-white text-[20px]" />}
                 </button>

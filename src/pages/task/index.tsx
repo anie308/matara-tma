@@ -1,10 +1,10 @@
 import WebApp from "@twa-dev/sdk";
 import { useNavigate } from "react-router-dom";
-import { FaCircleCheck } from "react-icons/fa6";
 import { useGetUserTasksQuery } from "../../services/routes";
 import { RootState } from "../../services/store";
 import { useSelector } from "react-redux";
 import { useEffect, useState } from "react";
+import { IoChevronForwardOutline } from "react-icons/io5";
 
 interface UserTask {
   slug: string;
@@ -15,10 +15,18 @@ interface UserTask {
   completed?: boolean;
 }
 
+interface Project {
+  id?: string;
+  _id?: string;
+  name: string;
+  icon?: { url: string };
+  tasks: UserTask[];
+}
+
 function Task() {
   WebApp.BackButton.hide();
   const navigate = useNavigate();
-  const [tasks, setTasks] = useState<UserTask[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
 
@@ -28,9 +36,15 @@ function Task() {
 
   useEffect(() => {
     if (isSuccess) {
-      setTasks(data?.data || []);
+      // Backend now returns projects with nested tasks
+      setProjects(data?.data || []);
     }
   }, [data, isSuccess]);
+
+  const handleProjectClick = (project: Project) => {
+    const projectId = project.id || project._id || '';
+    navigate(`/tasks/project/${projectId}`, { state: { project } });
+  };
 
   return (
     <div className="text-white flex w-full px-[10px] items-center flex-col justify-center">
@@ -44,33 +58,33 @@ function Task() {
 
       <div className="w-full mt-[40px]">
         <div className="relative w-full p-[10px]">
-          <p className="text-[20px] font-[600] text-white">Tasks</p>
+          <p className="text-[20px] font-[600] text-white">Projects</p>
 
           {/* Loading / Error states */}
           {isLoading && (
-            <p className="text-center mt-6 text-gray-400">Loading tasks…</p>
+            <p className="text-center mt-6 text-gray-400">Loading projects…</p>
           )}
           {isError && (
             <p className="text-center mt-6 text-red-400">
-              Failed to load tasks
+              Failed to load projects
             </p>
           )}
 
           <div className="mt-[20px] grid grid-cols-1 gap-4">
-            {tasks.length > 0
-              ? tasks.map((task) => (
+            {projects.length > 0
+              ? projects.map((project) => (
                   <button
-                    key={task.slug}
-                    onClick={() => navigate(`/tasks/${task.slug}`)}
-                    className="border-[#FFD683] border p-[15px] rounded-[10px] w-full text-left"
+                    key={project.id || project._id || project.name}
+                    onClick={() => handleProjectClick(project)}
+                    className="border-[#FFD683] border p-[15px] rounded-[10px] w-full text-left hover:bg-[#FFD683]/10 transition-colors"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-[10px]">
+                      <div className="flex items-center space-x-[10px] flex-1">
                         <div className="h-[50px] min-w-[50px] w-[50px] rounded-full border overflow-hidden flex items-center justify-center bg-white">
-                          {task.icon?.url ? (
+                          {project.icon?.url ? (
                             <img
-                              src={task.icon.url}
-                              alt={task.title}
+                              src={project.icon.url}
+                              alt={project.name}
                               className="h-full w-full object-cover"
                             />
                           ) : (
@@ -79,24 +93,20 @@ function Task() {
                             </span>
                           )}
                         </div>
-                        <p className="text-[16px] font-[500]">{task.title}</p>
+                        <div className="flex-1">
+                          <p className="text-[16px] font-[500]">{project.name}</p>
+                          <p className="text-[12px] text-gray-400 mt-1">
+                            {project.tasks?.length || 0} task{project.tasks?.length !== 1 ? 's' : ''}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-
-                    <div className="text-start text-white text-[14px] mt-[10px] line-clamp-2">
-                      {task.description}
-                    </div>
-                    <div className="flex items-center space-x-[10px]">
-                      <p>{task.points} $MARP</p>
-                      {task.completed && (
-                        <FaCircleCheck size={20} className="text-[#40D8A1]" />
-                      )}
+                      <IoChevronForwardOutline className="text-[#FFD683] text-[20px]" />
                     </div>
                   </button>
                 ))
               : !isLoading && (
                   <p className="text-center text-gray-400 mt-6 italic">
-                    No tasks available
+                    No projects available
                   </p>
                 )}
           </div>

@@ -8,6 +8,7 @@ import Profile from "../pages/profile";
 import MataraRank from "../pages/matara-rank";
 import Task from "../pages/task";
 import Singletask from "../pages/task/[slug]";
+import ProjectTasks from "../pages/task/project/[projectId]";
 import Trade from "../pages/trade";
 import TokenDetails from "../pages/token-details";
 import Swap from "../pages/swap";
@@ -24,6 +25,7 @@ const MainRoutes = () => {
         <Route path="ref" element={<Referral />} />
         <Route path="rank" element={<Rank />} />
         <Route path="tasks" element={<Task />} />
+        <Route path="tasks/project/:projectId" element={<ProjectTasks />} />
         <Route path="tasks/:slug" element={<Singletask />} />
         <Route path="game" element={<Game />} />
         <Route path="profile" element={<Profile />} />

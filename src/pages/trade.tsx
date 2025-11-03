@@ -1,6 +1,6 @@
 import WebApp from "@twa-dev/sdk";
 import { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Eye, EyeOff, Plus, RefreshCw, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Eye, EyeOff, Plus, RefreshCw, Wallet } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
@@ -10,6 +10,7 @@ import ImportTokenModal from "../components/modal/ImportTokenModal";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { getMultipleTokenPrices } from "../services/cryptoPrice";
+import { toast } from "react-hot-toast";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -176,6 +177,18 @@ export default function Trade() {
     }
   }
 
+  const handleCopyAddress = async () => {
+    if (!address) return;
+    
+    try {
+      await navigator.clipboard.writeText(address);
+      toast.success('Address copied to clipboard');
+      // Optional: Show toast notification here
+    } catch (error) {
+      console.error('Failed to copy address:', error);
+    }
+  }
+
   const availableTokens = getAvailableTokens();
   
   // Show all popular BSC tokens with their balances
@@ -217,14 +230,6 @@ export default function Trade() {
                     "****"
                   )}
                 </p>
-                <button 
-                  onClick={handleRefresh}
-                  disabled={isRefreshing || isLoadingBalances}
-                  className="disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Refresh balance"
-                >
-                  <RefreshCw className={`text-white text-[20px] ${isRefreshing ? 'animate-spin' : ''}`} />
-                </button>
                 <button onClick={() => setIsVisible(!isVisible)}>
                   {isVisible ? <Eye className="text-white text-[20px]" /> : <EyeOff className="text-white text-[20px]" />}
                 </button>
@@ -233,6 +238,15 @@ export default function Trade() {
                 <p className="text-gray-400 text-sm">
                   {address ? `${address.slice(0, 6)}...${address.slice(-4)}` : ""}
                 </p>
+                {address && (
+                  <button 
+                    onClick={handleCopyAddress}
+                    className="text-gray-400 hover:text-white transition-colors"
+                    title="Copy address"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                )}
               </div>
             </>
           )}
@@ -255,6 +269,14 @@ export default function Trade() {
               <div className="flex items-center text-white border-b pb-[10px] justify-between">
                 <p className="font-[600] text-[18px]">Tokens</p>
                 <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleRefresh}
+                    disabled={isRefreshing || isLoadingBalances}
+                    className="text-gray-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    title="Refresh"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  </button>
                   <button
                     onClick={() => setShowImportModal(true)}
                     className="text-[#FFB948] text-sm flex items-center gap-1 hover:text-[#FFA500]"

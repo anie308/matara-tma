@@ -25,6 +25,7 @@ interface Project {
   icon?: { url: string };
   tasks?: UserTask[];
   description?: string;
+  joinedUsers?: string[];
   joined?: boolean;
   participantsCount?: number;
   expectedParticipants?: number;
@@ -128,7 +129,7 @@ function ProjectTasks() {
         </p>
       )}
 
-      {!project.joined && (
+      {!project.joinedUsers?.includes(user?._id || '') && (
         <div className="w-full px-[10px] mb-[20px]">
           <button
             onClick={handleJoinProject}
@@ -140,7 +141,7 @@ function ProjectTasks() {
         </div>
       )}
 
-      {project.joined && (
+      {project.joinedUsers?.includes(user?._id || '') && (
         <div className="w-full px-[10px] mb-[20px]">
           <div className="bg-[#40D8A1]/20 border border-[#40D8A1] rounded-[10px] p-[12px] text-center">
             <p className="text-[#40D8A1] font-[500] text-[14px]">✓ You've joined this project</p>

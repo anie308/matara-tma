@@ -39,6 +39,8 @@ function Task() {
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
 
+  console.log(user, "user");
+
   const { data, isSuccess, isLoading, isError } = useGetProjectsQuery("projects");
   const [joinProject] = useJoinProjectMutation();
 

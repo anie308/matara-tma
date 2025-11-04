@@ -18,12 +18,7 @@ const PasswordWrapper: React.FC = () => {
   const jwtToken = useSelector((state: RootState) => state.user.jwtToken);
   const sessionActive = useSelector((state: RootState) => state.user.sessionActive);
   const username = profile?.username;
-  // console.log(username, "username")
-  // console.log(hasPassword, "hasPassword")
-  // console.log(isAuthenticated, "isAuthenticated")
-  // console.log(jwtToken, "jwtToken")
 
-  // Check if user has password set
   const {
     data: passwordStatus,
     isLoading: isCheckingPassword

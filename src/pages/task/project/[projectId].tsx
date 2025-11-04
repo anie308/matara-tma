@@ -17,18 +17,25 @@ interface UserTask {
   completed?: boolean;
 }
 
+interface JoinedUser {
+  _id: string;
+  username?: string;
+  profilePicture?: string;
+}
+
 interface Project {
   slug: string;
   id?: string;
   _id?: string;
   name: string;
   icon?: { url: string };
+  logo?: { url: string; public_id?: string };
   tasks?: UserTask[];
   description?: string;
-  joinedUsers?: string[];
+  joinedUsers?: (string | JoinedUser)[];
   joined?: boolean;
   participantsCount?: number;
-  expectedParticipants?: number;
+  numberOfParticipants?: number;
   status?: 'in-progress' | 'completed';
 }
 
@@ -50,7 +57,20 @@ function ProjectTasks() {
     skip: !slug,
   });
 
+  console.log(projectData?.data?.joinedUsers, "projectData joinedUsers");
+
   const [joinProject, { isLoading: isJoining }] = useJoinProjectMutation();
+
+  // Helper function to check if user is joined
+  const isUserJoined = (project: Project | null, username: string | null | undefined): boolean => {
+    if (!username || !project?.joinedUsers) return false;
+    return project.joinedUsers.some((joinedUser) => {
+      if (typeof joinedUser === 'string') {
+        return joinedUser === username;
+      }
+      return joinedUser.username === username;
+    });
+  };
 
   WebApp.BackButton.show();
   WebApp.BackButton.onClick(() => navigate(-1));
@@ -60,10 +80,10 @@ function ProjectTasks() {
     if (location.state?.project) {
       setProject(location.state.project);
     }
-    
+
     // Then fetch from API to get latest data
-    if (projectSuccess && projectData && Object.keys(projectData).length > 0) {
-      setProject(projectData as Project);
+    if (projectSuccess && projectData?.data ) {
+      setProject(projectData?.data as Project);
     } else if (projectError && slug) {
       // If project not found, navigate back to tasks
       toast.error('Project not found');
@@ -72,7 +92,10 @@ function ProjectTasks() {
   }, [location.state, projectData, projectSuccess, projectError, slug, navigate]);
 
   const handleJoinProject = async () => {
-    if (!slug || !savedUser || isJoining || project?.joined) return;
+    const username = savedUser;
+    const userJoined = isUserJoined(project, username);
+    
+    if (!slug || !savedUser || isJoining || userJoined) return;
 
     try {
       const result = await joinProject({
@@ -85,12 +108,16 @@ function ProjectTasks() {
       
       toast.success('Successfully joined project!');
       
-      // Update local project state
-      if (project) {
+      // Update local project state - add user object to joinedUsers array
+      if (project && savedUser) {
+        const newJoinedUser: JoinedUser = {
+          _id: user?._id || '',
+          username: savedUser,
+          profilePicture: user?.profilePicture || undefined
+        };
         setProject({ 
           ...project, 
-          joined: true,
-          participantsCount: (project.participantsCount || 0) + 1
+          joinedUsers: [...(project.joinedUsers || []), newJoinedUser]
         });
       }
       
@@ -129,28 +156,39 @@ function ProjectTasks() {
         </p>
       )}
 
-      {!project.joinedUsers?.includes(user?._id || '') && (
-        <div className="w-full px-[10px] mb-[20px]">
-          <button
-            onClick={handleJoinProject}
-            disabled={isJoining}
-            className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] disabled:opacity-50"
-          >
-            {isJoining ? 'Joining...' : 'Join Project'}
-          </button>
-        </div>
-      )}
-
-      {project.joinedUsers?.includes(user?._id || '') && (
-        <div className="w-full px-[10px] mb-[20px]">
-          <div className="bg-[#40D8A1]/20 border border-[#40D8A1] rounded-[10px] p-[12px] text-center">
-            <p className="text-[#40D8A1] font-[500] text-[14px]">✓ You've joined this project</p>
+      {(() => {
+        const username = savedUser;
+        const userJoined = isUserJoined(project, username);
+        
+        if (!userJoined) {
+          return (
+            <div className="w-full px-[10px] mb-[20px]">
+              <button
+                onClick={handleJoinProject}
+                disabled={isJoining}
+                className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] disabled:opacity-50"
+              >
+                {isJoining ? 'Joining...' : 'Join Project'}
+              </button>
+            </div>
+          );
+        }
+        
+        return (
+          <div className="w-full px-[10px] mb-[20px]">
+            <div className="bg-[#40D8A1]/20 border border-[#40D8A1] rounded-[10px] p-[12px] text-center">
+              <p className="text-[#40D8A1] font-[500] text-[14px]">✓ You've joined this project</p>
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       <p className="text-[15px] text-center text-white font-[500] w-[90%] mb-[20px]">
-        {project.joined ? 'Select a task to get started and earn rewards.' : 'Join the project to access tasks.'}
+        {(() => {
+          const username = savedUser;
+          const userJoined = isUserJoined(project, username);
+          return userJoined ? 'Select a task to get started and earn rewards.' : 'Join the project to access tasks.';
+        })()}
       </p>
 
       <div className="w-full mt-[20px]">
@@ -158,8 +196,20 @@ function ProjectTasks() {
           <p className="text-[20px] font-[600] text-white mb-[20px]">Tasks</p>
 
           <div className="mt-[20px] grid grid-cols-1 gap-4">
-            {project.joined && project.tasks && project.tasks.length > 0
-              ? project.tasks.map((task) => (
+            {(() => {
+              const username = savedUser;
+              const userJoined = isUserJoined(project, username);
+              
+              if (!userJoined) {
+                return (
+                  <p className="text-center text-gray-400 mt-6 italic">
+                    Join the project to view tasks
+                  </p>
+                );
+              }
+              
+              if (project.tasks && project.tasks.length > 0) {
+                return project.tasks.map((task) => (
                   <button
                     key={task.slug}
                     onClick={() => navigate(`/tasks/${task.slug}`)}
@@ -194,16 +244,15 @@ function ProjectTasks() {
                       )}
                     </div>
                   </button>
-                ))
-              : project.joined ? (
-                  <p className="text-center text-gray-400 mt-6 italic">
-                    No tasks available in this project
-                  </p>
-                ) : (
-                  <p className="text-center text-gray-400 mt-6 italic">
-                    Join the project to view tasks
-                  </p>
-                )}
+                ));
+              }
+              
+              return (
+                <p className="text-center text-gray-400 mt-6 italic">
+                  No tasks available in this project
+                </p>
+              );
+            })()}
           </div>
         </div>
       </div>

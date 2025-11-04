@@ -16,16 +16,23 @@ interface UserTask {
   completed?: boolean;
 }
 
+interface JoinedUser {
+  _id: string;
+  username?: string;
+  profilePicture?: string;
+}
+
 interface Project {
   slug: string;
   id?: string;
   _id?: string;
   name: string;
   icon?: { url: string };
+  logo?: { url: string; public_id?: string };
   tasks?: UserTask[];
   description?: string;
   joined?: boolean;
-  joinedUsers?: string[];
+  joinedUsers?: (string | JoinedUser)[];
   participantsCount?: number;
   numberOfParticipants?: number;
   status?: 'in-progress' | 'completed';
@@ -41,25 +48,42 @@ function Task() {
 
   console.log(user, "user");
 
-  const { data, isSuccess, isLoading, isError } = useGetProjectsQuery("projects");
+  const { data, isSuccess, isLoading, isError, refetch } = useGetProjectsQuery("projects");
   const [joinProject] = useJoinProjectMutation();
 
   useEffect(() => {
     if (isSuccess) {
       // Backend returns projects
-      setProjects(data?.data || data || []);
+      const projectsData = data?.data || data || [];
+      setProjects(Array.isArray(projectsData) ? projectsData : []);
     }
   }, [data, isSuccess]);
-  console.log(projects, "projects");
+
+
+  console.log(projects)
+  
+
+  // Helper function to check if user is joined
+  const isUserJoined = (project: Project, username: string | null | undefined): boolean => {
+    if (!username || !project.joinedUsers) return false;
+    return project.joinedUsers.some((joinedUser) => {
+      if (typeof joinedUser === 'string') {
+        return joinedUser === username;
+      }
+      return joinedUser.username === username;
+    });
+  };
 
   const handleJoinAndNavigate = async (project: Project, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click
     
-    const projectSlug = project.slug || project.id || project._id || '';
+    const projectSlug = project.slug;
+    const username = savedUser;
+    const userJoined = isUserJoined(project, username);
     
-    if (!projectSlug || !savedUser || joiningProjectSlug || project?.joined) {
+    if (!projectSlug || !savedUser || joiningProjectSlug || userJoined) {
       // If already joined, just navigate
-      if (project?.joined) {
+      if (userJoined) {
         navigate(`/tasks/project/${projectSlug}`, { state: { project } });
       }
       return;
@@ -76,17 +100,11 @@ function Task() {
       
       toast.success('Successfully joined project!');
       
-      // Update local project state
-      setProjects(prevProjects => 
-        prevProjects.map(p => 
-          p.slug === projectSlug || p.id === projectSlug || p._id === projectSlug
-            ? { ...p, joined: true, participantsCount: (p.participantsCount || 0) + 1 }
-            : p
-        )
-      );
+      // Refetch projects to get the latest data from server
+      await refetch();
       
       // Navigate to project details
-      navigate(`/tasks/project/${projectSlug}`, { state: { project: { ...project, joined: true } } });
+      navigate(`/tasks/project/${projectSlug}`);
     } catch (error: any) {
       console.error('Error joining project:', error);
       toast.error(error?.data?.message || 'Failed to join project');
@@ -96,7 +114,7 @@ function Task() {
   };
 
   const handleProjectClick = (project: Project) => {
-    const projectSlug = project.slug || project.id || project._id || '';
+    const projectSlug = project.slug;
     navigate(`/tasks/project/${projectSlug}`, { state: { project } });
   };
 
@@ -141,9 +159,9 @@ function Task() {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-[10px] flex-1">
                         <div className="h-[50px] min-w-[50px] w-[50px] rounded-full border overflow-hidden flex items-center justify-center bg-white">
-                          {project.icon?.url ? (
+                          {(project.logo?.url || project.icon?.url) ? (
                             <img
-                              src={project.icon.url}
+                              src={project.logo?.url || project.icon?.url}
                               alt={project.name}
                               className="h-full w-full object-cover"
                             />
@@ -156,7 +174,7 @@ function Task() {
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-[16px] font-[500]">{project.name}</p>
-                            {project.joined && (
+                            {isUserJoined(project, savedUser) && (
                               <span className="text-[#40D8A1] text-xs">✓ Joined</span>
                             )}
                           </div>
@@ -181,13 +199,18 @@ function Task() {
                           </span>
                           {project.numberOfParticipants && (
                             <span> / {project.numberOfParticipants}</span>
-                          )} participants
+                          )} participant{project.joinedUsers?.length !== 1 ? 's' : ''}
                         </p>
                         {getStatusBadge(project.status)}
                       </div>
-                      {!project.joinedUsers?.includes(user?._id || '') && (() => {
-                        const projectSlug = project.slug || project.id || project._id || '';
+                      {(() => {
+                        const username = savedUser;
+                        const userJoined = isUserJoined(project, username);
+                        const projectSlug = project.slug;
                         const isThisProjectJoining = joiningProjectSlug === projectSlug;
+
+                        if (userJoined) return null;
+                        
                         return (
                           <button
                             onClick={(e) => handleJoinAndNavigate(project, e)}

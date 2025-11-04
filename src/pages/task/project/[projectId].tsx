@@ -26,6 +26,9 @@ interface Project {
   tasks?: UserTask[];
   description?: string;
   joined?: boolean;
+  participantsCount?: number;
+  expectedParticipants?: number;
+  status?: 'in-progress' | 'completed';
 }
 
 function ProjectTasks() {
@@ -58,9 +61,8 @@ function ProjectTasks() {
     }
     
     // Then fetch from API to get latest data
-    if (projectSuccess && projectData) {
-      const fetchedProject = projectData?.data || projectData;
-      setProject(fetchedProject);
+    if (projectSuccess && projectData && Object.keys(projectData).length > 0) {
+      setProject(projectData as Project);
     } else if (projectError && slug) {
       // If project not found, navigate back to tasks
       toast.error('Project not found');
@@ -84,7 +86,11 @@ function ProjectTasks() {
       
       // Update local project state
       if (project) {
-        setProject({ ...project, joined: true });
+        setProject({ 
+          ...project, 
+          joined: true,
+          participantsCount: (project.participantsCount || 0) + 1
+        });
       }
       
       // Optionally refetch project data

@@ -115,7 +115,7 @@ const userSlice = apiSlice.injectEndpoints({
         url: `/project/${slug}`,
         method: "GET",
       }),
-      providesTags: ["projects"]
+      providesTags: ["projects", "tasks"]
     }),
     joinProject: builder.mutation({
       query: ({ slug, reqData }) => ({
@@ -123,7 +123,7 @@ const userSlice = apiSlice.injectEndpoints({
         method: "POST",
         body: reqData,
       }),
-      invalidatesTags: ["projects"],
+      invalidatesTags: ["projects", "tasks"],
     }),
   }),
 });

@@ -1,8 +1,11 @@
 import WebApp from "@twa-dev/sdk";
 import { useNavigate } from "react-router-dom";
-import { useGetProjectsQuery } from "../../services/routes";
+import { useGetProjectsQuery, useJoinProjectMutation } from "../../services/routes";
 import { useEffect, useState } from "react";
 import { IoChevronForwardOutline } from "react-icons/io5";
+import { useSelector } from "react-redux";
+import { RootState } from "../../services/store";
+import { toast } from "react-hot-toast";
 
 interface UserTask {
   slug: string;
@@ -22,14 +25,20 @@ interface Project {
   tasks?: UserTask[];
   description?: string;
   joined?: boolean;
+  participantsCount?: number;
+  expectedParticipants?: number;
+  status?: 'in-progress' | 'completed';
 }
 
 function Task() {
   WebApp.BackButton.hide();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
+  const user = useSelector((state: RootState) => state.user.profile);
+  const savedUser = user?.username;
 
   const { data, isSuccess, isLoading, isError } = useGetProjectsQuery("projects");
+  const [joinProject, { isLoading: isJoining }] = useJoinProjectMutation();
 
   useEffect(() => {
     if (isSuccess) {
@@ -37,10 +46,58 @@ function Task() {
       setProjects(data?.data || data || []);
     }
   }, [data, isSuccess]);
+  console.log(projects, "projects");
+
+  const handleJoinAndNavigate = async (project: Project, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click
+    
+    const projectSlug = project.slug || project.id || project._id || '';
+    
+    if (!projectSlug || !savedUser || isJoining || project?.joined) {
+      // If already joined, just navigate
+      if (project?.joined) {
+        navigate(`/tasks/project/${projectSlug}`, { state: { project } });
+      }
+      return;
+    }
+
+    try {
+      await joinProject({
+        slug: projectSlug,
+        reqData: {
+          username: savedUser,
+        },
+      }).unwrap();
+      
+      toast.success('Successfully joined project!');
+      
+      // Update local project state
+      setProjects(prevProjects => 
+        prevProjects.map(p => 
+          p.slug === projectSlug || p.id === projectSlug || p._id === projectSlug
+            ? { ...p, joined: true, participantsCount: (p.participantsCount || 0) + 1 }
+            : p
+        )
+      );
+      
+      // Navigate to project details
+      navigate(`/tasks/project/${projectSlug}`, { state: { project: { ...project, joined: true } } });
+    } catch (error: any) {
+      console.error('Error joining project:', error);
+      toast.error(error?.data?.message || 'Failed to join project');
+    }
+  };
 
   const handleProjectClick = (project: Project) => {
     const projectSlug = project.slug || project.id || project._id || '';
     navigate(`/tasks/project/${projectSlug}`, { state: { project } });
+  };
+
+  const getStatusBadge = (status?: string) => {
+    if (status === 'completed') {
+      return <span className="px-2 py-1 rounded-full text-xs font-[500] bg-[#40D8A1]/20 text-[#40D8A1] border border-[#40D8A1]">Completed</span>;
+    }
+    return <span className="px-2 py-1 rounded-full text-xs font-[500] bg-[#FFB948]/20 text-[#FFB948] border border-[#FFB948]">In Progress</span>;
   };
 
   return (
@@ -70,12 +127,11 @@ function Task() {
           <div className="mt-[20px] grid grid-cols-1 gap-4">
             {projects.length > 0
               ? projects.map((project) => (
-                  <button
+                  <div
                     key={project.slug || project.id || project._id || project.name}
-                    onClick={() => handleProjectClick(project)}
-                    className="border-[#FFD683] border p-[15px] rounded-[10px] w-full text-left hover:bg-[#FFD683]/10 transition-colors"
+                    className="border-[#FFD683] border p-[15px] rounded-[10px] w-full hover:bg-[#FFD683]/10 transition-colors"
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center space-x-[10px] flex-1">
                         <div className="h-[50px] min-w-[50px] w-[50px] rounded-full border overflow-hidden flex items-center justify-center bg-white">
                           {project.icon?.url ? (
@@ -91,18 +147,48 @@ function Task() {
                           )}
                         </div>
                         <div className="flex-1">
-                          <p className="text-[16px] font-[500]">{project.name}</p>
-                          <p className="text-[12px] text-gray-400 mt-1">
-                            {project.tasks?.length || 0} task{project.tasks?.length !== 1 ? 's' : ''}
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-[16px] font-[500]">{project.name}</p>
                             {project.joined && (
-                              <span className="ml-2 text-[#40D8A1]">• Joined</span>
+                              <span className="text-[#40D8A1] text-xs">✓ Joined</span>
                             )}
+                          </div>
+                          <p className="text-[12px] text-gray-400">
+                            {project.tasks?.length || 0} task{project.tasks?.length !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
-                      <IoChevronForwardOutline className="text-[#FFD683] text-[20px]" />
+                      <button
+                        onClick={() => handleProjectClick(project)}
+                        className="text-[#FFD683] hover:text-[#FFB948] transition-colors"
+                      >
+                        <IoChevronForwardOutline className="text-[20px]" />
+                      </button>
                     </div>
-                  </button>
+                    
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="flex items-center gap-3">
+                        <p className="text-[12px] text-gray-400">
+                          <span className="text-white font-[500]">
+                            {project.participantsCount || 0}
+                          </span>
+                          {project.expectedParticipants && (
+                            <span> / {project.expectedParticipants}</span>
+                          )} participants
+                        </p>
+                        {getStatusBadge(project.status)}
+                      </div>
+                      {!project.joined && (
+                        <button
+                          onClick={(e) => handleJoinAndNavigate(project, e)}
+                          disabled={isJoining}
+                          className="btn text-[#131721] font-[600] text-[12px] px-4 py-2 rounded-[8px] disabled:opacity-50"
+                        >
+                          {isJoining ? 'Joining...' : 'Join'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 ))
               : !isLoading && (
                   <p className="text-center text-gray-400 mt-6 italic">

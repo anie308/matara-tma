@@ -7,9 +7,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { Provider } from 'react-redux';
 import { store } from './services/store.ts';
 import { TonConnectUIProvider } from '@tonconnect/ui-react';
-// import eruda from 'eruda';
+import eruda from 'eruda';
 
-// eruda.init();
+eruda.init();
 
 
 createRoot(document.getElementById('root')!).render(

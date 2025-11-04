@@ -25,8 +25,9 @@ interface Project {
   tasks?: UserTask[];
   description?: string;
   joined?: boolean;
+  joinedUsers?: string[];
   participantsCount?: number;
-  expectedParticipants?: number;
+  numberOfParticipants?: number;
   status?: 'in-progress' | 'completed';
 }
 
@@ -34,11 +35,12 @@ function Task() {
   WebApp.BackButton.hide();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [joiningProjectSlug, setJoiningProjectSlug] = useState<string | null>(null);
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
 
   const { data, isSuccess, isLoading, isError } = useGetProjectsQuery("projects");
-  const [joinProject, { isLoading: isJoining }] = useJoinProjectMutation();
+  const [joinProject] = useJoinProjectMutation();
 
   useEffect(() => {
     if (isSuccess) {
@@ -53,7 +55,7 @@ function Task() {
     
     const projectSlug = project.slug || project.id || project._id || '';
     
-    if (!projectSlug || !savedUser || isJoining || project?.joined) {
+    if (!projectSlug || !savedUser || joiningProjectSlug || project?.joined) {
       // If already joined, just navigate
       if (project?.joined) {
         navigate(`/tasks/project/${projectSlug}`, { state: { project } });
@@ -62,6 +64,7 @@ function Task() {
     }
 
     try {
+      setJoiningProjectSlug(projectSlug);
       await joinProject({
         slug: projectSlug,
         reqData: {
@@ -85,6 +88,8 @@ function Task() {
     } catch (error: any) {
       console.error('Error joining project:', error);
       toast.error(error?.data?.message || 'Failed to join project');
+    } finally {
+      setJoiningProjectSlug(null);
     }
   };
 
@@ -170,23 +175,27 @@ function Task() {
                       <div className="flex items-center gap-3">
                         <p className="text-[12px] text-gray-400">
                           <span className="text-white font-[500]">
-                            {project.participantsCount || 0}
+                            {project.joinedUsers?.length || 0}
                           </span>
-                          {project.expectedParticipants && (
-                            <span> / {project.expectedParticipants}</span>
+                          {project.numberOfParticipants && (
+                            <span> / {project.numberOfParticipants}</span>
                           )} participants
                         </p>
                         {getStatusBadge(project.status)}
                       </div>
-                      {!project.joined && (
-                        <button
-                          onClick={(e) => handleJoinAndNavigate(project, e)}
-                          disabled={isJoining}
-                          className="btn text-[#131721] font-[600] text-[12px] px-4 py-2 rounded-[8px] disabled:opacity-50"
-                        >
-                          {isJoining ? 'Joining...' : 'Join'}
-                        </button>
-                      )}
+                      {!project.joinedUsers?.includes(user?._id || '') && (() => {
+                        const projectSlug = project.slug || project.id || project._id || '';
+                        const isThisProjectJoining = joiningProjectSlug === projectSlug;
+                        return (
+                          <button
+                            onClick={(e) => handleJoinAndNavigate(project, e)}
+                            disabled={isThisProjectJoining}
+                            className="btn text-[#131721] font-[600] text-[12px] px-4 py-2 rounded-[8px] disabled:opacity-50"
+                          >
+                            {isThisProjectJoining ? 'Joining...' : 'Join'}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 ))

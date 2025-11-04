@@ -2,6 +2,7 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { Middleware } from '@reduxjs/toolkit';
 
 export interface User {
+  _id: string;
   username: string | null;
   points: number;
   referrals: number;
@@ -35,6 +36,7 @@ export interface State {
 }
 
 const defaultProfile: User = {
+  _id: "",
   username: null,
   points: 0,
   referrals: 0,

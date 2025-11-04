@@ -5,7 +5,8 @@ import { IoChevronBackOutline } from "react-icons/io5";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../services/store";
-import { useGetUserTasksQuery } from "../../../services/routes";
+import { useGetSingleProjectQuery, useJoinProjectMutation } from "../../../services/routes";
+import { toast } from "react-hot-toast";
 
 interface UserTask {
   slug: string;
@@ -17,11 +18,14 @@ interface UserTask {
 }
 
 interface Project {
+  slug: string;
   id?: string;
   _id?: string;
   name: string;
   icon?: { url: string };
-  tasks: UserTask[];
+  tasks?: UserTask[];
+  description?: string;
+  joined?: boolean;
 }
 
 function ProjectTasks() {
@@ -32,40 +36,68 @@ function ProjectTasks() {
   const user = useSelector((state: RootState) => state.user.profile);
   const savedUser = user?.username;
   
-  // Fetch projects in case navigation state is lost
-  const { data: projectsData, isSuccess: projectsSuccess } = useGetUserTasksQuery({
-    username: savedUser,
+  // Use projectId as slug for API call
+  const slug = projectId || '';
+  
+  // Fetch single project by slug
+  const { data: projectData, isSuccess: projectSuccess, isLoading: projectLoading, isError: projectError } = useGetSingleProjectQuery({
+    slug: slug,
+  }, {
+    skip: !slug,
   });
+
+  const [joinProject, { isLoading: isJoining }] = useJoinProjectMutation();
 
   WebApp.BackButton.show();
   WebApp.BackButton.onClick(() => navigate(-1));
 
   useEffect(() => {
-    // First try to get project from navigation state
+    // First try to get project from navigation state (for quick display)
     if (location.state?.project) {
       setProject(location.state.project);
-      return;
     }
     
-    // If no navigation state, try to find project from fetched data
-    if (projectId && projectsSuccess && projectsData?.data) {
-      const foundProject = projectsData.data.find((p: Project) => 
-        (p.id === projectId || p._id === projectId)
-      );
-      if (foundProject) {
-        setProject(foundProject);
-      } else {
-        // If project not found in data, navigate back to tasks
-        navigate('/tasks', { replace: true });
-      }
-    } else if (projectId && projectsSuccess && (!projectsData?.data || projectsData.data.length === 0)) {
-      // Data loaded but empty or invalid, navigate back
+    // Then fetch from API to get latest data
+    if (projectSuccess && projectData) {
+      const fetchedProject = projectData?.data || projectData;
+      setProject(fetchedProject);
+    } else if (projectError && slug) {
+      // If project not found, navigate back to tasks
+      toast.error('Project not found');
       navigate('/tasks', { replace: true });
     }
-    // If projectsSuccess is false, wait for data to load (no action needed)
-  }, [location.state, projectId, projectsData, projectsSuccess, navigate]);
+  }, [location.state, projectData, projectSuccess, projectError, slug, navigate]);
 
-  if (!project) {
+  const handleJoinProject = async () => {
+    if (!slug || !savedUser || isJoining || project?.joined) return;
+
+    try {
+      const result = await joinProject({
+        slug: slug,
+        reqData: {
+          username: savedUser,
+        },
+      }).unwrap();
+      console.log(result)
+      
+      toast.success('Successfully joined project!');
+      
+      // Update local project state
+      if (project) {
+        setProject({ ...project, joined: true });
+      }
+      
+      // Optionally refetch project data
+      if (projectSuccess) {
+        // The query will automatically refetch due to invalidatesTags
+      }
+    } catch (error: any) {
+      console.error('Error joining project:', error);
+      toast.error(error?.data?.message || 'Failed to join project');
+    }
+  };
+
+  if (projectLoading || !project) {
     return (
       <div className="text-white flex w-full px-[10px] items-center flex-col justify-center">
         <p className="text-center mt-6 text-gray-400">Loading project...</p>
@@ -84,8 +116,34 @@ function ProjectTasks() {
         </p>
       </div>
 
+      {project.description && (
+        <p className="text-[15px] text-center text-white font-[500] w-[90%] mb-[10px]">
+          {project.description}
+        </p>
+      )}
+
+      {!project.joined && (
+        <div className="w-full px-[10px] mb-[20px]">
+          <button
+            onClick={handleJoinProject}
+            disabled={isJoining}
+            className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] disabled:opacity-50"
+          >
+            {isJoining ? 'Joining...' : 'Join Project'}
+          </button>
+        </div>
+      )}
+
+      {project.joined && (
+        <div className="w-full px-[10px] mb-[20px]">
+          <div className="bg-[#40D8A1]/20 border border-[#40D8A1] rounded-[10px] p-[12px] text-center">
+            <p className="text-[#40D8A1] font-[500] text-[14px]">✓ You've joined this project</p>
+          </div>
+        </div>
+      )}
+
       <p className="text-[15px] text-center text-white font-[500] w-[90%] mb-[20px]">
-        Select a task to get started and earn rewards.
+        {project.joined ? 'Select a task to get started and earn rewards.' : 'Join the project to access tasks.'}
       </p>
 
       <div className="w-full mt-[20px]">
@@ -93,7 +151,7 @@ function ProjectTasks() {
           <p className="text-[20px] font-[600] text-white mb-[20px]">Tasks</p>
 
           <div className="mt-[20px] grid grid-cols-1 gap-4">
-            {project.tasks && project.tasks.length > 0
+            {project.joined && project.tasks && project.tasks.length > 0
               ? project.tasks.map((task) => (
                   <button
                     key={task.slug}
@@ -130,9 +188,13 @@ function ProjectTasks() {
                     </div>
                   </button>
                 ))
-              : (
+              : project.joined ? (
                   <p className="text-center text-gray-400 mt-6 italic">
                     No tasks available in this project
+                  </p>
+                ) : (
+                  <p className="text-center text-gray-400 mt-6 italic">
+                    Join the project to view tasks
                   </p>
                 )}
           </div>

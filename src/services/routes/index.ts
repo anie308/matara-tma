@@ -103,6 +103,28 @@ const userSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["tasks"],
     }),
+    getProjects: builder.query({
+      query: () => ({
+        url: `/project`,
+        method: "GET",
+      }),
+      providesTags: ["projects"]
+    }),
+    getSingleProject: builder.query({
+      query: ({ slug }) => ({
+        url: `/project/${slug}`,
+        method: "GET",
+      }),
+      providesTags: ["projects"]
+    }),
+    joinProject: builder.mutation({
+      query: ({ slug, reqData }) => ({
+        url: `/project/${slug}/join`,
+        method: "POST",
+        body: reqData,
+      }),
+      invalidatesTags: ["projects"],
+    }),
   }),
 });
 
@@ -121,4 +143,7 @@ export const {
   useCheckBonusQuery,
   useStartMiningMutation,
   useClaimMiningMutation,
+  useGetProjectsQuery,
+  useGetSingleProjectQuery,
+  useJoinProjectMutation,
 } = userSlice;

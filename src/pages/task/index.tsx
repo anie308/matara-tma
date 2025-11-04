@@ -1,8 +1,6 @@
 import WebApp from "@twa-dev/sdk";
 import { useNavigate } from "react-router-dom";
-import { useGetUserTasksQuery } from "../../services/routes";
-import { RootState } from "../../services/store";
-import { useSelector } from "react-redux";
+import { useGetProjectsQuery } from "../../services/routes";
 import { useEffect, useState } from "react";
 import { IoChevronForwardOutline } from "react-icons/io5";
 
@@ -16,34 +14,33 @@ interface UserTask {
 }
 
 interface Project {
+  slug: string;
   id?: string;
   _id?: string;
   name: string;
   icon?: { url: string };
-  tasks: UserTask[];
+  tasks?: UserTask[];
+  description?: string;
+  joined?: boolean;
 }
 
 function Task() {
   WebApp.BackButton.hide();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
-  const user = useSelector((state: RootState) => state.user.profile);
-  const savedUser = user?.username;
 
-  const { data, isSuccess, isLoading, isError } = useGetUserTasksQuery({
-    username: savedUser,
-  });
+  const { data, isSuccess, isLoading, isError } = useGetProjectsQuery("projects");
 
   useEffect(() => {
     if (isSuccess) {
-      // Backend now returns projects with nested tasks
-      setProjects(data?.data || []);
+      // Backend returns projects
+      setProjects(data?.data || data || []);
     }
   }, [data, isSuccess]);
 
   const handleProjectClick = (project: Project) => {
-    const projectId = project.id || project._id || '';
-    navigate(`/tasks/project/${projectId}`, { state: { project } });
+    const projectSlug = project.slug || project.id || project._id || '';
+    navigate(`/tasks/project/${projectSlug}`, { state: { project } });
   };
 
   return (
@@ -74,7 +71,7 @@ function Task() {
             {projects.length > 0
               ? projects.map((project) => (
                   <button
-                    key={project.id || project._id || project.name}
+                    key={project.slug || project.id || project._id || project.name}
                     onClick={() => handleProjectClick(project)}
                     className="border-[#FFD683] border p-[15px] rounded-[10px] w-full text-left hover:bg-[#FFD683]/10 transition-colors"
                   >
@@ -97,6 +94,9 @@ function Task() {
                           <p className="text-[16px] font-[500]">{project.name}</p>
                           <p className="text-[12px] text-gray-400 mt-1">
                             {project.tasks?.length || 0} task{project.tasks?.length !== 1 ? 's' : ''}
+                            {project.joined && (
+                              <span className="ml-2 text-[#40D8A1]">• Joined</span>
+                            )}
                           </p>
                         </div>
                       </div>

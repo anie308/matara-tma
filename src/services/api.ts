@@ -38,7 +38,7 @@ export const apiSlice = createApi({
       query: () => '/auth/verify-token',
     }),
   }),
-  tagTypes: ['tasks', 'user', 'milestone', 'mining', 'bonus', 'auth']
+  tagTypes: ['tasks', 'user', 'milestone', 'mining', 'bonus', 'auth', 'projects']
 });
 
 

@@ -18,7 +18,7 @@ function App() {
   const [isSupported, setIsSupported] = useState(true);
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.profile);
-  const savedUser = user?.username;
+  const savedUser = user?.username || "jurstadev";
   const initUser = WebApp.initDataUnsafe?.user ;
 
   useEffect(() => {

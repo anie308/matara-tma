@@ -84,7 +84,8 @@ function Singletask() {
     } else if (
       singleMission?.status !== "done" &&
       singleMission?.status !== "progress" &&
-      singleMission?.status !== "ended"
+      singleMission?.status !== "ended" &&
+      singleMission?.status !== "pending"
     ) {
       return (
         <button
@@ -97,6 +98,12 @@ function Singletask() {
             ? "Mission Completed"
             : "Start Mission"}
         </button>
+      );
+    } else if (singleMission?.status === "pending") {
+      return (
+        <p className="flex items-center justify-center text-yellow-500">
+          Submitted for Review - Awaiting Admin Approval
+        </p>
       );
     } else if (singleMission?.status === "ended") {
       return (

@@ -11,8 +11,9 @@ import { addSpacesToNumber } from "../../utils";
 // import onion from "../../assets/img/onion.png";
 import { useCompleteTaskMutation } from "../../services/routes";
 import { useDispatch, useSelector } from "react-redux";
-import { setPoints, updateMissionStatus } from "../../services/redux/user";
+import { updateMissionStatus } from "../../services/redux/user";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 
 type MyModalProps = {
   setIsOpen: (string: boolean) => void;
@@ -27,21 +28,36 @@ function TaskModal({ setIsOpen, isOpen, data }: MyModalProps) {
   const { username } = useSelector((state: any) => state.user.profile);
   const missions = useSelector((state: any) => state.user.missions);
   const singleMission = missions.find((m: any) => m.slug === data?.slug);
-  const { points } = useSelector((state: any) => state.user.profile);
+  const [submissionUrl, setSubmissionUrl] = useState("");
+  const [error, setError] = useState("");
 
 //   console.log(singleMission, "modalmission");
   const handleAction = async () => {
+    // Validate URL
+    if (!submissionUrl.trim()) {
+      setError("Please enter a URL");
+      return;
+    }
+
+    // Basic URL validation
+    try {
+      new URL(submissionUrl);
+    } catch {
+      setError("Please enter a valid URL");
+      return;
+    }
+
+    setError("");
     try {
       const reqData = {
-       username
+        username,
+        url: submissionUrl.trim()
       };
       const slug = data?.slug;
       console.log(slug, reqData);
-      const res = await completeTask({ slug,  reqData }).unwrap();
-      console.log(res)
-      dispatch(updateMissionStatus({ ...singleMission, status: "ended" }));
-      const newPoints = points + data?.points;
-      dispatch(setPoints(newPoints));
+      const res = await completeTask({ slug, reqData }).unwrap();
+      console.log(res);
+      dispatch(updateMissionStatus({ ...singleMission, status: "pending" }));
       setIsOpen(!isOpen);
       navigate("/tasks");
     } catch (error) {
@@ -51,6 +67,8 @@ function TaskModal({ setIsOpen, isOpen, data }: MyModalProps) {
   };
   function close() {
     setIsOpen(false);
+    setSubmissionUrl("");
+    setError("");
   }
   return (
     <>
@@ -85,21 +103,39 @@ function TaskModal({ setIsOpen, isOpen, data }: MyModalProps) {
                       <img src={"/circle.png"} alt="" />
                     </div>
                     <p className="text-white font-inter font-[600] text-[24px] mt-[10px]">
-                      Congratulations
+                      Submit for Review
                     </p>
                     <p className="text-[#FFFFFF99] font-inter font-[500] text-center text-[12px] mt-[5px]">
-                      You’ve successfully completed the mission{" "}
+                      Submit your task completion URL for admin review
                     </p>
                     <p className="text-[#FFFFFF] font-inter  font-[500] text-center text-[20px] mt-[15px] flex items-center">
                       {/* <img className="h-[36px]" src={smcoin} alt="" /> */}
-                      {addSpacesToNumber(data?.points)}{" "}
+                      Reward: {addSpacesToNumber(data?.points)} MARP
                     </p>
                   </div>
 
                   <div className="mt-4 w-full">
+                    <div className="mb-4">
+                      <input
+                        type="url"
+                        value={submissionUrl}
+                        onChange={(e) => {
+                          setSubmissionUrl(e.target.value);
+                          setError("");
+                        }}
+                        placeholder="Enter completion URL (e.g., https://...)"
+                        className="w-full h-[50px] rounded-[10px] bg-[#27334E80] text-white font-inter font-[500] text-[14px] px-4 border border-[#27334E] focus:outline-none focus:border-[#4A90E2]"
+                      />
+                      {error && (
+                        <p className="text-red-500 text-[12px] mt-2 font-inter">
+                          {error}
+                        </p>
+                      )}
+                    </div>
                     <button
                       onClick={handleAction}
-                      className="btn w-full h-[50px] rounded-[10px] text-[20px] items-center justify-center flex font-[600] text-white font-inter"
+                      disabled={isLoading || !submissionUrl.trim()}
+                      className="btn w-full h-[50px] rounded-[10px] text-[20px] items-center justify-center flex font-[600] text-white font-inter disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <svg
@@ -119,7 +155,7 @@ function TaskModal({ setIsOpen, isOpen, data }: MyModalProps) {
                           />
                         </svg>
                       ) : (
-                        "Claim"
+                        "Submit for Review"
                       )}
                     </button>
                   </div>

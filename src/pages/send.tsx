@@ -8,7 +8,6 @@ import TokenLogo from '../components/TokenLogo';
 import { getTokenVariant } from '../utils/tokenUtils';
 import { useBackendWallet } from '../hooks/useBackendWallet';
 import { useState, useEffect } from 'react';
-import { POPULAR_BSC_TOKENS } from '../services/coinLogos';
 
 // Utility function to format numbers
 const formatNumber = (num: number): string => {
@@ -34,11 +33,9 @@ function Send() {
     // Get wallet state with balances
     const { 
         isConnected, 
-        address,
         balances,
         isLoadingBalances,
-        getTokenBalances,
-        getCustomTokens
+        getTokenBalances
     } = useBackendWallet();
 
     // Get token balance from wallet balances

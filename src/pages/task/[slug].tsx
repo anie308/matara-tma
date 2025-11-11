@@ -82,7 +82,7 @@ function Singletask() {
     // Progress or done status - show complete button (opens modal)
     if (
       singleMission?.status === "progress" ||
-      singleMission?.status === "done"
+      singleMission?.status === "complete"
     ) {
       return (
         <button

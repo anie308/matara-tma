@@ -15,6 +15,7 @@ import Swap from "../pages/swap";
 import Receive from "../pages/receive";
 import SelectToken from "../pages/select-token";
 import Send from "../pages/send";
+import Transactions from "../pages/transactions";
 
 const MainRoutes = () => {
   return (
@@ -36,6 +37,7 @@ const MainRoutes = () => {
         <Route path="receive" element={<Receive />} />
         <Route path="select-token" element={<SelectToken />} />
         <Route path="send" element={<Send />} />
+        <Route path="transactions" element={<Transactions />} />
       </Route>
     </Routes>
   );

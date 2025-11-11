@@ -214,19 +214,17 @@ function ProjectTasks() {
               
               if (project.tasks && project.tasks.length > 0) {
                 return project.tasks.map((task) => {
-                  // const taskMission = missions.find((m: any) => m.slug === task.slug);
-                  // const taskStatus = taskMission?.status;
                   const taskSubmission = project?.tasks?.find((t: any) => t.slug === task.slug)?.submissionStatus;
                   const isRejected = taskSubmission === "rejected";
-                  const isDisabled = taskSubmission === "complete" || taskSubmission === "reviewing";
-
+                  const isDisabled = taskSubmission === "complete";
+                  console.log(isDisabled, "isDisabled");
                   return (
                     <button
                       key={task.slug}
                       
                       onClick={() => {
                         // Allow clicking rejected tasks to see reason, disable approved/reviewing
-                        if (isRejected || isDisabled) {
+                        if (isRejected || !isDisabled) {
                           navigate(`/tasks/${task.slug}`);
                         }
                       }}

@@ -1,4 +1,5 @@
-// import React from 'react';
+import { useSelector } from 'react-redux';
+import { RootState } from '../services/store';
 
 interface TokenIconProps {
   size?: number;
@@ -10,8 +11,35 @@ interface TokenIconProps {
 export default function TokenIcon({ 
   size = 40, 
   className = "",
+  symbol,
   variant = 'default'
 }: TokenIconProps) {
+  // Get token info from Redux state
+  const tokenInfo = useSelector((state: RootState) => 
+    symbol ? state.tokens.tokens[symbol] : null
+  );
+
+  // If we have a logo from Redux, use it
+  if (symbol && tokenInfo?.logo) {
+    return (
+      <div 
+        className={`relative ${className}`}
+        style={{ width: size, height: size }}
+      >
+        <img
+          src={tokenInfo.logo}
+          alt={symbol}
+          className="w-full h-full rounded-full object-cover"
+          onError={(e) => {
+            // Fallback to default icon if image fails to load
+            e.currentTarget.style.display = 'none';
+          }}
+        />
+      </div>
+    );
+  }
+
+  // Fallback to default icon if no logo or symbol
   const getVariantStyles = () => {
     switch (variant) {
       case 'crypto':

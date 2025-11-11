@@ -30,14 +30,13 @@ interface Token {
 
 function Swap() {
   const navigate = useNavigate();
-  const { isConnected } = useBackendWallet();
+  const { isConnected, balances, isLoadingBalances } = useBackendWallet();
   const profile = useSelector((state: RootState) => state.user.profile);
   
   const [fromToken, setFromToken] = useState<Token | null>(null);
   const [toToken, setToToken] = useState<Token | null>(null);
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
-  const [tokenBalances, setTokenBalances] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [slippage, setSlippage] = useState(0.5);
   const [showSlippage, setShowSlippage] = useState(false);
@@ -54,18 +53,6 @@ function Swap() {
       setToToken({ ...usdtToken, decimals: 18 });
     }
   }, []);
-
-  // Load token balances
-  useEffect(() => {
-    const loadBalances = async () => {
-      if (!isConnected) return;
-      
-      const balances = {};
-      setTokenBalances(balances);
-    };
-
-    loadBalances();
-  }, [isConnected]); // Remove getCustomTokens from dependencies
 
   const handleSwapTokens = () => {
     const tempToken = fromToken;
@@ -88,18 +75,33 @@ function Swap() {
   };
 
   const handleMaxClick = () => {
-    if (fromToken && tokenBalances[fromToken.symbol]) {
-      setFromAmount(tokenBalances[fromToken.symbol].toString());
+    if (fromToken) {
+      const balance = balances[fromToken.symbol] || 0;
+      if (balance > 0) {
+        setFromAmount(balance.toString());
+      }
     }
   };
 
   const getTokenBalance = (token: Token | null) => {
     if (!token) return 0;
-    return tokenBalances[token.symbol] || 0;
+    return balances[token.symbol] || 0;
+  };
+
+  const hasInsufficientBalance = () => {
+    if (!fromToken || !fromAmount) return false;
+    const balance = getTokenBalance(fromToken);
+    const amount = parseFloat(fromAmount);
+    if (isNaN(amount) || amount <= 0) return false;
+    return amount > balance;
   };
 
   const canSwap = () => {
-    return isConnected && fromToken && toToken && fromAmount && parseFloat(fromAmount) > 0;
+    if (!isConnected || !fromToken || !toToken || !fromAmount) return false;
+    const amount = parseFloat(fromAmount);
+    if (isNaN(amount) || amount <= 0) return false;
+    if (hasInsufficientBalance()) return false;
+    return true;
   };
 
   const handleSwap = async () => {
@@ -198,7 +200,11 @@ function Swap() {
                 </span>
               </button>
               <span className="text-gray-400 text-sm">
-                Balance: {formatNumber(getTokenBalance(fromToken))}
+                {isLoadingBalances ? (
+                  'Loading...'
+                ) : (
+                  `Balance: ${formatNumber(getTokenBalance(fromToken))}`
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -244,7 +250,11 @@ function Swap() {
                 </span>
               </button>
               <span className="text-gray-400 text-sm">
-                Balance: {formatNumber(getTokenBalance(toToken))}
+                {isLoadingBalances ? (
+                  'Loading...'
+                ) : (
+                  `Balance: ${formatNumber(getTokenBalance(toToken))}`
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -266,6 +276,16 @@ function Swap() {
             1 {fromToken?.symbol} = {(parseFloat(toAmount) / parseFloat(fromAmount)).toFixed(6)} {toToken?.symbol}
           </div>
         )}
+
+        {/* Insufficient Balance Error */}
+        {hasInsufficientBalance() && (
+          <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-500/30 rounded-lg mb-4">
+            <AlertCircle color="#EF4444" size={16} />
+            <span className="text-red-400 text-sm">
+              Insufficient {fromToken?.symbol} balance. You have {formatNumber(getTokenBalance(fromToken))} {fromToken?.symbol}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Swap Button */}
@@ -278,7 +298,14 @@ function Swap() {
             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
         }`}
       >
-        {isLoading ? 'Swapping...' : !isConnected ? 'Connect Wallet' : 'Swap'}
+        {isLoading 
+          ? 'Swapping...' 
+          : !isConnected 
+            ? 'Connect Wallet' 
+            : hasInsufficientBalance()
+              ? 'Insufficient Balance'
+              : 'Swap'
+        }
       </button>
 
       {/* Warning */}

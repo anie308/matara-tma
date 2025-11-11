@@ -11,6 +11,7 @@ import { RootState } from "../services/store";
 import { useDispatch, useSelector } from "react-redux";
 import { setLeaderboard, setReferrals, setTasks } from "../services/redux/user";
 import { useEffect } from "react";
+import { useTokenPrices } from "../hooks/useTokenPrices";
 
 function Layout() {
   const location = useLocation();
@@ -18,6 +19,9 @@ function Layout() {
   const user = useSelector((state: RootState) => state.user.profile);
   const username = user?.username;
   const dispatch = useDispatch();
+  
+  // Initialize token price updates with automatic refresh
+  useTokenPrices();
 
   const {
     data: userData,

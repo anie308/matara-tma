@@ -4,11 +4,13 @@ import storage from "redux-persist/lib/storage"; // localStorage for web
 import { apiSlice } from "./api";
 import userReducer, { localStorageSyncMiddleware } from "./redux/user";
 import transactionReducer from "./redux/transaction";
+import tokensReducer from "./redux/tokens";
 
 // ✅ Combine all reducers first
 const rootReducer = combineReducers({
   user: userReducer,
   transaction: transactionReducer,
+  tokens: tokensReducer,
   [apiSlice.reducerPath]: apiSlice.reducer,
 });
 

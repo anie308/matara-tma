@@ -30,6 +30,7 @@ interface Project {
   icon?: { url: string };
   logo?: { url: string; public_id?: string };
   tasks?: UserTask[];
+  taskCount?: number;
   description?: string;
   joined?: boolean;
   joinedUsers?: (string | JoinedUser)[];
@@ -179,7 +180,7 @@ function Task() {
                             )}
                           </div>
                           <p className="text-[12px] text-gray-400">
-                            {project.tasks?.length || 0} task{project.tasks?.length !== 1 ? 's' : ''}
+                            {project.taskCount || 0} task{project.taskCount !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>

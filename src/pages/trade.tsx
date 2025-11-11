@@ -1,6 +1,6 @@
 import WebApp from "@twa-dev/sdk";
 import { useState, useEffect } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Eye, EyeOff, Plus, RefreshCw, Wallet } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Copy, Eye, EyeOff, Plus, RefreshCw, Wallet, History } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setTransaction } from "../services/redux/transaction";
@@ -261,6 +261,9 @@ export default function Trade() {
             </button>
             <button onClick={() => navigate("/swap")} className="btn p-[8px] rounded-[10px] rotate-90">
               <ArrowUpDown className=" text-[20px]" />
+            </button>
+            <button onClick={() => navigate("/transactions")} className="btn p-[8px] rounded-[10px]">
+              <History className=" text-[20px]" />
             </button>
           </div>
         

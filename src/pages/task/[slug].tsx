@@ -48,7 +48,7 @@ function Singletask() {
     }
     
     // Approved or reviewing - disable button
-    if (singleMission?.status === "approved" || singleMission?.status === "reviewing") {
+    if (singleMission?.status === "approved") {
       return (
         <button
           disabled
@@ -67,7 +67,7 @@ function Singletask() {
     ) {
       return (
         <button
-          disabled={singleMission && singleMission?.status === "progress"}
+          // disabled={singleMission}
           // onClick={()=> dispatch(clearMission())}
           onClick={handleEndMission}
           className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] "

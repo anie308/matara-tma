@@ -1,4 +1,4 @@
-import { ChevronLeft, ArrowUp } from 'lucide-react'
+import { ChevronLeft, ArrowUp, AlertCircle } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '../services/store'
@@ -9,6 +9,19 @@ import { getTokenVariant } from '../utils/tokenUtils';
 import { useBackendWallet } from '../hooks/useBackendWallet';
 import { useState, useEffect } from 'react';
 import { POPULAR_BSC_TOKENS } from '../services/coinLogos';
+
+// Utility function to format numbers
+const formatNumber = (num: number): string => {
+    if (num === 0) return "0.00";
+    if (num < 0.01) return num.toFixed(6);
+    if (num < 1) return num.toFixed(4);
+    if (num < 1000) return num.toFixed(2);
+    return num.toLocaleString('en-US', { 
+        minimumFractionDigits: 2, 
+        maximumFractionDigits: 2 
+    });
+};
+
 function Send() {
     const navigate = useNavigate();
     const transaction = useSelector((state: RootState) => state.transaction);
@@ -16,45 +29,56 @@ function Send() {
     const [amount, setAmount] = useState("");
     const [recipientAddress, setRecipientAddress] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [tokenBalance, setTokenBalance] = useState(0);
     const [tokenPrice] = useState(1); // USD price per token
     
-    // Get wallet state
+    // Get wallet state with balances
     const { 
         isConnected, 
         address,
+        balances,
+        isLoadingBalances,
+        getTokenBalances,
         getCustomTokens
     } = useBackendWallet();
 
-    // Create token list for balance fetching
-    const TOKENS = Object.values(POPULAR_BSC_TOKENS).map(token => ({
-        symbol: token.symbol,
-        name: token.name,
-        logo: token.logo,
-        address: token.address,
-        decimals: 18
-    }));
-    const customTokens = getCustomTokens();
-    const allTokens = [...TOKENS, ...customTokens];
+    // Get token balance from wallet balances
+    const getTokenBalance = () => {
+        if (!transaction.token) return 0;
+        return balances[transaction.token] || 0;
+    };
 
-    // Fetch token balance when component mounts or transaction changes
+    const tokenBalance = getTokenBalance();
+
+    // Fetch balances when component mounts or transaction changes
     useEffect(() => {
-        const fetchTokenBalance = async () => {
-            if (!isConnected || !address || !transaction.token) return;
-            
-            try {
-                // For now, set balance to 0 - token balance fetching will be implemented later
-                const balances = {};
-                const balance = (balances as any)[transaction.token] || 0;
-                setTokenBalance(balance);
-            } catch (error) {
-                console.error('Error fetching token balance:', error);
-                setTokenBalance(0);
-            }
-        };
+        if (isConnected && getTokenBalances && transaction.token) {
+            getTokenBalances();
+        }
+    }, [isConnected, transaction.token]);
 
-        fetchTokenBalance();
-    }, [isConnected, address, transaction.token, allTokens]);
+    // Check if amount exceeds balance
+    const hasInsufficientBalance = () => {
+        if (!amount || !transaction.token) return false;
+        const amountNum = parseFloat(amount);
+        if (isNaN(amountNum) || amountNum <= 0) return false;
+        return amountNum > tokenBalance;
+    };
+
+    // Get remaining balance after transaction
+    const getRemainingBalance = () => {
+        if (!amount) return tokenBalance;
+        const amountNum = parseFloat(amount);
+        if (isNaN(amountNum) || amountNum <= 0) return tokenBalance;
+        return Math.max(0, tokenBalance - amountNum);
+    };
+
+    // Get balance percentage used
+    const getBalancePercentage = () => {
+        if (!amount || !transaction.token) return 0;
+        const amountNum = parseFloat(amount);
+        if (isNaN(amountNum) || amountNum <= 0 || tokenBalance === 0) return 0;
+        return Math.min((amountNum / tokenBalance) * 100, 100);
+    };
 
     const handleSend = async()=> {
         if (!isConnected) {
@@ -65,13 +89,29 @@ function Send() {
             toast.error("Please enter a valid amount");
             return;
         }
-        if (parseFloat(amount) > tokenBalance) {
-            toast.error("Insufficient balance");
+        if (hasInsufficientBalance()) {
+            toast.error(`Insufficient balance. You have ${formatNumber(tokenBalance)} ${transaction.token}`);
             return;
         }
         if (!recipientAddress) {
             toast.error("Please enter recipient address");
             return;
+        }
+        // Validate recipient address format
+        if (!recipientAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+            toast.error("Please enter a valid wallet address");
+            return;
+        }
+        // Warn if using more than 95% of balance
+        const balancePercentage = getBalancePercentage();
+        if (balancePercentage > 95) {
+            const confirmed = window.confirm(
+                `You are using ${balancePercentage.toFixed(1)}% of your ${transaction.token} balance. ` +
+                `This might not leave enough for gas fees. Do you want to continue?`
+            );
+            if (!confirmed) {
+                return;
+            }
         }
         
         setIsLoading(true);
@@ -90,6 +130,11 @@ function Send() {
             // Simulate transaction processing
             await new Promise(resolve => setTimeout(resolve, 2000));
             
+            // Refresh balances after successful send
+            if (getTokenBalances) {
+                await getTokenBalances();
+            }
+            
             dispatch(clearTransaction())
             navigate("/")
             toast.success("Transaction sent successfully")
@@ -101,7 +146,13 @@ function Send() {
     }
 
     const handleMaxAmount = () => {
-        setAmount(tokenBalance.toString());
+        if (tokenBalance > 0) {
+            // Use 99.9% of balance to account for gas fees
+            const maxAmount = tokenBalance * 0.999;
+            setAmount(maxAmount.toString());
+        } else {
+            toast.error(`No ${transaction.token} balance available`);
+        }
     }
 
     // Calculate USD value
@@ -148,8 +199,14 @@ function Send() {
                             </div>
                         </div>
                         <div className="text-right">
-                            <p className="text-white font-[600]">Balance: {tokenBalance.toFixed(4)}</p>
-                            <p className="text-gray-400 text-sm">≈ ${(tokenBalance * tokenPrice).toFixed(2)}</p>
+                            {isLoadingBalances ? (
+                                <p className="text-gray-500 text-sm">Loading...</p>
+                            ) : (
+                                <>
+                                    <p className="text-white font-[600]">Balance: {formatNumber(tokenBalance)} {transaction.token}</p>
+                                    <p className="text-gray-400 text-sm">≈ ${(tokenBalance * tokenPrice).toFixed(2)}</p>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -157,10 +214,18 @@ function Send() {
                 {/* Amount Input */}
                 <div className="border border-gray-600 rounded-[15px] p-[20px]">
                     <div className="flex items-center justify-between mb-[15px]">
-                        <p className="text-white font-[600]">Amount</p>
+                        <div>
+                            <p className="text-white font-[600]">Amount</p>
+                            {amount && parseFloat(amount) > 0 && (
+                                <p className="text-gray-400 text-xs mt-1">
+                                    {getBalancePercentage().toFixed(1)}% of balance
+                                </p>
+                            )}
+                        </div>
                         <button 
                             onClick={handleMaxAmount}
-                            className="text-[#44F58E] text-sm font-medium hover:text-[#44F58E]/80"
+                            disabled={tokenBalance === 0}
+                            className="text-[#44F58E] text-sm font-medium hover:text-[#44F58E]/80 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             MAX
                         </button>
@@ -169,17 +234,50 @@ function Send() {
                         <input 
                             type="number" 
                             placeholder="0.00"
+                            step="any"
                             className="flex-1 bg-transparent text-white text-2xl font-[600] border-none outline-none placeholder-gray-500"
                             value={amount}  
                             onChange={(e) => setAmount(e.target.value)} 
                             min={0}
-                            max={tokenBalance.toString()}
                         />
                         <span className="text-gray-400 text-lg">{transaction.token}</span>
                     </div>
-                    <div className="mt-[10px] text-gray-400 text-sm">
-                        ≈ ${usdValue.toFixed(2)} USD
+                    <div className="mt-[10px] flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">
+                            ≈ ${usdValue.toFixed(2)} USD
+                        </span>
+                        {amount && parseFloat(amount) > 0 && (
+                            <span className="text-gray-500 text-xs">
+                                Remaining: {formatNumber(getRemainingBalance())} {transaction.token}
+                            </span>
+                        )}
                     </div>
+                    {/* Balance indicator bar */}
+                    {amount && parseFloat(amount) > 0 && (
+                        <div className="mt-3">
+                            <div className="w-full bg-gray-700 rounded-full h-1.5">
+                                <div
+                                    className={`h-1.5 rounded-full transition-all ${
+                                        getBalancePercentage() > 100
+                                            ? 'bg-red-500'
+                                            : getBalancePercentage() > 80
+                                            ? 'bg-yellow-500'
+                                            : 'bg-[#44F58E]'
+                                    }`}
+                                    style={{ width: `${Math.min(getBalancePercentage(), 100)}%` }}
+                                />
+                            </div>
+                        </div>
+                    )}
+                    {/* Insufficient Balance Warning */}
+                    {hasInsufficientBalance() && (
+                        <div className="flex items-center gap-2 mt-3 p-2 bg-red-900/20 border border-red-500/30 rounded text-red-400 text-xs">
+                            <AlertCircle size={14} />
+                            <span>
+                                Insufficient {transaction.token} balance. You have {formatNumber(tokenBalance)} {transaction.token}
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Recipient Address */}
@@ -221,13 +319,18 @@ function Send() {
                 {/* Send Button */}
                 <button 
                     onClick={handleSend} 
-                    disabled={isLoading || !amount || !recipientAddress}
+                    disabled={isLoading || !amount || !recipientAddress || hasInsufficientBalance()}
                     className="btn p-[15px] text-[18px] font-[600] w-full rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isLoading ? (
                         <>
                             <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                             Processing...
+                        </>
+                    ) : hasInsufficientBalance() ? (
+                        <>
+                            <AlertCircle size={20} />
+                            Insufficient Balance
                         </>
                     ) : (
                         <>

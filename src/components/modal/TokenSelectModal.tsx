@@ -8,6 +8,19 @@ import {
 import { GoPlus } from "react-icons/go";
 import { POPULAR_BSC_TOKENS } from "../../services/coinLogos";
 import TokenIcon from "../TokenIcon";
+import { useBackendWallet } from "../../hooks/useBackendWallet";
+
+// Utility function to format numbers
+const formatNumber = (num: number): string => {
+  if (num === 0) return "0.00";
+  if (num < 0.01) return num.toFixed(6);
+  if (num < 1) return num.toFixed(4);
+  if (num < 1000) return num.toFixed(2);
+  return num.toLocaleString('en-US', { 
+    minimumFractionDigits: 2, 
+    maximumFractionDigits: 2 
+  });
+};
 
 type TokenSelectModalProps = {
   setIsOpen: (isOpen: boolean) => void;
@@ -23,6 +36,8 @@ const tokens = Object.values(POPULAR_BSC_TOKENS).map(token => ({
 }));
 
 function TokenSelectModal({ setIsOpen, isOpen, onSelectToken }: TokenSelectModalProps) {
+  const { balances, isLoadingBalances } = useBackendWallet();
+
   function close() {
     setIsOpen(false);
   }
@@ -61,17 +76,36 @@ function TokenSelectModal({ setIsOpen, isOpen, onSelectToken }: TokenSelectModal
                       <GoPlus className="text-white rotate-45 text-[40px]" />
                     </button>
                   </div>
-                  <div className="flex flex-col gap-2">
-                    {tokens.map((token) => (
+                  <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
+                    {tokens.map((token) => {
+                      const balance = balances[token.symbol] || 0;
+                      return (
                         <button
                             key={token.symbol}
                             onClick={() => handleSelectToken(token.symbol)}
-                            className="flex items-center gap-4 p-2 rounded-lg hover:bg-gray-700"
+                            className="flex items-center justify-between gap-4 p-3 rounded-lg hover:bg-gray-700 transition-colors"
                         >
-                            <TokenIcon symbol={token.symbol} size={32} />
-                            <span className="text-white font-inter font-[500] text-[18px]">{token.symbol}</span>
+                            <div className="flex items-center gap-4">
+                              <TokenIcon symbol={token.symbol} size={32} />
+                              <div className="text-left">
+                                <span className="text-white font-inter font-[500] text-[18px] block">{token.symbol}</span>
+                                {isLoadingBalances ? (
+                                  <span className="text-gray-500 text-xs">Loading...</span>
+                                ) : (
+                                  <span className="text-gray-400 text-xs">
+                                    Balance: {formatNumber(balance)} {token.symbol}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {!isLoadingBalances && balance > 0 && (
+                              <span className="text-[#44F58E] text-sm font-medium">
+                                {formatNumber(balance)}
+                              </span>
+                            )}
                         </button>
-                    ))}
+                      );
+                    })}
                   </div>
                 </DialogPanel>
               </TransitionChild>

@@ -97,7 +97,7 @@ export const useBackendWallet = () => {
       console.log('Fetched token list:', tokenList.length, 'tokens');
       
       // Use a reliable BSC RPC endpoint
-      const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+      const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.bnbchain.org/');
       
       // Test connection first with timeout
       try {

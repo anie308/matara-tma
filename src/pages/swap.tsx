@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ArrowUpDown, Settings, AlertCircle } from "lucide-react";
+import { ChevronLeft, ArrowUpDown, Settings, AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useBackendWallet } from "../hooks/useBackendWallet";
@@ -7,6 +7,13 @@ import { POPULAR_BSC_TOKENS } from "../services/coinLogos";
 import TokenIcon from "../components/TokenIcon";
 import TokenSelectModal from "../components/modal/TokenSelectModal";
 import { RootState } from "../services/store";
+import { toast } from "react-hot-toast";
+import { 
+  executeSwap, 
+  getTokenAddress, 
+  calculateDeadline,
+  SwapRequest 
+} from "../services/swap";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -30,8 +37,9 @@ interface Token {
 
 function Swap() {
   const navigate = useNavigate();
-  const { isConnected, balances, isLoadingBalances } = useBackendWallet();
+  const { isConnected, balances, isLoadingBalances, getTokenBalances } = useBackendWallet();
   const profile = useSelector((state: RootState) => state.user.profile);
+  const username = profile?.username;
   
   const [fromToken, setFromToken] = useState<Token | null>(null);
   const [toToken, setToToken] = useState<Token | null>(null);
@@ -42,6 +50,8 @@ function Swap() {
   const [showSlippage, setShowSlippage] = useState(false);
   const [showTokenModal, setShowTokenModal] = useState(false);
   const [selectingFor, setSelectingFor] = useState<'from' | 'to'>('from');
+  const [swapError, setSwapError] = useState<string | null>(null);
+  const [lastSwapResult, setLastSwapResult] = useState<any>(null);
 
   // Initialize with tBNB and USDT (testnet tokens)
   useEffect(() => {
@@ -62,12 +72,18 @@ function Swap() {
     setToToken(tempToken);
     setFromAmount(toAmount);
     setToAmount(tempAmount);
+    // Clear any previous errors or success messages
+    setSwapError(null);
+    setLastSwapResult(null);
   };
 
   const handleFromAmountChange = (value: string) => {
     setFromAmount(value);
-    // Simple 1:1 conversion for demo - in real app, you'd call a price API
+    setSwapError(null);
+    // For now, we'll let the backend calculate the output amount
+    // In a real implementation, you'd call a price quote API here
     if (value && fromToken && toToken) {
+      // Simple estimation - backend will provide actual amountOut
       setToAmount(value);
     } else {
       setToAmount('');
@@ -105,17 +121,65 @@ function Swap() {
   };
 
   const handleSwap = async () => {
-    if (!canSwap()) return;
+    if (!canSwap() || !username) {
+      if (!username) {
+        toast.error('Username not found. Please ensure you are logged in.');
+      }
+      return;
+    }
     
     setIsLoading(true);
+    setSwapError(null);
+    setLastSwapResult(null);
+    
     try {
-      // Simulate swap transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Swap executed:', { fromToken, toToken, fromAmount, toAmount });
-      // Reset amounts after successful swap
-      setFromAmount('');
-      setToAmount('');
+      // Get token addresses, converting BNB to WBNB if needed
+      const tokenInAddress = getTokenAddress(fromToken!.address);
+      const tokenOutAddress = getTokenAddress(toToken!.address);
+      
+      // Calculate deadline (5 minutes from now)
+      const deadline = calculateDeadline(5);
+      
+      // Prepare swap request
+      const swapRequest: SwapRequest = {
+        username: username,
+        tokenIn: tokenInAddress,
+        tokenOut: tokenOutAddress,
+        tokenInSymbol: fromToken!.symbol,
+        tokenOutSymbol: toToken!.symbol,
+        amountIn: fromAmount, // Send as string, backend will handle conversion to wei
+        slippageTolerance: slippage,
+        deadline: deadline,
+      };
+      
+      // Execute swap
+      const result = await executeSwap(swapRequest);
+      setLastSwapResult(result);
+      
+      // Check swap status
+      if (result.data.status === 'completed' && result.data.transactionHash) {
+        toast.success(
+          `Swap successful! Transaction: ${result.data.transactionHash.slice(0, 10)}...`,
+          { duration: 5000 }
+        );
+        
+        // Reset amounts after successful swap
+        setFromAmount('');
+        setToAmount('');
+        
+        // Refresh balances
+        if (getTokenBalances) {
+          await getTokenBalances();
+        }
+      } else if (result.data.status === 'failed') {
+        const errorMsg = result.data.errorMessage || 'Swap execution failed';
+        setSwapError(errorMsg);
+        toast.error(`Swap failed: ${errorMsg}`, { duration: 5000 });
+      }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      setSwapError(errorMessage);
+      toast.error(`Swap failed: ${errorMessage}`, { duration: 5000 });
       console.error('Swap failed:', error);
     } finally {
       setIsLoading(false);
@@ -128,9 +192,17 @@ function Swap() {
       const tokenData = { ...token, decimals: 18 };
       if (selectingFor === 'from') {
         setFromToken(tokenData);
+        // Clear amount when changing token
+        setFromAmount('');
+        setToAmount('');
       } else {
         setToToken(tokenData);
+        // Clear output amount when changing output token
+        setToAmount('');
       }
+      // Clear any previous errors or success messages
+      setSwapError(null);
+      setLastSwapResult(null);
     }
     setShowTokenModal(false);
   };
@@ -284,6 +356,35 @@ function Swap() {
             <span className="text-red-400 text-sm">
               Insufficient {fromToken?.symbol} balance. You have {formatNumber(getTokenBalance(fromToken))} {fromToken?.symbol}
             </span>
+          </div>
+        )}
+
+        {/* Swap Error */}
+        {swapError && (
+          <div className="flex items-center gap-2 p-3 bg-red-900/20 border border-red-500/30 rounded-lg mb-4">
+            <XCircle color="#EF4444" size={16} />
+            <span className="text-red-400 text-sm">{swapError}</span>
+          </div>
+        )}
+
+        {/* Swap Success */}
+        {lastSwapResult?.data?.status === 'completed' && lastSwapResult?.data?.transactionHash && (
+          <div className="flex items-center gap-2 p-3 bg-green-900/20 border border-green-500/30 rounded-lg mb-4">
+            <CheckCircle color="#10B981" size={16} />
+            <div className="flex-1">
+              <span className="text-green-400 text-sm block">
+                Swap completed successfully!
+              </span>
+              <button
+                onClick={() => {
+                  const url = `https://bscscan.com/tx/${lastSwapResult.data.transactionHash}`;
+                  window.open(url, '_blank');
+                }}
+                className="text-green-300 text-xs underline mt-1 hover:text-green-200"
+              >
+                View on BSCScan
+              </button>
+            </div>
           </div>
         )}
       </div>

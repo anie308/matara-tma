@@ -111,8 +111,16 @@ const userSlice = createSlice({
     // Missions
     startMission: (state, action: PayloadAction<any>) => {
       const mission = action.payload;
-      const exists = state.missions.some((m: any) => m._id === mission._id);
-      if (!exists) state.missions.push(mission);
+      const existingIndex = state.missions.findIndex((m: any) => 
+        m._id === mission._id || m.slug === mission.slug
+      );
+      if (existingIndex >= 0) {
+        // Update existing mission
+        state.missions[existingIndex] = { ...state.missions[existingIndex], ...mission };
+      } else {
+        // Add new mission
+        state.missions.push(mission);
+      }
     },
     clearMission: (state) => {
       state.missions = [];
@@ -124,8 +132,19 @@ const userSlice = createSlice({
     },
     updateMissionStatus: (state, action: PayloadAction<any>) => {
       const mission = action.payload;
-      const target = state.missions.find((m: any) => m._id === mission._id);
-      if (target) target.status = mission.status;
+      const target = state.missions.find((m: any) => 
+        m._id === mission._id || m.slug === mission.slug
+      );
+      if (target) {
+        target.status = mission.status;
+        // Update other fields if provided
+        if (mission.rejectionReason !== undefined) {
+          target.rejectionReason = mission.rejectionReason;
+        }
+        if (mission.proofUrl !== undefined) {
+          target.proofUrl = mission.proofUrl;
+        }
+      }
     },
 
     // Other data

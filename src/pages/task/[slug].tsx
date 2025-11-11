@@ -22,16 +22,24 @@ function Singletask() {
   const singleMission = missions.find((m: any) => m.slug === slug);
 
   const handleStartMission = () => {
-    console.log("tarted");
+    console.log("started");
     WebApp.HapticFeedback.impactOccurred("medium");
-    dispatch(startMission({ ...singleTask, status: "progress" }));
-    WebApp.openLink(singleTask.link);
+    // Create or update mission with progress status
+    const missionData = {
+      ...singleTask,
+      status: "progress",
+      _id: singleTask._id || singleTask.slug,
+      slug: singleTask.slug,
+    };
+    dispatch(startMission(missionData));
+    if (singleTask.link) {
+      WebApp.openLink(singleTask.link);
+    }
   };
 
   const handleEndMission = () => {
     WebApp.HapticFeedback.impactOccurred("medium");
     setOpen(true);
-    // dispatch(removeActiveMission(singleMission));
   };
 
   const renderButton = () => {
@@ -40,75 +48,81 @@ function Singletask() {
       return (
         <button
           onClick={handleEndMission}
-          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] "
+          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px]"
         >
           Resubmit Task
         </button>
       );
     }
     
-    // Approved or reviewing - disable button
+    // Approved status - disable button
     if (singleMission?.status === "approved") {
       return (
         <button
           disabled
           className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] opacity-50 cursor-not-allowed"
         >
-          {singleMission?.status === "approved" 
-            ? "Task Approved" 
-            : "Under Review"}
+          Task Approved
         </button>
       );
     }
 
+    // Reviewing status - disable button
+    if (singleMission?.status === "reviewing") {
+      return (
+        <button
+          disabled
+          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] opacity-50 cursor-not-allowed"
+        >
+          Under Review
+        </button>
+      );
+    }
+
+    // Progress or done status - show complete button (opens modal)
     if (
       singleMission?.status === "progress" ||
       singleMission?.status === "done"
     ) {
       return (
         <button
-          // disabled={singleMission}
-          // onClick={()=> dispatch(clearMission())}
           onClick={handleEndMission}
-          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] "
+          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px]"
         >
           Complete Mission
         </button>
       );
-    } else if (
-      singleMission?.status !== "done" &&
-      singleMission?.status !== "progress" &&
-      singleMission?.status !== "ended" &&
-      singleMission?.status !== "pending" &&
-      singleMission?.status !== "reviewing" &&
-      singleMission?.status !== "approved" &&
-      singleMission?.status !== "rejected"
-    ) {
-      return (
-        <button
-          disabled={singleMission && singleMission?.status === "progress"}
-          // onClick={()=> dispatch(clearMission())}
-          onClick={handleStartMission}
-          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] "
-        >
-          {singleMission && singleMission?.status === "done"
-            ? "Mission Completed"
-            : "Start Mission"}
-        </button>
-      );
-    } else if (singleMission?.status === "pending") {
+    }
+
+    // Pending status - show message
+    if (singleMission?.status === "pending") {
       return (
         <p className="flex items-center justify-center text-yellow-500">
           Submitted for Review - Awaiting Admin Approval
         </p>
       );
-    } else if (singleMission?.status === "ended") {
+    }
+
+    // Ended status - show message
+    if (singleMission?.status === "ended") {
       return (
         <p className="flex items-center justify-center text-green-500">
           Mission Completed!
         </p>
       );
     }
+
+    // Default: No mission started yet - show start button
+    // Disable if there's a mission with progress status (shouldn't happen, but safety check)
+    return (
+      <button
+        disabled={singleMission?.status === "progress"}
+        onClick={handleStartMission}
+        className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Start Mission
+      </button>
+    );
   };
 
   return (

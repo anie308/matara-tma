@@ -37,7 +37,7 @@ export interface State {
 
 const defaultProfile: User = {
   _id: "",
-  username: "jurstadev",
+  username: "",
   points: 0,
   referrals: 0,
   level: 1,

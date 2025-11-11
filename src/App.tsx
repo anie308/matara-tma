@@ -18,12 +18,12 @@ function App() {
   const [isSupported, setIsSupported] = useState(true);
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.user.profile);
-  const savedUser = user?.username || "jurstadev";
+  const savedUser = user?.username;
   const initUser = WebApp.initDataUnsafe?.user ;
 
   useEffect(() => {
     if (!savedUser && initUser) {
-      dispatch(setUsername(initUser?.username || "jurstadev"));
+      dispatch(setUsername(initUser?.username));
       dispatch(setProfilePicture(initUser?.photo_url));
     }
   }, [savedUser, initUser, dispatch]);

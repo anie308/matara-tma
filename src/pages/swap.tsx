@@ -64,6 +64,13 @@ function Swap() {
     }
   }, []);
 
+  // Fetch balances when wallet is connected or tokens change
+  useEffect(() => {
+    if (isConnected && getTokenBalances) {
+      getTokenBalances();
+    }
+  }, [isConnected, fromToken?.symbol, toToken?.symbol]);
+
   const handleSwapTokens = () => {
     const tempToken = fromToken;
     const tempAmount = fromAmount;
@@ -92,9 +99,13 @@ function Swap() {
 
   const handleMaxClick = () => {
     if (fromToken) {
-      const balance = balances[fromToken.symbol] || 0;
+      const balance = getTokenBalance(fromToken);
       if (balance > 0) {
-        setFromAmount(balance.toString());
+        // Use 99.9% of balance to account for gas fees
+        const maxAmount = balance * 0.999;
+        setFromAmount(maxAmount.toString());
+      } else {
+        toast.error(`No ${fromToken.symbol} balance available`);
       }
     }
   };
@@ -112,6 +123,22 @@ function Swap() {
     return amount > balance;
   };
 
+  const getBalancePercentage = () => {
+    if (!fromToken || !fromAmount) return 0;
+    const balance = getTokenBalance(fromToken);
+    const amount = parseFloat(fromAmount);
+    if (isNaN(amount) || amount <= 0 || balance === 0) return 0;
+    return Math.min((amount / balance) * 100, 100);
+  };
+
+  const getRemainingBalance = () => {
+    if (!fromToken || !fromAmount) return getTokenBalance(fromToken);
+    const balance = getTokenBalance(fromToken);
+    const amount = parseFloat(fromAmount);
+    if (isNaN(amount) || amount <= 0) return balance;
+    return Math.max(0, balance - amount);
+  };
+
   const canSwap = () => {
     if (!isConnected || !fromToken || !toToken || !fromAmount) return false;
     const amount = parseFloat(fromAmount);
@@ -126,6 +153,24 @@ function Swap() {
         toast.error('Username not found. Please ensure you are logged in.');
       }
       return;
+    }
+
+    // Final balance validation before swap
+    if (hasInsufficientBalance()) {
+      toast.error(`Insufficient balance. You have ${formatNumber(getTokenBalance(fromToken!))} ${fromToken!.symbol}`);
+      return;
+    }
+
+    // Warn if using more than 95% of balance (might not have enough for gas)
+    const balancePercentage = getBalancePercentage();
+    if (balancePercentage > 95) {
+      const confirmed = window.confirm(
+        `You are using ${balancePercentage.toFixed(1)}% of your ${fromToken!.symbol} balance. ` +
+        `This might not leave enough for gas fees. Do you want to continue?`
+      );
+      if (!confirmed) {
+        return;
+      }
     }
     
     setIsLoading(true);
@@ -203,6 +248,11 @@ function Swap() {
       // Clear any previous errors or success messages
       setSwapError(null);
       setLastSwapResult(null);
+      
+      // Refresh balances when token changes
+      if (isConnected && getTokenBalances) {
+        getTokenBalances();
+      }
     }
     setShowTokenModal(false);
   };
@@ -259,7 +309,25 @@ function Swap() {
       <div className="bg-gray-900 border border-[#44F58E] rounded-xl p-4 mb-4">
         {/* From Token */}
         <div className="mb-4">
-          <label className="text-gray-400 text-sm mb-2 block">From</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-gray-400 text-sm block">From</label>
+            <div className="flex items-center gap-2">
+              {isLoadingBalances ? (
+                <span className="text-gray-500 text-xs">Loading balance...</span>
+              ) : fromToken ? (
+                <>
+                  <span className="text-gray-400 text-xs">
+                    Available: <span className="text-white font-medium">{formatNumber(getTokenBalance(fromToken))} {fromToken.symbol}</span>
+                  </span>
+                  {fromAmount && parseFloat(fromAmount) > 0 && (
+                    <span className="text-gray-500 text-xs">
+                      ({getBalancePercentage().toFixed(1)}%)
+                    </span>
+                  )}
+                </>
+              ) : null}
+            </div>
+          </div>
           <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <button 
@@ -271,13 +339,6 @@ function Swap() {
                   {fromToken?.symbol || 'Select Token'}
                 </span>
               </button>
-              <span className="text-gray-400 text-sm">
-                {isLoadingBalances ? (
-                  'Loading...'
-                ) : (
-                  `Balance: ${formatNumber(getTokenBalance(fromToken))}`
-                )}
-              </span>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -285,15 +346,45 @@ function Swap() {
                 value={fromAmount}
                 onChange={(e) => handleFromAmountChange(e.target.value)}
                 placeholder="0.0"
+                step="any"
+                min="0"
                 className="flex-1 bg-transparent text-white text-xl font-medium outline-none"
               />
               <button
                 onClick={handleMaxClick}
-                className="bg-[#44F58E] text-black px-2 py-1 rounded text-xs font-medium hover:bg-[#3DE077] transition-colors"
+                disabled={!fromToken || getTokenBalance(fromToken) === 0}
+                className="bg-[#44F58E] text-black px-2 py-1 rounded text-xs font-medium hover:bg-[#3DE077] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 MAX
               </button>
             </div>
+            {/* Balance indicator bar */}
+            {fromAmount && parseFloat(fromAmount) > 0 && fromToken && (
+              <div className="mt-2">
+                <div className="w-full bg-gray-700 rounded-full h-1.5">
+                  <div
+                    className={`h-1.5 rounded-full transition-all ${
+                      getBalancePercentage() > 100
+                        ? 'bg-red-500'
+                        : getBalancePercentage() > 80
+                        ? 'bg-yellow-500'
+                        : 'bg-[#44F58E]'
+                    }`}
+                    style={{ width: `${Math.min(getBalancePercentage(), 100)}%` }}
+                  />
+                </div>
+                {fromAmount && parseFloat(fromAmount) > 0 && (
+                  <div className="flex items-center justify-between mt-1 text-xs">
+                    <span className="text-gray-500">
+                      Remaining: {formatNumber(getRemainingBalance())} {fromToken.symbol}
+                    </span>
+                    {hasInsufficientBalance() && (
+                      <span className="text-red-400">Insufficient</span>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -309,7 +400,16 @@ function Swap() {
 
         {/* To Token */}
         <div className="mb-4">
-          <label className="text-gray-400 text-sm mb-2 block">To</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-gray-400 text-sm block">To</label>
+            {isLoadingBalances ? (
+              <span className="text-gray-500 text-xs">Loading balance...</span>
+            ) : toToken ? (
+              <span className="text-gray-400 text-xs">
+                Balance: <span className="text-white font-medium">{formatNumber(getTokenBalance(toToken))} {toToken.symbol}</span>
+              </span>
+            ) : null}
+          </div>
           <div className="bg-gray-800 rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <button 
@@ -321,13 +421,6 @@ function Swap() {
                   {toToken?.symbol || 'Select Token'}
                 </span>
               </button>
-              <span className="text-gray-400 text-sm">
-                {isLoadingBalances ? (
-                  'Loading...'
-                ) : (
-                  `Balance: ${formatNumber(getTokenBalance(toToken))}`
-                )}
-              </span>
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -339,6 +432,12 @@ function Swap() {
                 readOnly
               />
             </div>
+            {/* Show estimated balance after swap */}
+            {toAmount && parseFloat(toAmount) > 0 && toToken && (
+              <div className="mt-2 text-xs text-gray-500">
+                You will receive ~{formatNumber(parseFloat(toAmount))} {toToken.symbol}
+              </div>
+            )}
           </div>
         </div>
 

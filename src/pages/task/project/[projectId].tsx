@@ -14,7 +14,8 @@ interface UserTask {
   description: string;
   points: number;
   icon?: { url: string };
-  completed?: boolean;
+  submissionStatus?: "reviewing" | "complete" | "rejected";
+  rejectionReason?: string;
 }
 
 interface JoinedUser {
@@ -53,6 +54,7 @@ function ProjectTasks() {
   // Fetch single project by slug
   const { data: projectData, isSuccess: projectSuccess, isLoading: projectLoading, isError: projectError } = useGetSingleProjectQuery({
     slug: slug,
+    username: savedUser
   }, {
     skip: !slug,
   });
@@ -130,6 +132,8 @@ function ProjectTasks() {
       toast.error(error?.data?.message || 'Failed to join project');
     }
   };
+
+  console.log(project, "project");
 
   if (projectLoading || !project) {
     return (
@@ -209,42 +213,89 @@ function ProjectTasks() {
               }
               
               if (project.tasks && project.tasks.length > 0) {
-                return project.tasks.map((task) => (
-                  <button
-                    key={task.slug}
-                    onClick={() => navigate(`/tasks/${task.slug}`)}
-                    className="border-[#FFD683] border p-[15px] rounded-[10px] w-full text-left hover:bg-[#FFD683]/10 transition-colors"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-[10px]">
-                        <div className="h-[50px] min-w-[50px] w-[50px] rounded-full border overflow-hidden flex items-center justify-center bg-white">
-                          {task.icon?.url ? (
-                            <img
-                              src={task.icon.url}
-                              alt={task.title}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-xs text-gray-600">
-                              No Icon
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-[16px] font-[500]">{task.title}</p>
-                      </div>
-                    </div>
+                return project.tasks.map((task) => {
+                  // const taskMission = missions.find((m: any) => m.slug === task.slug);
+                  // const taskStatus = taskMission?.status;
+                  const taskSubmission = project?.tasks?.find((t: any) => t.slug === task.slug)?.submissionStatus;
+                  const isRejected = taskSubmission === "rejected";
+                  const isDisabled = taskSubmission === "complete" || taskSubmission === "reviewing";
 
-                    <div className="text-start text-white text-[14px] mt-[10px] line-clamp-2">
-                      {task.description}
-                    </div>
-                    <div className="flex items-center space-x-[10px] mt-[10px]">
-                      <p className="text-[#FFB948] font-[600]">{task.points} $MARP</p>
-                      {task.completed && (
-                        <FaCircleCheck size={20} className="text-[#40D8A1]" />
+                  return (
+                    <button
+                      key={task.slug}
+                      
+                      onClick={() => {
+                        // Allow clicking rejected tasks to see reason, disable approved/reviewing
+                        if (isRejected || isDisabled) {
+                          navigate(`/tasks/${task.slug}`);
+                        }
+                      }}
+                      disabled={isDisabled}
+                      className={`border-[#FFD683] border p-[15px] rounded-[10px] w-full text-left transition-colors ${
+                        isDisabled 
+                          ? "opacity-50 cursor-not-allowed" 
+                          : "hover:bg-[#FFD683]/10"
+                      } ${isRejected ? "border-[#FF4444]" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-[10px] flex-1">
+                          <div className="h-[50px] min-w-[50px] w-[50px] rounded-full border overflow-hidden flex items-center justify-center bg-white">
+                            {task.icon?.url ? (
+                              <img
+                                src={task.icon.url}
+                                alt={task.title}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xs text-gray-600">
+                                No Icon
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <p className="text-[16px] font-[500]">{task.title}</p>
+                            {taskSubmission && (
+                              <div className="mt-1">
+                                {taskSubmission === "rejected" && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-[500] bg-[#FF4444]/30 text-[#FF4444] border border-[#FF4444]">
+                                    Rejected
+                                  </span>
+                                )}
+                                {taskSubmission === "complete" && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-[500] bg-[#40D8A1]/30 text-[#40D8A1] border border-[#40D8A1]">
+                                    Approved
+                                  </span>
+                                )}
+                                {taskSubmission === "reviewing" && (
+                                  <span className="px-2 py-0.5 rounded-full text-xs font-[500] bg-[#FFB948]/30 text-[#FFB948] border border-[#FFB948]">
+                                    Reviewing
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="text-start text-white text-[14px] mt-[10px] line-clamp-2">
+                        {task.description}
+                      </div>
+                      <div className="flex items-center space-x-[10px] mt-[10px]">
+                        <p className="text-[#FFB948] font-[600]">{task.points} $MARP</p>
+                        {taskSubmission === "complete" && (
+                          <FaCircleCheck size={20} className="text-[#40D8A1]" />
+                        )}
+                      </div>
+                      {isRejected && project?.tasks?.find((t: any) => t.slug === task.slug)?.rejectionReason && (
+                        <div className="mt-2 text-start">
+                          <p className="text-[#FF4444] text-[12px] font-[500]">
+                            Rejection: {project?.tasks?.find((t: any) => t.slug === task.slug)?.rejectionReason}
+                          </p>
+                        </div>
                       )}
-                    </div>
-                  </button>
-                ));
+                    </button>
+                  );
+                });
               }
               
               return (

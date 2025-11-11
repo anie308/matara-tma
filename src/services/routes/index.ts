@@ -111,8 +111,8 @@ const userSlice = apiSlice.injectEndpoints({
       providesTags: ["projects"]
     }),
     getSingleProject: builder.query({
-      query: ({ slug }) => ({
-        url: `/project/${slug}`,
+      query: ({ slug, username }) => ({
+        url: `/project/${slug}?username=${username}`,
         method: "GET",
       }),
       providesTags: ["projects", "tasks"]

@@ -51,13 +51,13 @@ function TaskModal({ setIsOpen, isOpen, data }: MyModalProps) {
     try {
       const reqData = {
         username,
-        url: submissionUrl.trim()
+        proofUrl: submissionUrl.trim()
       };
       const slug = data?.slug;
       console.log(slug, reqData);
       const res = await completeTask({ slug, reqData }).unwrap();
       console.log(res);
-      dispatch(updateMissionStatus({ ...singleMission, status: "pending" }));
+      dispatch(updateMissionStatus({ ...singleMission, status: "reviewing" }));
       setIsOpen(!isOpen);
       navigate("/tasks");
     } catch (error) {

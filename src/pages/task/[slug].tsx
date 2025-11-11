@@ -1,10 +1,10 @@
 // import React from 'react'
 import WebApp from "@twa-dev/sdk";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { RootState } from "../../services/store";
-import { startMission, updateMissionStatus } from "../../services/redux/user";
+import { startMission } from "../../services/redux/user";
 import TaskModal from "../../components/modal/TaskModal";
 import { IoChevronBackOutline } from "react-icons/io5";
 
@@ -20,31 +20,11 @@ function Singletask() {
   const singleTask = tasks.find((task: any) => task.slug === slug);
   const missions = useSelector((state: any) => state.user.missions);
   const singleMission = missions.find((m: any) => m.slug === slug);
-  const [checkFinished, setCheckFinished] = useState(false);
-  const [countdown, setCountdown] = useState(30);
-
-
-  useEffect(() => {
-    let timer: any;
-
-    if (countdown > 0 && checkFinished) {
-      timer = setInterval(() => {
-        setCountdown((prev) => prev - 1);
-      }, 1000);
-    } else if (countdown === 0) {
-      dispatch(updateMissionStatus({ ...singleMission, status: "done" }));
-      setCheckFinished(false);
-      clearInterval(timer);
-    }
-
-    return () => clearInterval(timer);
-  }, [countdown, checkFinished, dispatch, singleMission]);
 
   const handleStartMission = () => {
     console.log("tarted");
     WebApp.HapticFeedback.impactOccurred("medium");
     dispatch(startMission({ ...singleTask, status: "progress" }));
-    setCheckFinished(false); // Reset countdown to 20 seconds
     WebApp.openLink(singleTask.link);
   };
 
@@ -54,19 +34,33 @@ function Singletask() {
     // dispatch(removeActiveMission(singleMission));
   };
 
-  const showCountdownText = () => {
-    const minutes = Math.floor(countdown / 60);
-    const seconds = countdown % 60;
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
-  const handleCheckTask = () => {
-    WebApp.HapticFeedback.impactOccurred("medium");
-    setCountdown(30);
-    setCheckFinished(true);
-  };
-
   const renderButton = () => {
+    // Rejected status - allow resubmission
+    if (singleMission?.status === "rejected") {
+      return (
+        <button
+          onClick={handleEndMission}
+          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] "
+        >
+          Resubmit Task
+        </button>
+      );
+    }
+    
+    // Approved or reviewing - disable button
+    if (singleMission?.status === "approved" || singleMission?.status === "reviewing") {
+      return (
+        <button
+          disabled
+          className="btn w-full text-[#131721] font-[600] text-[18px] p-[16px_16px] rounded-[10px] opacity-50 cursor-not-allowed"
+        >
+          {singleMission?.status === "approved" 
+            ? "Task Approved" 
+            : "Under Review"}
+        </button>
+      );
+    }
+
     if (
       singleMission?.status === "progress" ||
       singleMission?.status === "done"
@@ -85,7 +79,10 @@ function Singletask() {
       singleMission?.status !== "done" &&
       singleMission?.status !== "progress" &&
       singleMission?.status !== "ended" &&
-      singleMission?.status !== "pending"
+      singleMission?.status !== "pending" &&
+      singleMission?.status !== "reviewing" &&
+      singleMission?.status !== "approved" &&
+      singleMission?.status !== "rejected"
     ) {
       return (
         <button
@@ -141,23 +138,47 @@ function Singletask() {
         </div>
       </div>
 
-      {singleMission && singleMission.status === "progress" && (
-        <div className="bg-[#27334E80] p-[15px_10px] rounded-[16px] mt-[40px] flex items-center justify-between">
-          {checkFinished ? (
-            <p className="font-[500] text-red-500 text-[14px]">
-              Are you sure you've done the task?
-            </p>
-          ) : (
-            <p className="font-[500] text-white">{singleTask?.title}</p>
+      {/* Rejection Status and Reason */}
+      {singleMission?.status === "rejected" && (
+        <div className="bg-[#FF4444]/20 border border-[#FF4444] rounded-[16px] p-[15px] mt-[20px]">
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-[#FF4444] font-[600] text-[16px]">Task Rejected</p>
+            <span className="px-2 py-1 rounded-full text-xs font-[500] bg-[#FF4444]/30 text-[#FF4444] border border-[#FF4444]">
+              Rejected
+            </span>
+          </div>
+          {singleMission?.rejectionReason && (
+            <div className="mt-2">
+              <p className="text-[#FFFFFF99] text-[12px] font-[500] mb-1">Reason:</p>
+              <p className="text-white text-[14px] font-[500]">
+                {singleMission.rejectionReason}
+              </p>
+            </div>
           )}
+        </div>
+      )}
 
-          <button
-            disabled={checkFinished}
-            onClick={handleCheckTask}
-            className="btn  text-[#131721] font-[600] text-[14px] p-[5px_10px]  rounded-full disabled:bg-[#27334E80] "
-          >
-            {checkFinished ? showCountdownText() : "Check"}
-          </button>
+      {/* Approved Status */}
+      {singleMission?.status === "approved" && (
+        <div className="bg-[#40D8A1]/20 border border-[#40D8A1] rounded-[16px] p-[15px] mt-[20px]">
+          <div className="flex items-center gap-2">
+            <p className="text-[#40D8A1] font-[600] text-[16px]">Task Approved</p>
+            <span className="px-2 py-1 rounded-full text-xs font-[500] bg-[#40D8A1]/30 text-[#40D8A1] border border-[#40D8A1]">
+              Approved
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* Reviewing Status */}
+      {singleMission?.status === "reviewing" && (
+        <div className="bg-[#FFB948]/20 border border-[#FFB948] rounded-[16px] p-[15px] mt-[20px]">
+          <div className="flex items-center gap-2">
+            <p className="text-[#FFB948] font-[600] text-[16px]">Under Review</p>
+            <span className="px-2 py-1 rounded-full text-xs font-[500] bg-[#FFB948]/30 text-[#FFB948] border border-[#FFB948]">
+              Reviewing
+            </span>
+          </div>
         </div>
       )}
 

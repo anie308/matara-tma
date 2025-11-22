@@ -144,7 +144,8 @@ function Send() {
       dispatch(clearTransaction());
       navigate("/");
       toast.success("Transaction sent successfully");
-    } catch (error) {
+    } catch (error: any) {
+      console.log("error sending:", error)
       toast.error("Transaction failed");
     } finally {
       setIsLoading(false);

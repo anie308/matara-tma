@@ -125,6 +125,22 @@ const userSlice = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["projects", "tasks"],
     }),
+    setToUserWallet: builder.mutation({
+      query: ({ data }) => ({
+        url: `/transfer/external`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["user"],
+    }),
+    setToExternalWallet: builder.mutation({
+      query: ({ data }) => ({
+        url: `/transfer/external`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["user"],
+    })
   }),
 });
 
@@ -146,4 +162,6 @@ export const {
   useGetProjectsQuery,
   useGetSingleProjectQuery,
   useJoinProjectMutation,
+  useSetToExternalWalletMutation,
+  useSetToUserWalletMutation
 } = userSlice;

@@ -9,11 +9,14 @@ import TokenSelectModal from "../components/modal/TokenSelectModal";
 import { RootState } from "../services/store";
 import { toast } from "react-hot-toast";
 import { 
-  executeSwap, 
   getTokenAddress, 
   calculateDeadline,
   SwapRequest 
 } from "../services/swap";
+import { 
+  useCreateSwapRequestMutation, 
+  useGetSwapRequestQuery 
+} from "../services/routes";
 
 // Utility function to format numbers with commas
 const formatNumber = (num: number): string => {
@@ -40,6 +43,8 @@ function Swap() {
   const { isConnected, balances, isLoadingBalances, getTokenBalances } = useBackendWallet();
   const profile = useSelector((state: RootState) => state.user.profile);
   const username = profile?.username;
+  const tokenPrices = useSelector((state: RootState) => state.tokens.prices);
+  const [isCalculatingQuote, setIsCalculatingQuote] = useState(false);
   
   const [fromToken, setFromToken] = useState<Token | null>(null);
   const [toToken, setToToken] = useState<Token | null>(null);
@@ -52,6 +57,19 @@ function Swap() {
   const [selectingFor, setSelectingFor] = useState<'from' | 'to'>('from');
   const [swapError, setSwapError] = useState<string | null>(null);
   const [lastSwapResult, setLastSwapResult] = useState<any>(null);
+  const [currentSwapRequestId, setCurrentSwapRequestId] = useState<string | null>(null);
+  const [swapStatus, setSwapStatus] = useState<string | null>(null);
+  
+  const [createSwapRequest, { isLoading: isCreatingSwap }] = useCreateSwapRequestMutation();
+  
+  // Poll swap status if we have a pending/processing swap
+  const { data: swapRequestData } = useGetSwapRequestQuery(
+    { swapRequestId: currentSwapRequestId! },
+    { 
+      skip: !currentSwapRequestId,
+      pollingInterval: currentSwapRequestId && (swapStatus === 'pending' || swapStatus === 'processing') ? 2000 : 0,
+    }
+  );
 
   // Initialize with tBNB and USDT (testnet tokens)
   useEffect(() => {
@@ -71,6 +89,75 @@ function Swap() {
     }
   }, [isConnected, fromToken?.symbol, toToken?.symbol]);
 
+  // Recalculate output amount when input amount, tokens, or prices change
+  useEffect(() => {
+    if (fromAmount && fromToken && toToken) {
+      const amount = parseFloat(fromAmount);
+      if (!isNaN(amount) && amount > 0) {
+        const fromPrice = tokenPrices[fromToken.symbol] || 0;
+        const toPrice = tokenPrices[toToken.symbol] || 0;
+
+        if (fromPrice && toPrice) {
+          const estimatedOutput = (amount * fromPrice) / toPrice;
+          let formattedOutput: string;
+          
+          if (estimatedOutput < 0.01) {
+            formattedOutput = estimatedOutput.toFixed(8);
+          } else if (estimatedOutput < 1) {
+            formattedOutput = estimatedOutput.toFixed(6);
+          } else if (estimatedOutput < 1000) {
+            formattedOutput = estimatedOutput.toFixed(4);
+          } else {
+            formattedOutput = estimatedOutput.toFixed(2);
+          }
+          
+          setToAmount(formattedOutput);
+        } else {
+          setToAmount('Calculating...');
+        }
+      }
+    } else if (!fromAmount) {
+      setToAmount('');
+    }
+  }, [fromAmount, fromToken, toToken, tokenPrices]);
+
+  // Handle swap status updates from polling
+  useEffect(() => {
+    if (swapRequestData?.data) {
+      const status = swapRequestData.data.status;
+      setSwapStatus(status);
+      
+      if (status === 'completed') {
+        setLastSwapResult({ data: swapRequestData.data });
+        toast.success(
+          `Swap completed successfully! Transaction: ${swapRequestData.data.transactionHash?.slice(0, 10)}...`,
+          { duration: 5000 }
+        );
+        
+        // Reset amounts after successful swap
+        setFromAmount('');
+        setToAmount('');
+        
+        // Refresh balances
+        if (getTokenBalances) {
+          getTokenBalances();
+        }
+        
+        // Clear polling
+        setCurrentSwapRequestId(null);
+        setSwapStatus(null);
+      } else if (status === 'failed') {
+        const errorMsg = swapRequestData.data.errorMessage || 'Swap execution failed';
+        setSwapError(errorMsg);
+        toast.error(`Swap failed: ${errorMsg}`, { duration: 5000 });
+        
+        // Clear polling
+        setCurrentSwapRequestId(null);
+        setSwapStatus(null);
+      }
+    }
+  }, [swapRequestData, getTokenBalances]);
+
   const handleSwapTokens = () => {
     const tempToken = fromToken;
     const tempAmount = fromAmount;
@@ -84,16 +171,60 @@ function Swap() {
     setLastSwapResult(null);
   };
 
-  const handleFromAmountChange = (value: string) => {
+  // Calculate estimated output amount based on token prices
+  const calculateOutputAmount = (inputAmount: string): string => {
+    if (!inputAmount || !fromToken || !toToken) {
+      return '';
+    }
+
+    const amount = parseFloat(inputAmount);
+    if (isNaN(amount) || amount <= 0) {
+      return '';
+    }
+
+    // Get token prices from Redux
+    const fromPrice = tokenPrices[fromToken.symbol] || 0;
+    const toPrice = tokenPrices[toToken.symbol] || 0;
+
+    // If we don't have prices, show a placeholder
+    if (!fromPrice || !toPrice) {
+      return 'Calculating...';
+    }
+
+    // Calculate: (inputAmount * fromPrice) / toPrice
+    // This gives us the equivalent amount in the output token
+    const estimatedOutput = (amount * fromPrice) / toPrice;
+
+    // Format the result (show more decimals for small amounts)
+    if (estimatedOutput < 0.01) {
+      return estimatedOutput.toFixed(8);
+    } else if (estimatedOutput < 1) {
+      return estimatedOutput.toFixed(6);
+    } else if (estimatedOutput < 1000) {
+      return estimatedOutput.toFixed(4);
+    } else {
+      return estimatedOutput.toFixed(2);
+    }
+  };
+
+  const handleFromAmountChange = async (value: string) => {
     setFromAmount(value);
     setSwapError(null);
-    // For now, we'll let the backend calculate the output amount
-    // In a real implementation, you'd call a price quote API here
+    
     if (value && fromToken && toToken) {
-      // Simple estimation - backend will provide actual amountOut
-      setToAmount(value);
+      setIsCalculatingQuote(true);
+      
+      // Calculate output amount based on prices
+      const estimatedOutput = calculateOutputAmount(value);
+      setToAmount(estimatedOutput);
+      
+      // Small delay to show loading state (optional, can be removed)
+      setTimeout(() => {
+        setIsCalculatingQuote(false);
+      }, 100);
     } else {
       setToAmount('');
+      setIsCalculatingQuote(false);
     }
   };
 
@@ -147,6 +278,32 @@ function Swap() {
     return true;
   };
 
+  // Handle swap errors with specific messages
+  const handleSwapError = (error: any): string => {
+    const errorMessage = error?.data?.message || error?.message || 'Unknown error occurred';
+    
+    if (errorMessage.includes('User not found')) {
+      return 'User account not found. Please verify your username.';
+    }
+    if (errorMessage.includes('wallet address not found')) {
+      return 'Wallet not set up. Please set up your wallet first.';
+    }
+    if (errorMessage.includes('Insufficient balance')) {
+      return 'Insufficient token balance for this swap.';
+    }
+    if (errorMessage.includes('Insufficient BNB')) {
+      return 'Insufficient BNB for gas fees. Please add BNB to your wallet.';
+    }
+    if (errorMessage.includes('slippage')) {
+      return 'Swap failed due to price movement. Try increasing slippage tolerance.';
+    }
+    if (errorMessage.includes('deadline')) {
+      return 'Swap deadline expired. Please try again.';
+    }
+    
+    return errorMessage;
+  };
+
   const handleSwap = async () => {
     if (!canSwap() || !username) {
       if (!username) {
@@ -176,6 +333,8 @@ function Swap() {
     setIsLoading(true);
     setSwapError(null);
     setLastSwapResult(null);
+    setSwapStatus(null);
+    setCurrentSwapRequestId(null);
     
     try {
       // Get token addresses, converting BNB to WBNB if needed
@@ -197,14 +356,14 @@ function Swap() {
         deadline: deadline,
       };
       
-      // Execute swap
-      const result = await executeSwap(swapRequest);
+      // Execute swap using RTK Query
+      const result = await createSwapRequest({ data: swapRequest }).unwrap();
       setLastSwapResult(result);
       
       // Check swap status
       if (result.data.status === 'completed' && result.data.transactionHash) {
         toast.success(
-          `Swap successful! Transaction: ${result.data.transactionHash.slice(0, 10)}...`,
+          `Swap completed successfully! Transaction: ${result.data.transactionHash.slice(0, 10)}...`,
           { duration: 5000 }
         );
         
@@ -220,9 +379,17 @@ function Swap() {
         const errorMsg = result.data.errorMessage || 'Swap execution failed';
         setSwapError(errorMsg);
         toast.error(`Swap failed: ${errorMsg}`, { duration: 5000 });
+      } else {
+        // Swap is pending or processing - start polling
+        setCurrentSwapRequestId(result.data.swapRequestId);
+        setSwapStatus(result.data.status);
+        toast(`Swap ${result.data.status}. Monitoring status...`, { 
+          duration: 3000,
+          icon: '⏳'
+        });
       }
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    } catch (error: any) {
+      const errorMessage = handleSwapError(error);
       setSwapError(errorMessage);
       toast.error(`Swap failed: ${errorMessage}`, { duration: 5000 });
       console.error('Swap failed:', error);
@@ -424,18 +591,31 @@ function Swap() {
             </div>
             <div className="flex items-center gap-2">
               <input
-                type="number"
+                type="text"
                 value={toAmount}
-                onChange={(e) => setToAmount(e.target.value)}
-                placeholder="0.0"
+                placeholder={isCalculatingQuote ? "Calculating..." : "0.0"}
                 className="flex-1 bg-transparent text-white text-xl font-medium outline-none"
                 readOnly
               />
+              {isCalculatingQuote && (
+                <div className="w-4 h-4 border-2 border-[#44F58E] border-t-transparent rounded-full animate-spin" />
+              )}
             </div>
             {/* Show estimated balance after swap */}
-            {toAmount && parseFloat(toAmount) > 0 && toToken && (
+            {toAmount && toAmount !== 'Calculating...' && !isNaN(parseFloat(toAmount)) && parseFloat(toAmount) > 0 && toToken && (
               <div className="mt-2 text-xs text-gray-500">
                 You will receive ~{formatNumber(parseFloat(toAmount))} {toToken.symbol}
+                {tokenPrices[fromToken?.symbol || ''] && tokenPrices[toToken?.symbol || ''] && (
+                  <span className="text-gray-600 ml-1">
+                    (estimated)
+                  </span>
+                )}
+              </div>
+            )}
+            {/* Show message if prices are not available */}
+            {fromAmount && fromToken && toToken && (!tokenPrices[fromToken.symbol] || !tokenPrices[toToken.symbol]) && (
+              <div className="mt-2 text-xs text-yellow-400">
+                Price data not available. Amount shown is an estimate.
               </div>
             )}
           </div>
@@ -455,6 +635,21 @@ function Swap() {
             <span className="text-red-400 text-sm">
               Insufficient {fromToken?.symbol} balance. You have {formatNumber(getTokenBalance(fromToken))} {fromToken?.symbol}
             </span>
+          </div>
+        )}
+
+        {/* Swap Status - Processing/Pending */}
+        {(swapStatus === 'pending' || swapStatus === 'processing') && (
+          <div className="flex items-center gap-2 p-3 bg-blue-900/20 border border-blue-500/30 rounded-lg mb-4">
+            <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+            <div className="flex-1">
+              <span className="text-blue-400 text-sm block">
+                Swap {swapStatus === 'pending' ? 'pending' : 'processing'}...
+              </span>
+              <span className="text-blue-300 text-xs mt-1">
+                This may take a few moments. Please wait.
+              </span>
+            </div>
           </div>
         )}
 
@@ -491,15 +686,15 @@ function Swap() {
       {/* Swap Button */}
       <button
         onClick={handleSwap}
-        disabled={!canSwap() || isLoading}
+        disabled={!canSwap() || isLoading || isCreatingSwap || swapStatus === 'pending' || swapStatus === 'processing'}
         className={`w-full py-3 rounded-lg font-medium text-lg transition-colors ${
-          canSwap() && !isLoading
+          canSwap() && !isLoading && !isCreatingSwap && swapStatus !== 'pending' && swapStatus !== 'processing'
             ? 'bg-[#44F58E] text-black hover:bg-[#3DE077]'
             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
         }`}
       >
-        {isLoading 
-          ? 'Swapping...' 
+        {isLoading || isCreatingSwap || swapStatus === 'pending' || swapStatus === 'processing'
+          ? (swapStatus === 'pending' || swapStatus === 'processing' ? 'Processing Swap...' : 'Swapping...')
           : !isConnected 
             ? 'Connect Wallet' 
             : hasInsufficientBalance()

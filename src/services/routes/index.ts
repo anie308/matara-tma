@@ -140,6 +140,42 @@ const userSlice = apiSlice.injectEndpoints({
         body: data,
       }),
       invalidatesTags: ["user"],
+    }),
+    verifyUsername: builder.query({
+      query: ({ username }) => ({
+        url: `/transfer/verify-username?username=${encodeURIComponent(username)}`,
+        method: "GET",
+      }),
+    }),
+    sendTokensToUser: builder.mutation({
+      query: ({ data }) => ({
+        url: `/transfer/user`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["user"],
+    }),
+    createSwapRequest: builder.mutation({
+      query: ({ data }) => ({
+        url: `/swap`,
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: ["swap", "user"],
+    }),
+    getUserSwapHistory: builder.query({
+      query: ({ username }) => ({
+        url: `/swap/user?username=${encodeURIComponent(username)}`,
+        method: "GET",
+      }),
+      providesTags: ["swap"],
+    }),
+    getSwapRequest: builder.query({
+      query: ({ swapRequestId }) => ({
+        url: `/swap/${swapRequestId}`,
+        method: "GET",
+      }),
+      providesTags: (_result, _error, { swapRequestId }) => [{ type: "swap", id: swapRequestId }],
     })
   }),
 });
@@ -163,5 +199,10 @@ export const {
   useGetSingleProjectQuery,
   useJoinProjectMutation,
   useSetToExternalWalletMutation,
-  useSetToUserWalletMutation
+  useSetToUserWalletMutation,
+  useVerifyUsernameQuery,
+  useSendTokensToUserMutation,
+  useCreateSwapRequestMutation,
+  useGetUserSwapHistoryQuery,
+  useGetSwapRequestQuery
 } = userSlice;

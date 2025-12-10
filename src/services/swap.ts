@@ -29,12 +29,33 @@ export interface SwapResponse {
     feePercentage: number;
     feeAmount: string;
     feeRecipientAddress: string;
-    status: 'completed' | 'failed';
+    status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
     transactionHash?: string;
     createdAt: string;
     completedAt?: string;
     errorMessage?: string;
   };
+}
+
+export interface SwapHistoryItem {
+  _id: string;
+  userId: string;
+  walletAddress: string;
+  chain: string;
+  tokenIn: string;
+  tokenOut: string;
+  tokenInSymbol: string;
+  tokenOutSymbol: string;
+  amountIn: string;
+  amountOut: string;
+  amountOutMin: string;
+  feePercentage: number;
+  feeAmount: string;
+  status: string;
+  transactionHash?: string;
+  errorMessage?: string;
+  createdAt: string;
+  completedAt?: string;
 }
 
 // WBNB address for BNB swaps

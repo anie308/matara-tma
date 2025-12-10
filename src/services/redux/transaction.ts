@@ -7,7 +7,8 @@ type InitialProp = {
     network: string,
     icon: string
     name: string
-
+    transferType?: "external" | "username"
+    recipientUsername?: string
 }
 
 const initialState: InitialProp = {
@@ -16,8 +17,9 @@ const initialState: InitialProp = {
     address: "",
     network: "bsc",
     icon: "",
-    name: ""
-
+    name: "",
+    transferType: "external",
+    recipientUsername: ""
 }
 
 const transactionSlice = createSlice({
@@ -31,6 +33,8 @@ const transactionSlice = createSlice({
             state.network = action.payload.network;
             state.icon = action.payload.icon;
             state.name = action.payload.name;
+            state.transferType = action.payload.transferType || "external";
+            state.recipientUsername = action.payload.recipientUsername || "";
         },
         clearTransaction: (state) => {
             state.type = "";
@@ -39,6 +43,8 @@ const transactionSlice = createSlice({
             state.network = "bsc";
             state.icon = "";
             state.name = "";
+            state.transferType = "external";
+            state.recipientUsername = "";
         },
 
         setType: (state, action: PayloadAction<string>) => {
@@ -56,9 +62,15 @@ const transactionSlice = createSlice({
         },
         setName: (state, action: PayloadAction<string>) => {
             state.name = action.payload;
+        },
+        setTransferType: (state, action: PayloadAction<"external" | "username">) => {
+            state.transferType = action.payload;
+        },
+        setRecipientUsername: (state, action: PayloadAction<string>) => {
+            state.recipientUsername = action.payload;
         }
     }
 })
 
-export const { setTransaction, setType, setToken, setAddress, clearTransaction } = transactionSlice.actions;
+export const { setTransaction, setType, setToken, setAddress, clearTransaction, setTransferType, setRecipientUsername } = transactionSlice.actions;
 export default transactionSlice.reducer;

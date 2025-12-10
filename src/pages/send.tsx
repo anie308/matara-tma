@@ -1,14 +1,14 @@
-import { ChevronLeft, ArrowUp, AlertCircle } from "lucide-react";
+import { ChevronLeft, ArrowUp, AlertCircle, CheckCircle, XCircle, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../services/store";
-import { clearTransaction } from "../services/redux/transaction";
+import { clearTransaction, setTransferType } from "../services/redux/transaction";
 import { toast } from "react-hot-toast";
 import TokenLogo from "../components/TokenLogo";
 import { getTokenVariant } from "../utils/tokenUtils";
 import { useBackendWallet } from "../hooks/useBackendWallet";
-import { useState, useEffect } from "react";
-import { useSetToExternalWalletMutation } from "../services/routes";
+import { useState, useEffect, useRef } from "react";
+import { useSetToExternalWalletMutation, useVerifyUsernameQuery, useSendTokensToUserMutation } from "../services/routes";
 
 // Utility function to format numbers
 const formatNumber = (num: number): string => {
@@ -29,12 +29,27 @@ function Send() {
   const user = useSelector((state: RootState) => state.user.profile?.username);
   const [amount, setAmount] = useState("");
   const [recipientAddress, setRecipientAddress] = useState("");
+  const [recipientUsername, setRecipientUsername] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [tokenPrice] = useState(1); // USD price per token
+  const [transferType, setTransferTypeState] = useState<"external" | "username">(
+    transaction.transferType || "external"
+  );
+  const [verifiedUser, setVerifiedUser] = useState<any>(null);
+  const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
+  const [debouncedUsername, setDebouncedUsername] = useState("");
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
   const [sendToExternalWallet, { isLoading: sendLoading }] =
     useSetToExternalWalletMutation();
-
-  console.log(transaction);
+  const [sendTokensToUser, { isLoading: sendToUserLoading }] =
+    useSendTokensToUserMutation();
+  
+  // Username verification query (only runs when debounced username is provided and transferType is "username")
+  const { data: usernameVerification, isLoading: isVerifying } = useVerifyUsernameQuery(
+    { username: debouncedUsername },
+    { skip: !debouncedUsername || transferType !== "username" || debouncedUsername.length < 3 }
+  );
 
   // Get wallet state with balances
   const { isConnected, balances, isLoadingBalances, getTokenBalances } =
@@ -54,6 +69,59 @@ function Send() {
       getTokenBalances();
     }
   }, [isConnected, transaction.token]);
+
+  // Update Redux when transfer type changes
+  useEffect(() => {
+    dispatch(setTransferType(transferType));
+  }, [transferType, dispatch]);
+
+  // Update Redux when recipient username changes
+  useEffect(() => {
+    if (transferType === "username" && recipientUsername) {
+      // Store in Redux for persistence (optional, can be removed if not needed)
+      // dispatch(setRecipientUsername(recipientUsername));
+    }
+  }, [recipientUsername, transferType]);
+
+  // Handle username verification with debounce
+  useEffect(() => {
+    if (transferType !== "username" || !recipientUsername || recipientUsername.length < 3) {
+      setVerifiedUser(null);
+      setIsVerifyingUsername(false);
+      setDebouncedUsername("");
+      return;
+    }
+
+    setIsVerifyingUsername(true);
+
+    // Clear previous timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Set new timer for debounce (500ms)
+    debounceTimerRef.current = setTimeout(() => {
+      setDebouncedUsername(recipientUsername);
+      setIsVerifyingUsername(false);
+    }, 500);
+
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [recipientUsername, transferType]);
+
+  // Update verified user when verification data changes
+  useEffect(() => {
+    if (usernameVerification) {
+      if (usernameVerification.exists && usernameVerification.data) {
+        setVerifiedUser(usernameVerification.data);
+      } else {
+        setVerifiedUser(null);
+      }
+    }
+  }, [usernameVerification]);
 
   // Check if amount exceeds balance
   const hasInsufficientBalance = () => {
@@ -96,15 +164,30 @@ function Send() {
       );
       return;
     }
-    if (!recipientAddress) {
-      toast.error("Please enter recipient address");
-      return;
+
+    // Validate based on transfer type
+    if (transferType === "external") {
+      if (!recipientAddress) {
+        toast.error("Please enter recipient address");
+        return;
+      }
+      // Validate recipient address format
+      if (!recipientAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+        toast.error("Please enter a valid wallet address");
+        return;
+      }
+    } else {
+      // Username transfer
+      if (!recipientUsername) {
+        toast.error("Please enter recipient username");
+        return;
+      }
+      if (!verifiedUser || !verifiedUser.hasWallet) {
+        toast.error("Recipient user not found or does not have a wallet address");
+        return;
+      }
     }
-    // Validate recipient address format
-    if (!recipientAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
-      toast.error("Please enter a valid wallet address");
-      return;
-    }
+
     // Warn if using more than 95% of balance
     const balancePercentage = getBalancePercentage();
     if (balancePercentage > 95) {
@@ -122,19 +205,33 @@ function Send() {
     setIsLoading(true);
 
     try {
-      const data = {
-        fromUsername: user,
-        tokenSymbol: transaction.token,
-        tokenAddress: transaction.address,
-        amount: parseFloat(amount),
-        toAddress: recipientAddress,
-      };  
-      console.log(data);
+      if (transferType === "external") {
+        // External wallet transfer
+        const data = {
+          fromUsername: user,
+          tokenSymbol: transaction.token,
+          tokenAddress: transaction.address,
+          amount: parseFloat(amount),
+          toAddress: recipientAddress,
+        };
+        console.log(data);
 
-      const res = await sendToExternalWallet({ data }).unwrap();
-      console.log(res, "transfer");
+        const res = await sendToExternalWallet({ data }).unwrap();
+        console.log(res, "transfer");
+      } else {
+        // Username transfer
+        const data = {
+          username: recipientUsername,
+          tokenAddress: transaction.address,
+          amount: parseFloat(amount).toString(),
+          tokenSymbol: transaction.token,
+          fromUsername: user,
+        };
+        console.log(data);
 
-      // Simulate transaction processing
+        const res = await sendTokensToUser({ data }).unwrap();
+        console.log(res, "transfer to user");
+      }
 
       // Refresh balances after successful send
       if (getTokenBalances) {
@@ -145,8 +242,9 @@ function Send() {
       navigate("/");
       toast.success("Transaction sent successfully");
     } catch (error: any) {
-      console.log("error sending:", error)
-      toast.error("Transaction failed");
+      console.log("error sending:", error);
+      const errorMessage = error?.data?.message || error?.message || "Transaction failed";
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -311,27 +409,134 @@ function Send() {
             )}
           </div>
 
-          {/* Recipient Address */}
-          <div className=" border border-gray-600 rounded-[15px] p-[20px]">
-            <p className="text-white font-[600] mb-[15px]">Recipient Address</p>
-            <div className="flex items-center gap-[10px]">
-              <input
-                type="text"
-                placeholder="Enter wallet address"
-                className="flex-1 bg-transparent text-white border-none outline-none placeholder-gray-500"
-                value={recipientAddress}
-                onChange={(e) => setRecipientAddress(e.target.value)}
-              />
+          {/* Transfer Type Selection */}
+          <div className="border border-gray-600 rounded-[15px] p-[20px]">
+            <p className="text-white font-[600] mb-[15px]">Transfer Type</p>
+            <div className="flex gap-[10px]">
+              <button
+                onClick={() => {
+                  setTransferTypeState("external");
+                  setRecipientUsername("");
+                  setVerifiedUser(null);
+                }}
+                className={`flex-1 p-[12px] rounded-[10px] font-[600] transition-all ${
+                  transferType === "external"
+                    ? "bg-[#44F58E] text-black"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`}
+              >
+                External Wallet
+              </button>
+              <button
+                onClick={() => {
+                  setTransferTypeState("username");
+                  setRecipientAddress("");
+                }}
+                className={`flex-1 p-[12px] rounded-[10px] font-[600] transition-all ${
+                  transferType === "username"
+                    ? "bg-[#44F58E] text-black"
+                    : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                }`}
+              >
+                Username
+              </button>
             </div>
           </div>
 
+          {/* Recipient Input - Conditional based on transfer type */}
+          {transferType === "external" ? (
+            <div className="border border-gray-600 rounded-[15px] p-[20px]">
+              <p className="text-white font-[600] mb-[15px]">Recipient Address</p>
+              <div className="flex items-center gap-[10px]">
+                <input
+                  type="text"
+                  placeholder="Enter wallet address (0x...)"
+                  className="flex-1 bg-transparent text-white border-none outline-none placeholder-gray-500"
+                  value={recipientAddress}
+                  onChange={(e) => setRecipientAddress(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="border border-gray-600 rounded-[15px] p-[20px]">
+              <p className="text-white font-[600] mb-[15px]">Recipient Username</p>
+              <div className="flex items-center gap-[10px]">
+                <input
+                  type="text"
+                  placeholder="Enter username"
+                  className="flex-1 bg-transparent text-white border-none outline-none placeholder-gray-500"
+                  value={recipientUsername}
+                  onChange={(e) => setRecipientUsername(e.target.value)}
+                />
+                {isVerifying || isVerifyingUsername ? (
+                  <div className="w-5 h-5 border-2 border-[#44F58E] border-t-transparent rounded-full animate-spin" />
+                ) : verifiedUser ? (
+                  <CheckCircle className="text-[#44F58E]" size={20} />
+                ) : recipientUsername.length >= 3 ? (
+                  <XCircle className="text-red-500" size={20} />
+                ) : null}
+              </div>
+              
+              {/* Username Verification Status */}
+              {recipientUsername && recipientUsername.length >= 3 && (
+                <div className="mt-3">
+                  {isVerifying || isVerifyingUsername ? (
+                    <p className="text-gray-400 text-sm">Verifying username...</p>
+                  ) : verifiedUser ? (
+                    <div className="bg-[#44F58E]/10 border border-[#44F58E]/30 rounded-[10px] p-[12px]">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CheckCircle className="text-[#44F58E]" size={16} />
+                        <p className="text-[#44F58E] font-[600] text-sm">User Found</p>
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center gap-2 text-gray-300">
+                          <User size={12} />
+                          <span>{verifiedUser.firstName || verifiedUser.username}</span>
+                        </div>
+                        {verifiedUser.walletAddress && (
+                          <p className="text-gray-400 text-xs mt-1">
+                            Wallet: {verifiedUser.walletAddress.slice(0, 6)}...{verifiedUser.walletAddress.slice(-4)}
+                          </p>
+                        )}
+                        {!verifiedUser.hasWallet && (
+                          <p className="text-yellow-400 text-xs mt-1">
+                            ⚠ User does not have a wallet address
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-red-900/20 border border-red-500/30 rounded-[10px] p-[12px]">
+                      <div className="flex items-center gap-2">
+                        <XCircle className="text-red-500" size={16} />
+                        <p className="text-red-400 font-[600] text-sm">User Not Found</p>
+                      </div>
+                      <p className="text-red-300 text-xs mt-1">
+                        Please check the username and try again
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Transaction Summary */}
-          {amount && recipientAddress && (
+          {amount && ((transferType === "external" && recipientAddress) || (transferType === "username" && verifiedUser)) && (
             <div className="bg-[#0a0a0a] border border-[#44F58E]/30 rounded-[15px] p-[20px]">
               <p className="text-white font-[600] mb-[15px]">
                 Transaction Summary
               </p>
               <div className="space-y-[10px]">
+                <div className="flex justify-between">
+                  <span className="text-gray-400">Recipient</span>
+                  <span className="text-white text-sm">
+                    {transferType === "external" 
+                      ? `${recipientAddress.slice(0, 6)}...${recipientAddress.slice(-4)}`
+                      : verifiedUser?.username || verifiedUser?.firstName || recipientUsername
+                    }
+                  </span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-400">Amount</span>
                   <span className="text-white">
@@ -357,9 +562,11 @@ function Send() {
             onClick={handleSend}
             disabled={
               isLoading ||
-              sendLoading || 
+              sendLoading ||
+              sendToUserLoading ||
               !amount ||
-              !recipientAddress ||
+              (transferType === "external" && !recipientAddress) ||
+              (transferType === "username" && (!recipientUsername || !verifiedUser || !verifiedUser.hasWallet)) ||
               hasInsufficientBalance()
             }
             className="btn p-[15px] text-[18px] font-[600] w-full rounded-[15px] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -377,7 +584,10 @@ function Send() {
             ) : (
               <>
                 <ArrowUp size={20} />
-                Send {amount} {transaction.token}
+                {transferType === "username" 
+                  ? `Send ${amount} ${transaction.token} to ${recipientUsername}`
+                  : `Send ${amount} ${transaction.token}`
+                }
               </>
             )}
           </button>

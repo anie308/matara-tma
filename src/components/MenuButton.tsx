@@ -42,7 +42,7 @@ export default function Example() {
             </button>
           </MenuItem>
           <MenuItem>
-            <button onClick={()=> WebApp.openLink('https://drive.google.com/file/d/1HdyuPv6Mmxtvx58GJf3NiYPdfYIsKdsb/view?usp=sharing')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
+            <button onClick={()=> WebApp.openLink('https://matara-token.gitbook.io/matara-token/')} className="group flex w-full items-center gap-2 rounded-lg py-1.5 px-3 data-[focus]:bg-white/10">
             <Files className='text-[#FFC152] text-[14px]' />
               Documentation
               <kbd className="ml-auto hidden font-sans text-xs text-white/50 group-data-[focus]:inline">⌘A</kbd>

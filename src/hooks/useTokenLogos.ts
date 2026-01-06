@@ -12,6 +12,7 @@ export const useTokenLogos = (tokenAddresses: string[]) => {
       setIsLoading(true);
       
       try {
+        // Fetch logos from DexScreener
         const metadataMap = await CoinLogoService.getMultipleTokens(tokenAddresses);
         const logoMap = new Map<string, string>();
         

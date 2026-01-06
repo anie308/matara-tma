@@ -19,15 +19,17 @@ export const useBackendWallet = () => {
   const walletAddress = profile?.walletAddress;
   console.log('walletAddress', walletAddress);
 
-  // Popular BSC tokens to show with 0 balances when wallet is empty
-  const POPULAR_BSC_FALLBACK = [
-    { symbol: 'BNB', name: 'BNB', address: 'native', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png', balance: 0 },
-    { symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/325/small/Tether.png', balance: 0 },
-    { symbol: 'USDC', name: 'USD Coin', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png', balance: 0 },
-    { symbol: 'BUSD', name: 'Binance USD', address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png', balance: 0 },
-    { symbol: 'ETH', name: 'Ethereum Token', address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png', balance: 0 },
-    { symbol: 'BTCB', name: 'Bitcoin BEP2', address: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png', balance: 0 },
-    { symbol: 'CAKE', name: 'PancakeSwap Token', address: '0x0E09FaBB73Bd3Ade0a17ECC321fD13a19e81cE82', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/12632/small/pancakeswap-cake-logo_%281%29.png', balance: 0 }
+  // Only these 9 tokens are supported - show with 0 balances when wallet is empty
+  const POPULAR_BSC_FALLBACK =  [
+    { symbol: 'MARS', name: 'MARS Token', address: '0x6844B2e9afB002d188A072A3ef0FBb068650F214', decimals: 18, logoURI: 'https://cdn.dexscreener.com/cms/images/d33c76a1c7bb23e4de0e83553377c191453dfc36f114393a0e012ea509060908?width=128&height=128&fit=crop&quality=95&format=auto' }, // TODO: Replace with actual MARS address and logo
+    { symbol: 'BNB', name: 'BNB', address: 'native', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+    { symbol: 'WKC', name: 'WKC Token', address: '0x6Ec90334d89dBdc89E08A133271be3d104128Edb', decimals: 18, logoURI: 'https://cdn.dexscreener.com/cms/images/6012b7aeac14fd99318f10747e4deb40c0de61588e12e873621e354f4033a513?width=128&height=128&fit=crop&quality=95&format=auto' }, // Logo fetched from DexScreener
+    { symbol: 'DTG', name: 'DTG Token', address: '0xb1957bdba889686ebde631df970ece6a7571a1b6', decimals: 18, logoURI: 'https://cdn.dexscreener.com/cms/images/86ab901bc71e3cf982bc8f6a429cd28a5e0895b1cd8472f6460d490a552f7975?width=128&height=128&fit=crop&quality=95&format=auto' }, // Logo fetched from DexScreener
+    { symbol: 'YUKAN', name: 'YUKAN Token', address: '0xd086B849a71867731D74D6bB5Df4f640de900171', decimals: 18, logoURI: 'https://cdn.dexscreener.com/cms/images/97292f8e15e0dcf3da3cd28698b8810870ba938cf15b5e78fa68346b3116e61e?width=128&height=128&fit=crop&quality=95&format=auto' }, // Logo fetched from DexScreener
+    { symbol: 'TWD', name: 'TWD Token', address: '0xf00cd9366a13e725ab6764ee6fc8bd21da22786e', decimals: 18, logoURI: 'https://cdn.dexscreener.com/cms/images/8ea0e9c58e403cf520a9a02572a433bfcc9e41dff9c79d83b599e4110cd2d449?width=128&height=128&fit=crop&quality=95&format=auto' }, // Logo fetched from DexScreener
+    { symbol: 'TKC', name: 'TKC Token', address: '0x06dc293c250e2fb2416a4276d291803fc74fb9b5', decimals: 18, logoURI: 'https://cdn.dexscreener.com/cms/images/d940f694d43867e42d75d6b751930f1bf34f140acc8e5c22dd4c051d47434132?width=128&height=128&fit=crop&quality=95&format=auto' }, // Logo fetched from DexScreener
+    { symbol: 'ETH', name: 'Ethereum Token', address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', decimals: 18, logoURI: 'https://cdn.dexscreener.com/fetch?src=https%3A%2F%2Fcoin-images.coingecko.com%2Fcoins%2Fimages%2F39580%2Flarge%2Fweth.png%3F1723006716' }, // Logo fetched from DexScreener
+    { symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18, logoURI: '' } // Logo fetched from DexScreener
   ];
 
   // Fetch token list from PancakeSwap API
@@ -51,20 +53,23 @@ export const useBackendWallet = () => {
         name: 'BNB',
         address: 'native',
         decimals: 18,
-        logoURI: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png'
+        logoURI: '' // Logo fetched from DexScreener
       });
       
       return tokens;
     } catch (error) {
       console.error('Failed to fetch token list:', error);
-      // Fallback to basic tokens
+      // Fallback to only the 9 supported tokens
       return [
-        { symbol: 'BNB', name: 'BNB', address: 'native', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png' },
-        { symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/325/small/Tether.png' },
-        { symbol: 'USDC', name: 'USD Coin', address: '0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/6319/small/USD_Coin_icon.png' },
-        { symbol: 'BUSD', name: 'Binance USD', address: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/9576/small/BUSD.png' },
-        { symbol: 'ETH', name: 'Ethereum Token', address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/279/small/ethereum.png' },
-        { symbol: 'BTCB', name: 'Bitcoin BEP2', address: '0x7130d2A12B9BCbFAe4f2634d864A1Ee1Ce3Ead9c', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/7598/small/wrapped_bitcoin_wbtc.png' }
+        { symbol: 'MARS', name: 'MARS Token', address: '0x6844B2e9afB002d188A072A3ef0FBb068650F214', decimals: 18, logoURI: 'https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png' }, // TODO: Replace with actual MARS address and logo
+        { symbol: 'BNB', name: 'BNB', address: 'native', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'WKC', name: 'WKC Token', address: '0x6Ec90334d89dBdc89E08A133271be3d104128Edb', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'DTG', name: 'DTG Token', address: '0xb1957bdba889686ebde631df970ece6a7571a1b6', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'YUKAN', name: 'YUKAN Token', address: '0xd086B849a71867731D74D6bB5Df4f640de900171', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'TWD', name: 'TWD Token', address: '0xf00cd9366a13e725ab6764ee6fc8bd21da22786e', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'TKC', name: 'TKC Token', address: '0x06dc293c250e2fb2416a4276d291803fc74fb9b5', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'ETH', name: 'Ethereum Token', address: '0x2170Ed0880ac9A755fd29B2688956BD959F933F8', decimals: 18, logoURI: '' }, // Logo fetched from DexScreener
+        { symbol: 'USDT', name: 'Tether USD', address: '0x55d398326f99059fF775485246999027B3197955', decimals: 18, logoURI: '' } // Logo fetched from DexScreener
       ];
     }
   };
@@ -165,6 +170,41 @@ export const useBackendWallet = () => {
         // Small delay between batches to avoid rate limiting
         if (i + batchSize < tokensToCheck.length) {
           await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      
+      // Also check balances for tokens in POPULAR_BSC_FALLBACK that weren't in the PancakeSwap list
+      const tokensToCheckFromFallback = POPULAR_BSC_FALLBACK.filter(
+        token => !tokenList.some((t: any) => t.symbol === token.symbol || t.address.toLowerCase() === token.address.toLowerCase())
+      );
+      
+      // Fetch balances for fallback tokens that weren't checked
+      for (const token of tokensToCheckFromFallback) {
+        try {
+          let balance = 0;
+          
+          if (token.address === 'native') {
+            // BNB balance already fetched above, skip
+            continue;
+          } else if (token.address !== '0x0000000000000000000000000000000000000000') {
+            // Only check if address is not placeholder
+            const contract = new ethers.Contract(token.address, ERC20_ABI, provider);
+            const [rawBalance, decimals] = await Promise.race([
+              Promise.all([
+                contract.balanceOf(address),
+                contract.decimals()
+              ]),
+              new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+            ]) as [bigint, number];
+            balance = Number(ethers.formatUnits(rawBalance, decimals));
+            
+            if (balance > 0) {
+              newBalances[token.symbol] = balance;
+              console.log(`${token.symbol} balance:`, balance);
+            }
+          }
+        } catch (error) {
+          console.warn(`Failed to fetch balance for ${token.symbol}:`, error);
         }
       }
       

@@ -77,7 +77,21 @@ function TokenSelectModal({ setIsOpen, isOpen, onSelectToken }: TokenSelectModal
                     </button>
                   </div>
                   <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto">
-                    {tokens.map((token) => {
+                    {tokens
+                      .sort((a, b) => {
+                        const balanceA = balances[a.symbol] || 0;
+                        const balanceB = balances[b.symbol] || 0;
+                        const aHasBalance = balanceA > 0;
+                        const bHasBalance = balanceB > 0;
+                        
+                        // Tokens with balance > 0 come first
+                        if (aHasBalance && !bHasBalance) return -1;
+                        if (!aHasBalance && bHasBalance) return 1;
+                        
+                        // If both have balance or both don't, sort by balance amount (descending)
+                        return balanceB - balanceA;
+                      })
+                      .map((token) => {
                       const balance = balances[token.symbol] || 0;
                       return (
                         <button

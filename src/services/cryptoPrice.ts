@@ -30,9 +30,53 @@ const TOKEN_ID_MAP: Record<string, string> = {
   'WBNB': 'binancecoin', // Wrapped BNB uses BNB price
 };
 
+// Token contract address mapping for DexScreener API (for tokens not on CoinGecko or with wrong mappings)
+const TOKEN_ADDRESS_MAP: Record<string, string> = {
+  'MARS': '0x6844B2e9afB002d188A072A3ef0FBb068650F214',
+  'WKC': '0x6Ec90334d89dBdc89E08A133271be3d104128Edb',
+  'DTG': '0xb1957bdba889686ebde631df970ece6a7571a1b6',
+  'YUKAN': '0xd086B849a71867731D74D6bB5Df4f640de900171',
+  'TWD': '0xf00cd9366a13e725ab6764ee6fc8bd21da22786e',
+  'TKC': '0x06dc293c250e2fb2416a4276d291803fc74fb9b5',
+};
+
 // Fallback token IDs for common tokens
 const getTokenId = (symbol: string): string => {
   return TOKEN_ID_MAP[symbol.toUpperCase()] || symbol.toLowerCase();
+};
+
+// Get token price from DexScreener by contract address
+const getPriceFromDexScreener = async (contractAddress: string): Promise<number | null> => {
+  if (!contractAddress || contractAddress === 'native') {
+    return null;
+  }
+
+  try {
+    const response = await fetchWithTimeout(
+      `https://api.dexscreener.com/latest/dex/tokens/${contractAddress}`,
+      8000
+    );
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json();
+    
+    // DexScreener returns pairs array, get the first pair's price
+    if (data.pairs && data.pairs.length > 0) {
+      const pair = data.pairs[0];
+      const priceUsd = parseFloat(pair.priceUsd);
+      if (!isNaN(priceUsd) && priceUsd > 0) {
+        return priceUsd;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error(`Error fetching price from DexScreener for ${contractAddress}:`, error);
+    return null;
+  }
 };
 
 // Helper function to fetch with timeout
@@ -212,35 +256,68 @@ export const getMultipleTokenPrices = async (symbols: string[]): Promise<Record<
       return {};
     }
 
-    const tokenIds = uniqueSymbols.map(getTokenId).join(',');
-    
-    // Use timeout to prevent hanging
-    const response = await fetchWithTimeout(
-      `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds}&vs_currencies=usd`,
-      10000 // 10 second timeout
-    );
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch prices: ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    if (!data || typeof data !== 'object') {
-      console.warn('Invalid API response format');
-      return {};
-    }
-    
-    // Convert back to symbol-based map
     const prices: Record<string, number> = {};
+    
+    // Separate tokens into CoinGecko and DexScreener groups
+    const coinGeckoTokens: string[] = [];
+    const dexScreenerTokens: string[] = [];
+    
     uniqueSymbols.forEach((symbol) => {
-      const tokenId = getTokenId(symbol);
-      const price = data[tokenId]?.usd;
-      // Only set price if it's a valid number
-      if (typeof price === 'number' && price > 0) {
-        prices[symbol] = price;
+      const upperSymbol = symbol.toUpperCase();
+      if (TOKEN_ADDRESS_MAP[upperSymbol]) {
+        dexScreenerTokens.push(symbol);
+      } else {
+        coinGeckoTokens.push(symbol);
       }
     });
+    
+    // Fetch from CoinGecko for tokens not in DexScreener map
+    if (coinGeckoTokens.length > 0) {
+      try {
+        const tokenIds = coinGeckoTokens.map(getTokenId).join(',');
+        const response = await fetchWithTimeout(
+          `https://api.coingecko.com/api/v3/simple/price?ids=${tokenIds}&vs_currencies=usd`,
+          10000
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data && typeof data === 'object') {
+            coinGeckoTokens.forEach((symbol) => {
+              const tokenId = getTokenId(symbol);
+              const price = data[tokenId]?.usd;
+              if (typeof price === 'number' && price > 0) {
+                prices[symbol] = price;
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching prices from CoinGecko:', error);
+      }
+    }
+    
+    // Fetch from DexScreener for custom tokens
+    if (dexScreenerTokens.length > 0) {
+      const dexScreenerPromises = dexScreenerTokens.map(async (symbol) => {
+        const upperSymbol = symbol.toUpperCase();
+        const contractAddress = TOKEN_ADDRESS_MAP[upperSymbol];
+        if (contractAddress) {
+          const price = await getPriceFromDexScreener(contractAddress);
+          if (price !== null) {
+            return { symbol, price };
+          }
+        }
+        return null;
+      });
+      
+      const dexScreenerResults = await Promise.all(dexScreenerPromises);
+      dexScreenerResults.forEach((result) => {
+        if (result) {
+          prices[result.symbol] = result.price;
+        }
+      });
+    }
     
     return prices;
   } catch (error) {

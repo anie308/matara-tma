@@ -178,7 +178,21 @@ function SelectToken() {
             </div>
           ) : (
           <div className="flex flex-col items-center justify-center w-full gap-[5px] px-[20px]">
-            {allTokens.map((token) => {
+            {allTokens
+              .sort((a, b) => {
+                const balanceA = balances[a.symbol] || 0;
+                const balanceB = balances[b.symbol] || 0;
+                const aHasBalance = balanceA > 0;
+                const bHasBalance = balanceB > 0;
+                
+                // Tokens with balance > 0 come first
+                if (aHasBalance && !bHasBalance) return -1;
+                if (!aHasBalance && bHasBalance) return 1;
+                
+                // If both have balance or both don't, sort by balance amount (descending)
+                return balanceB - balanceA;
+              })
+              .map((token) => {
               const customTokens = getCustomTokens();
               const isCustomToken = customTokens.some((ct: any) => ct.address === token.address);
               const balance = balances[token.symbol] || 0;

@@ -89,6 +89,8 @@ export const executeSwap = async (swapData: SwapRequest): Promise<SwapResponse> 
   const baseUrl = getApiBaseUrl();
   const url = `${baseUrl}/swap`;
 
+  console.log('swapData', swapData);
+
   try {
     const response = await fetch(url, {
       method: 'POST',

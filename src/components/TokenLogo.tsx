@@ -25,8 +25,8 @@ export default function TokenLogo({
   useEffect(() => {
     const loadLogo = async () => {
       if (address === "native") {
-        // For native tokens like BNB, use a default logo or specific handling
-        setLogoUrl("https://assets.coingecko.com/coins/images/825/small/bnb-icon2_2x.png");
+        // For native tokens like BNB, use a default logo
+        setLogoUrl("https://cdn.dexscreener.com/cms/images/d33c76a1c7bb23e4de0e83553377c191453dfc36f114393a0e012ea509060908?width=128&height=128&fit=crop&quality=95&format=auto");
         return;
       }
 
@@ -41,7 +41,7 @@ export default function TokenLogo({
           return;
         }
 
-        // Fetch from API
+        // Fetch from DexScreener API
         const metadata = await CoinLogoService.getTokenByContract(address);
         if (metadata?.image) {
           setLogoUrl(metadata.image);

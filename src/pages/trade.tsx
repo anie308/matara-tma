@@ -191,16 +191,28 @@ export default function Trade() {
 
   const availableTokens = getAvailableTokens();
   
-  // Show all popular BSC tokens with their balances
-  const tokensWithBalances = availableTokens.map(token => {
-    return {
-      symbol: token.symbol,
-      name: token.name,
-      address: token.address,
-      logo: token.logoURI,
-      balance: token.balance
-    };
-  });
+  // Show all popular BSC tokens with their balances, sorted by balance (non-zero first)
+  const tokensWithBalances = availableTokens
+    .map(token => {
+      return {
+        symbol: token.symbol,
+        name: token.name,
+        address: token.address,
+        logo: token.logoURI,
+        balance: token.balance
+      };
+    })
+    .sort((a, b) => {
+      // Tokens with balance > 0 come first
+      const aHasBalance = (a.balance || 0) > 0;
+      const bHasBalance = (b.balance || 0) > 0;
+      
+      if (aHasBalance && !bHasBalance) return -1;
+      if (!aHasBalance && bHasBalance) return 1;
+      
+      // If both have balance or both don't, sort by balance amount (descending)
+      return (b.balance || 0) - (a.balance || 0);
+    });
 
   return (
     <>
